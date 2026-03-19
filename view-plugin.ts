@@ -2,7 +2,7 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkHasChildren, getToggleRegex, getVisualCol, getLastChildLineNo } from "./utils";
+import { checkHasChildren, getToggleRegex, getLastChildLineNo } from "./utils";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -43,6 +43,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             }
             return builder.finish();
         }
+
     }, {
         decorations: v => v.decorations,
         provide: p => [EditorView.atomicRanges.of(v => v.plugin(p)?.decorations || Decoration.none)]
