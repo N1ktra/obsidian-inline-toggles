@@ -1,25 +1,27 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
-import { RangeSetBuilder, Text } from "@codemirror/state";
+// WICHTIG: Prec (Precedence / Priorität) aus @codemirror/state importieren!
+import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 
-// Hilfsfunktion: Prüft, ob es eingerückte Zeilen darunter gibt
 function checkHasChildren(doc: Text, lineNumber: number): boolean {
     const line = doc.line(lineNumber);
     const currentIndent = line.text.match(/^\s*/)?.[0].length || 0;
 
     for (let i = lineNumber + 1; i <= doc.lines; i++) {
         const nextLine = doc.line(i);
-        if (nextLine.text.trim() === "") continue; // Leere Zeilen ignorieren
-
+        const isEmpty = nextLine.text.trim() === "";
         const nextIndent = nextLine.text.match(/^\s*/)?.[0].length || 0;
-        return nextIndent > currentIndent;
+
+        if (nextIndent > currentIndent) return true;
+        if (!isEmpty) return false;
     }
     return false;
 }
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
-    return ViewPlugin.fromClass(class {
+    // 1. Wir definieren das Plugin wie gehabt
+    const plugin = ViewPlugin.fromClass(class {
         decorations: DecorationSet;
 
         constructor(view: EditorView) {
@@ -27,7 +29,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         update(update: ViewUpdate) {
-            if (update.docChanged || update.viewportChanged) {
+            if (update.docChanged || update.viewportChanged || update.selectionSet) {
                 this.decorations = this.buildDecorations(update.view);
             }
         }
@@ -36,41 +38,61 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             const builder = new RangeSetBuilder<Decoration>();
             const { symbolOpen, symbolClosed } = settings;
 
-            const escapedOpen = symbolOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const escapedClosed = symbolClosed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${escapedOpen}|${escapedClosed})`, 'g');
+            const widgets: { from: number, to: number, deco: Decoration }[] = [];
 
             for (let { from, to } of view.visibleRanges) {
-                const text = view.state.doc.sliceString(from, to);
-                let match;
+                const startLine = view.state.doc.lineAt(from);
+                const endLine = view.state.doc.lineAt(to);
 
-                while ((match = regex.exec(text)) !== null) {
-                    const textIsOpen = match[1] === symbolOpen;
-                    const pos = from + match.index;
+                for (let i = startLine.number; i <= endLine.number; i++) {
+                    const line = view.state.doc.line(i);
 
-                    const line = view.state.doc.lineAt(pos);
-                    const hasChild = checkHasChildren(view.state.doc, line.number);
+                    let matchIdx = -1;
+                    while ((matchIdx = line.text.indexOf(symbolOpen, matchIdx + 1)) !== -1) {
+                        const pos = line.from + matchIdx;
+                        const hasChild = checkHasChildren(view.state.doc, line.number);
+                        widgets.push({
+                            from: pos,
+                            to: pos + symbolOpen.length,
+                            deco: Decoration.replace({
+                                widget: new ToggleWidget(hasChild, true, { open: symbolOpen, closed: symbolClosed })
+                            })
+                        });
+                    }
 
-                    // NEU: Wenn keine Kinder da sind, IMMER als "zu" anzeigen
-                    const displayIsOpen = hasChild ? textIsOpen : false;
-
-                    builder.add(
-                        pos,
-                        pos + match[1].length,
-                        Decoration.replace({
-                            // Wir übergeben jetzt, wie es aussehen soll UND was wirklich im Text steht
-                            widget: new ToggleWidget(displayIsOpen, textIsOpen, pos, {
-                                open: symbolOpen,
-                                closed: symbolClosed
-                            }),
-                        })
-                    );
+                    matchIdx = -1;
+                    while ((matchIdx = line.text.indexOf(symbolClosed, matchIdx + 1)) !== -1) {
+                        const pos = line.from + matchIdx;
+                        widgets.push({
+                            from: pos,
+                            to: pos + symbolClosed.length,
+                            deco: Decoration.replace({
+                                widget: new ToggleWidget(false, false, { open: symbolOpen, closed: symbolClosed })
+                            })
+                        });
+                    }
                 }
             }
+
+            widgets.sort((a, b) => a.from - b.from);
+
+            let lastTo = -1;
+            for (let w of widgets) {
+                if (w.from >= lastTo) {
+                    builder.add(w.from, w.to, w.deco);
+                    lastTo = w.to;
+                }
+            }
+
             return builder.finish();
         }
     }, {
         decorations: v => v.decorations,
         provide: plugin => EditorView.atomicRanges.of(view => view.plugin(plugin)?.decorations || Decoration.none)
     });
+
+    // 2. DER MAGISCHE FIX:
+    // Wir zwingen CodeMirror, unser Plugin als allerwichtigstes im gesamten Editor zu behandeln!
+    // Dadurch kann Obsidian unser Widget beim Verlassen der Zeile nicht mehr zerstören.
+    return Prec.highest(plugin);
 };
