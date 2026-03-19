@@ -23,48 +23,31 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     editor.replaceRange(`${symbolOpen} `, { line: cursor.line, ch: insertPos });
 }
 
-export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
+export function scanAndApplyFold(app: App, settings: MyToggleSettings)
+{
+    // Wir suchen die aktive Markdown-Ansicht
     const view = app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view || !view.editor) return;
+    if (!view) return;
 
     const editor = view.editor;
     const lineCount = editor.lineCount();
-    const { symbolOpen, symbolClosed } = settings;
+    const openSymb = settings.symbolOpen;
+    const closedSymb = settings.symbolClosed;
 
-    for (let i = 0; i < lineCount; i++) {
+    // DER FIX: Die Schleife läuft jetzt RÜCKWÄRTS (von unten nach oben)
+    for (let i = lineCount - 1; i >= 0; i--) {
         const lineText = editor.getLine(i);
-        const isOpen = lineText.includes(symbolOpen);
-        const isClosed = lineText.includes(symbolClosed);
 
-        if (isOpen || isClosed) {
-            let hasChildren = false;
-            const currentIndent = lineText.match(/^\s*/)?.[0].length || 0;
-
-            // Wir scannen die Zeilen darunter
-            for (let j = i + 1; j < lineCount; j++) {
-                const nextLineText = editor.getLine(j);
-
-                if (nextLineText.trim() === "") continue; // Leere Zeilen überspringen
-
-                const nextIndent = nextLineText.match(/^\s*/)?.[0].length || 0;
-
-                if (nextIndent > currentIndent) {
-                    hasChildren = true;
-                    break;
-                } else {
-                    break;
-                }
-            }
-
-            // Befehl nur ausführen, wenn Kinder gefunden wurden
-            if (hasChildren) {
-                editor.setCursor({ line: i, ch: 0 });
-                const command = isOpen ? 'editor:fold-less' : 'editor:fold-more';
-                (app as any).commands.executeCommandById(command);
-            }
+        if (lineText.includes(openSymb)) { // if toggle is open
+            editor.setCursor({ line: i, ch: 0 });
+            (app as any).commands.executeCommandById('editor:fold-less'); // ausklappen
+        }
+        else if (lineText.includes(closedSymb)) {
+            editor.setCursor({ line: i, ch: 0 });
+            (app as any).commands.executeCommandById('editor:fold-more'); // zuklappen
         }
     }
 
-    // Setzt den Cursor wieder entspannt an den Anfang
+    // Optional: Cursor wieder an den Anfang setzen, damit er nicht beim letzten Toggle bleibt
     editor.setCursor({ line: 0, ch: 0 });
 }
