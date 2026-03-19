@@ -1,5 +1,5 @@
 import { Plugin } from 'obsidian';
-import { createToggleViewPlugin } from './view-plugin';
+import { createToggleViewPlugin, createToggleEnterFix } from './view-plugin';
 import { insertOrRemoveToggle, scanAndApplyFold } from './logic';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
 
@@ -11,7 +11,10 @@ export default class MyTogglePlugin extends Plugin {
         this.addSettingTab(new MyToggleSettingTab(this.app, this));
 
         // Editor Extension für die Icons
-        this.registerEditorExtension(createToggleViewPlugin(this.settings));
+        this.registerEditorExtension([
+            createToggleViewPlugin(this.settings),
+            createToggleEnterFix(this.settings)
+        ]);
 
         // Befehl zum Einfügen
         this.addCommand({
