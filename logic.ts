@@ -49,31 +49,42 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     editor.setCursor({ line: cursor.line, ch: newCh });
 }
 
-export function scanAndApplyFold(app: App, settings: MyToggleSettings)
-{
-    // Wir suchen die aktive Markdown-Ansicht
+export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     const view = app.workspace.getActiveViewOfType(MarkdownView);
     if (!view) return;
 
     const editor = view.editor;
+
+    // 1. ZUSTAND SPEICHERN: Cursor UND Scroll-Position
+    const originalCursor = editor.getCursor();
+    const scrollInfo = editor.getScrollInfo(); // Holt {top: pixel, left: pixel}
+
     const lineCount = editor.lineCount();
     const openSymb = settings.symbolOpen;
     const closedSymb = settings.symbolClosed;
 
-    // DER FIX: Die Schleife läuft jetzt RÜCKWÄRTS (von unten nach oben)
+    // Rückwärts-Scan für stabiles Folding
     for (let i = lineCount - 1; i >= 0; i--) {
         const lineText = editor.getLine(i);
 
-        if (lineText.includes(openSymb)) { // if toggle is open
+        if (lineText.includes(openSymb)) {
             editor.setCursor({ line: i, ch: 0 });
-            (app as any).commands.executeCommandById('editor:fold-less'); // ausklappen
+            (app as any).commands.executeCommandById('editor:fold-less');
         }
         else if (lineText.includes(closedSymb)) {
             editor.setCursor({ line: i, ch: 0 });
-            (app as any).commands.executeCommandById('editor:fold-more'); // zuklappen
+            (app as any).commands.executeCommandById('editor:fold-more');
         }
     }
 
-    // Optional: Cursor wieder an den Anfang setzen, damit er nicht beim letzten Toggle bleibt
-    editor.setCursor({ line: 0, ch: 0 });
+    // 2. ZUSTAND WIEDERHERSTELLEN
+    // Zuerst den Cursor zurücksetzen
+    editor.setCursor(originalCursor);
+
+    // Dann die Scroll-Ansicht exakt auf die alten Pixel-Werte setzen
+    // Wir nutzen ein kleines Timeout (0ms), damit Obsidian den Layout-Wechsel
+    // durch die Folds erst abschließt, bevor wir scrollen.
+    setTimeout(() => {
+        editor.scrollTo(scrollInfo.left, scrollInfo.top);
+    }, 0);
 }

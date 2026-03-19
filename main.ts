@@ -26,6 +26,15 @@ export default class MyTogglePlugin extends Plugin {
             }
         });
 
+        this.addCommand({
+            id: 'reset-foldings',
+            name: 'Reset all foldings',
+            icon: 'rotate-ccw',
+            editorCallback: (editor) => {
+                scanAndApplyFold(this.app, this.settings);
+            }
+        });
+
         // Auto-Fold beim Tab-Wechsel
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
