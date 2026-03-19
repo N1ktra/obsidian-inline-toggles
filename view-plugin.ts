@@ -3,6 +3,7 @@ import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkHasChildren, getToggleRegex, getLastChildLineNo } from "./utils";
+import { foldedRanges, foldEffect } from "@codemirror/language";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -94,6 +95,16 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
 
                 let insertPos: number;
                 let insertText: string;
+                let isAtEof = false;
+                let isFolded = false;
+                // foldedRanges gibt uns einen Baum aller eingeklappten Bereiche
+                foldedRanges(state).between(parentLine.from, parentLine.to, (from, to) => {
+                    // Wenn ein gefalteter Bereich an unserer Zeile startet,
+                    // setzen wir isFolded auf true
+                    if (from >= parentLine.from && from <= parentLine.to) {
+                        isFolded = true;
+                    }
+                });
 
                 if (lastChildLine < state.doc.lines) {
                     const targetLine = state.doc.line(lastChildLine + 1);
@@ -102,6 +113,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     insertText = prefixClean + " \n";
                 } else {
                     // Ende des Dokuments
+                    isAtEof = true;
                     insertPos = state.doc.line(state.doc.lines).to;
                     insertText = "\n" + prefixClean + " ";
                 }
@@ -112,6 +124,11 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     scrollIntoView: true,
                     userEvent: "input"
                 });
+                if (isAtEof && isFolded) {
+                    view.dispatch({
+                        effects: foldEffect.of({ from: parentLine.to, to: insertPos })
+                    });
+                }
 
                 return true;
             }
