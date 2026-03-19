@@ -11,8 +11,11 @@ export class ToggleWidget extends WidgetType {
     }
 
     eq(other: ToggleWidget) {
-        return this.displayIsOpen === other.displayIsOpen &&
-               this.textIsOpen === other.textIsOpen;
+        return other.displayIsOpen === this.displayIsOpen &&
+               other.textIsOpen === this.textIsOpen &&
+               other.pos === this.pos &&
+               other.symbols.open === this.symbols.open &&
+               other.symbols.closed === this.symbols.closed;
     }
 
     // UPDATE-DOM: Verhindert das Flackern

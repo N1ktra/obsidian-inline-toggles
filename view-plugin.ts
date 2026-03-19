@@ -3,10 +3,10 @@ import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 
-// HILFSFUNKTION: Berechnet die visuelle Spalte (Tabs vs Spaces)
+// --- HILFSFUNKTIONEN ---
+
 function getVisualCol(text: string, tabSize: number): number {
     let col = 0;
-    // Säuberung von unsichtbaren Zeichen (Zero-Width-Spaces etc.)
     const clean = text.replace(/[\u200B\u200C\u200D\uFEFF]/g, "");
     for (let i = 0; i < clean.length; i++) {
         if (clean[i] === "\t") col += tabSize - (col % tabSize);
@@ -16,24 +16,21 @@ function getVisualCol(text: string, tabSize: number): number {
     return col;
 }
 
-// HILFSFUNKTION: Prüft, ob eine Zeile eingerückte Kinder hat
 function checkHasChildren(doc: Text, lineNumber: number, tabSize: number): boolean {
-    const line = doc.line(lineNumber);
-    const currentIndent = getVisualCol(line.text, tabSize);
-
+    if (lineNumber >= doc.lines) return false;
+    const currentIndent = getVisualCol(doc.line(lineNumber).text, tabSize);
     for (let i = lineNumber + 1; i <= doc.lines; i++) {
         const nextLine = doc.line(i);
         if (nextLine.text.trim() === "") continue;
-        const nextIndent = getVisualCol(nextLine.text, tabSize);
-
-        if (nextIndent > currentIndent) return true;
-        return false; // Sobald eine Zeile auf gleicher oder höherer Ebene kommt
+        return getVisualCol(nextLine.text, tabSize) > currentIndent;
     }
     return false;
 }
 
+// --- VIEW PLUGIN (Icon Rendering & Sync) ---
+
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
-    return ViewPlugin.fromClass(class {
+    const plugin = ViewPlugin.fromClass(class {
         decorations: DecorationSet;
 
         constructor(view: EditorView) {
@@ -41,12 +38,9 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         update(update: ViewUpdate) {
-            // 1. ICONS ZEICHNEN
             if (update.docChanged || update.viewportChanged) {
                 this.decorations = this.buildDecorations(update.view);
             }
-
-            // 2. HAUPTLOGIK: Synchronisation & Auto-Unfold
             if (update.docChanged) {
                 this.processToggleLogic(update.view);
             }
@@ -62,69 +56,30 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
 
             const changes: any[] = [];
             const head = state.selection.main.head;
-            const currentLine = state.doc.lineAt(head);
-            const currentCol = getVisualCol(currentLine.text, tabSize);
+            const cursorLine = state.doc.lineAt(head);
 
-            // Scan der sichtbaren Bereiche für Sync
-            for (const { from, to } of view.visibleRanges) {
-                let pos = from;
-                while (pos <= to) {
-                    const line = state.doc.lineAt(pos);
-                    const lineNo = line.number;
-                    const hasClosed = line.text.includes(symbolClosed);
-                    const hasOpen = line.text.includes(symbolOpen);
+            const from = state.doc.lineAt(view.viewport.from).number;
+            const to = state.doc.lineAt(view.viewport.to).number;
 
-                    if (hasClosed || hasOpen) {
-                        // @ts-ignore - Obsidian Fold API
-                        const isFoldedVisual = editor.getFold ? editor.getFold(lineNo - 1) : false;
-                        const hasChildren = checkHasChildren(state.doc, lineNo, tabSize);
+            for (let i = from; i <= to; i++) {
+                const line = state.doc.line(i);
+                // @ts-ignore
+                const isFolded = editor.getFold ? editor.getFold(i - 1) : false;
+                const hasChildren = checkHasChildren(state.doc, i, tabSize);
 
-                        // SPEZIALFALL: Einrücken unter einem geschlossenen Toggle (Auto-Unfold)
-                        const isParentOfCursor = (lineNo < currentLine.number && currentCol > getVisualCol(line.text, tabSize));
-
-                        if (hasClosed && isParentOfCursor) {
-                            const matchIdx = line.text.indexOf(symbolClosed);
-                            changes.push({
-                                from: line.from + matchIdx,
-                                to: line.from + matchIdx + symbolClosed.length,
-                                insert: symbolOpen
-                            });
-
-                            // Unfold erzwingen
-                            setTimeout(() => {
-                                if (editor.setFold) editor.setFold(lineNo - 1, false);
-                                (window as any).app.commands.executeCommandById('editor:fold-less');
-                            }, 50);
-                        }
-                        // SYNC: Wenn visuell ZU oder keine Kinder -> Muss geschlossen sein
-                        else if (hasOpen && (isFoldedVisual || !hasChildren)) {
-                            const matchIdx = line.text.indexOf(symbolOpen);
-                            changes.push({
-                                from: line.from + matchIdx,
-                                to: line.from + matchIdx + symbolOpen.length,
-                                insert: symbolClosed
-                            });
-                        }
-                        // SYNC: Wenn visuell AUF und Kinder da -> Muss offen sein
-                        else if (hasClosed && !isFoldedVisual && hasChildren) {
-                            const matchIdx = line.text.indexOf(symbolClosed);
-                            changes.push({
-                                from: line.from + matchIdx,
-                                to: line.from + matchIdx + symbolClosed.length,
-                                insert: symbolOpen
-                            });
-                        }
+                if (line.text.includes(symbolOpen) && (isFolded || !hasChildren)) {
+                    const idx = line.text.indexOf(symbolOpen);
+                    changes.push({ from: line.from + idx, to: line.from + idx + symbolOpen.length, insert: symbolClosed });
+                } else if (line.text.includes(symbolClosed) && !isFolded && hasChildren) {
+                    const isParent = i < cursorLine.number && getVisualCol(line.text, tabSize) < getVisualCol(cursorLine.text, tabSize);
+                    if (isParent) {
+                        const idx = line.text.indexOf(symbolClosed);
+                        changes.push({ from: line.from + idx, to: line.from + idx + symbolClosed.length, insert: symbolOpen });
                     }
-                    pos = line.to + 1;
                 }
             }
-
             if (changes.length > 0) {
-                setTimeout(() => {
-                    if (view.state) {
-                        view.dispatch({ changes, userEvent: "toggle.sync" });
-                    }
-                }, 0);
+                setTimeout(() => { if (view.state) view.dispatch({ changes, userEvent: "toggle.sync" }); }, 20);
             }
         }
 
@@ -135,39 +90,43 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
 
             const escOpen = symbolOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const escClosed = symbolClosed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`${escOpen}|${escClosed}`, 'g');
 
-            for (let { from, to } of view.visibleRanges) {
-                const text = view.state.doc.sliceString(from, to);
-                const regex = new RegExp(`(${escOpen}|${escClosed})`, 'g');
-                let match;
+            const { from, to } = view.viewport;
+            const text = view.state.doc.sliceString(from, to);
+            let match;
+            let lastPos = -1;
 
-                while ((match = regex.exec(text)) !== null) {
-                    const textIsOpen = match[1] === symbolOpen;
-                    const pos = from + match.index;
-                    const line = view.state.doc.lineAt(pos);
+            while ((match = regex.exec(text)) !== null) {
+                const pos = from + match.index;
+                if (pos <= lastPos) continue;
+                lastPos = pos;
 
-                    const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
-                    const displayIsOpen = hasChild ? textIsOpen : false;
+                const line = view.state.doc.lineAt(pos);
+                const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
+                const textIsOpen = match[0] === symbolOpen;
 
-                    builder.add(
-                        pos,
-                        pos + match[1].length,
-                        Decoration.replace({
-                            widget: new ToggleWidget(displayIsOpen, textIsOpen, pos, {
-                                open: symbolOpen,
-                                closed: symbolClosed
-                            }),
-                        })
-                    );
-                }
+                builder.add(pos, pos + match[0].length,
+                    Decoration.replace({
+                        widget: new ToggleWidget(hasChild ? textIsOpen : false, textIsOpen, pos, {
+                            open: symbolOpen,
+                            closed: symbolClosed
+                        }),
+                    })
+                );
             }
             return builder.finish();
         }
     }, {
         decorations: v => v.decorations,
-        provide: plugin => EditorView.atomicRanges.of(view => view.plugin(plugin)?.decorations || Decoration.none)
+        provide: plugin => [
+            EditorView.atomicRanges.of(view => view.plugin(plugin)?.decorations || Decoration.none)
+        ]
     });
+    return Prec.highest(plugin);
 };
+
+// --- ENTER FIX (Deine ursprüngliche Logik) ---
 
 export const createToggleEnterFix = (settings: MyToggleSettings) => {
     return Prec.highest(keymap.of([{
@@ -184,15 +143,16 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
 
             let matchIndex = parentLine.text.indexOf(symbolClosed);
             let matchedSymbol = symbolClosed;
-
             if (matchIndex === -1) {
                 matchIndex = parentLine.text.indexOf(symbolOpen);
                 matchedSymbol = symbolOpen;
             }
 
-            if (matchIndex !== -1 && pos >= parentLine.to && pos <= block.to) {
+            // Check: Cursor hinter dem Symbol
+            if (matchIndex !== -1 && pos >= parentLine.from + matchIndex) {
                 const currentIndentLevel = getVisualCol(parentLine.text, tabSize);
 
+                // 1. Letztes Kind finden
                 let lastChildLine = parentLine.number;
                 for (let i = parentLine.number + 1; i <= state.doc.lines; i++) {
                     const nextLine = state.doc.line(i);
@@ -206,6 +166,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     }
                 }
 
+                // 2. Spezialfall: Leeres Toggle -> Löschen
                 const textAfterSymbol = parentLine.text.substring(matchIndex + matchedSymbol.length).trim();
                 if (textAfterSymbol === "") {
                     const deleteFrom = parentLine.from + matchIndex;
@@ -218,6 +179,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     return true;
                 }
 
+                // 3. Normalfall: Neues Toggle nach dem Block einfügen
                 const prefixUntilSymbol = parentLine.text.substring(0, matchIndex);
                 const prefixClean = prefixUntilSymbol + symbolClosed;
 
@@ -230,7 +192,6 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     scrollIntoView: true,
                     userEvent: "input"
                 });
-
                 return true;
             }
             return false;
