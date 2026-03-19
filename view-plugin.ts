@@ -19,7 +19,6 @@ function checkHasChildren(doc: Text, lineNumber: number): boolean {
 }
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
-    // 1. Wir definieren das Plugin wie gehabt
     const plugin = ViewPlugin.fromClass(class {
         decorations: DecorationSet;
 
@@ -28,82 +27,54 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         update(update: ViewUpdate) {
-            // 1. Standard-Update für die Icons
+            // 1. ICONS ZEICHNEN: Bei Textänderung oder Scrollen
             if (update.docChanged || update.viewportChanged) {
                 this.decorations = this.buildDecorations(update.view);
             }
 
-            // 2. NEU: Überwachung der Einrückung (Indentation)
+            // 2. LOGIK-CHECKS: Nur bei Textänderungen
             if (update.docChanged) {
-                let shouldUnfold = false;
-                let parentLineNumber = -1;
+                const { state, view } = update;
+                const { symbolClosed, symbolOpen } = settings;
 
-                // Wir prüfen, was genau im Text verändert wurde
-                update.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-                    // Sicherheitscheck, damit wir nicht ins Leere greifen
-                    if (toB <= update.state.doc.length && fromA <= update.startState.doc.length) {
-                        const newLine = update.state.doc.lineAt(toB);
-                        const oldLine = update.startState.doc.lineAt(fromA);
+                update.changes.iterChanges((fromA, toA, fromB, toB) => {
+                    if (toB > state.doc.length) return;
 
-                        const newIndent = newLine.text.match(/^\s*/)?.[0].length || 0;
-                        const oldIndent = oldLine.text.match(/^\s*/)?.[0].length || 0;
+                    const newLine = state.doc.lineAt(toB);
+                    const newIndent = newLine.text.match(/^\s*/)?.[0].length || 0;
 
-                        // Wurde die Zeile gerade weiter eingerückt? (z.B. durch Tab)
-                        if (newIndent > oldIndent) {
+                    // A) SYNC-CHECK: Wenn man in einen "geschlossenen" Bereich schreibt
+                    // B) INDENT-CHECK: Wenn man eine Zeile tiefer einrückt
+                    for (let i = newLine.number - 1; i >= 1; i--) {
+                        const prevLine = state.doc.line(i);
+                        const prevIndent = prevLine.text.match(/^\s*/)?.[0].length || 0;
 
-                            // Wir suchen nach oben, zu wem diese Zeile jetzt gehört
-                            for (let i = newLine.number - 1; i >= 1; i--) {
-                                const prevLine = update.state.doc.line(i);
-                                const prevIndent = prevLine.text.match(/^\s*/)?.[0].length || 0;
+                        if (prevIndent < newIndent) {
+                            if (prevLine.text.includes(symbolClosed)) {
+                                const matchIdx = prevLine.text.indexOf(symbolClosed);
+                                const matchPos = prevLine.from + matchIdx;
 
-                                // Sobald wir eine Zeile finden, die WENIGER eingerückt ist, ist das unser logischer Elternteil
-                                if (prevIndent < newIndent) {
-                                    // Ist dieses Elternteil rein zufällig ein geschlossenes Toggle?
-                                    if (prevLine.text.includes(settings.symbolClosed)) {
-                                        shouldUnfold = true;
-                                        parentLineNumber = prevLine.number;
-                                    }
-                                    break; // Suche beenden, Elternteil gefunden
-                                }
+                                // Sofortiges Update des Symbols und Aufklappen
+                                setTimeout(() => {
+                                    const prevSelection = view.state.selection;
+
+                                    view.dispatch({
+                                        changes: { from: matchPos, to: matchPos + symbolClosed.length, insert: symbolOpen },
+                                        selection: { anchor: prevLine.from }
+                                    });
+
+                                    const app = (window as any).app;
+                                    if (app) app.commands.executeCommandById('editor:fold-less');
+
+                                    view.dispatch({ selection: prevSelection });
+                                }, 0);
                             }
+                            break;
                         }
+                        // Stop, wenn wir ganz links ankommen ohne ein Toggle zu finden
+                        if (prevIndent === 0 && !prevLine.text.includes(symbolClosed)) break;
                     }
                 });
-
-                // 3. Wenn ein geschlossenes Eltern-Toggle gefunden wurde -> Ausklappen!
-                if (shouldUnfold && parentLineNumber !== -1) {
-                    // Minimaler Timer, damit CodeMirror seinen aktuellen Render-Zyklus abschließen kann
-                    setTimeout(() => {
-                        const view = update.view;
-                        const parentLine = view.state.doc.line(parentLineNumber);
-                        const matchIndex = parentLine.text.indexOf(settings.symbolClosed);
-
-                        if (matchIndex !== -1) {
-                            // Cursor-Position retten, damit du ungestört weiterarbeiten kannst
-                            const previousSelection = view.state.selection;
-                            const matchPos = parentLine.from + matchIndex;
-
-                            // Symbol von geschlossen auf offen wechseln und Cursor kurz hochsetzen
-                            view.dispatch({
-                                changes: {
-                                    from: matchPos,
-                                    to: matchPos + settings.symbolClosed.length,
-                                    insert: settings.symbolOpen
-                                },
-                                selection: { anchor: parentLine.from }
-                            });
-
-                            // Den nativen Obsidian-Befehl zum Ausklappen abfeuern
-                            const app = (window as any).app;
-                            if (app) {
-                                app.commands.executeCommandById('editor:fold-less');
-                            }
-
-                            // Cursor sofort wieder exakt dorthin zurücksetzen, wo du gerade einrückst
-                            view.dispatch({ selection: previousSelection });
-                        }
-                    }, 10);
-                }
             }
         }
 
@@ -111,52 +82,38 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             const builder = new RangeSetBuilder<Decoration>();
             const { symbolOpen, symbolClosed } = settings;
 
-            const widgets: { from: number, to: number, deco: Decoration }[] = [];
+            // Regex sicher escapen
+            const escOpen = symbolOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escClosed = symbolClosed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             for (let { from, to } of view.visibleRanges) {
-                const startLine = view.state.doc.lineAt(from);
-                const endLine = view.state.doc.lineAt(to);
+                const text = view.state.doc.sliceString(from, to);
+                // Regex innerhalb der Schleife neu erstellen (Fix für lastIndex Bug)
+                const regex = new RegExp(`(${escOpen}|${escClosed})`, 'g');
+                let match;
 
-                for (let i = startLine.number; i <= endLine.number; i++) {
-                    const line = view.state.doc.line(i);
+                while ((match = regex.exec(text)) !== null) {
+                    const textIsOpen = match[1] === symbolOpen;
+                    const pos = from + match.index;
+                    const line = view.state.doc.lineAt(pos);
 
-                    let matchIdx = -1;
-                    while ((matchIdx = line.text.indexOf(symbolOpen, matchIdx + 1)) !== -1) {
-                        const pos = line.from + matchIdx;
-                        const hasChild = checkHasChildren(view.state.doc, line.number);
-                        widgets.push({
-                            from: pos,
-                            to: pos + symbolOpen.length,
-                            deco: Decoration.replace({
-                                widget: new ToggleWidget(hasChild, true, { open: symbolOpen, closed: symbolClosed })
-                            })
-                        });
-                    }
+                    const hasChild = checkHasChildren(view.state.doc, line.number);
+                    // Ein Icon ist nur dann "aufgeklappt" (Pfeil nach unten),
+                    // wenn es Kinder hat UND der Text das offene Symbol zeigt.
+                    const displayIsOpen = hasChild ? textIsOpen : false;
 
-                    matchIdx = -1;
-                    while ((matchIdx = line.text.indexOf(symbolClosed, matchIdx + 1)) !== -1) {
-                        const pos = line.from + matchIdx;
-                        widgets.push({
-                            from: pos,
-                            to: pos + symbolClosed.length,
-                            deco: Decoration.replace({
-                                widget: new ToggleWidget(false, false, { open: symbolOpen, closed: symbolClosed })
-                            })
-                        });
-                    }
+                    builder.add(
+                        pos,
+                        pos + match[1].length,
+                        Decoration.replace({
+                            widget: new ToggleWidget(displayIsOpen, textIsOpen, pos, {
+                                open: symbolOpen,
+                                closed: symbolClosed
+                            }),
+                        })
+                    );
                 }
             }
-
-            widgets.sort((a, b) => a.from - b.from);
-
-            let lastTo = -1;
-            for (let w of widgets) {
-                if (w.from >= lastTo) {
-                    builder.add(w.from, w.to, w.deco);
-                    lastTo = w.to;
-                }
-            }
-
             return builder.finish();
         }
     }, {
@@ -164,9 +121,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         provide: plugin => EditorView.atomicRanges.of(view => view.plugin(plugin)?.decorations || Decoration.none)
     });
 
-    // 2. DER MAGISCHE FIX:
-    // Wir zwingen CodeMirror, unser Plugin als allerwichtigstes im gesamten Editor zu behandeln!
-    // Dadurch kann Obsidian unser Widget beim Verlassen der Zeile nicht mehr zerstören.
+    // Wir geben dem Plugin die höchste Priorität, damit es stabil bleibt
     return Prec.highest(plugin);
 };
 
@@ -190,56 +145,57 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 matchedSymbol = symbolOpen;
             }
 
-            // Prüfung: Cursor ist in der Toggle-Zeile
+            // Cursor-Check: Wir sind am Ende der sichtbaren Toggle-Zeile
             if (matchIndex !== -1 && pos >= parentLine.to && pos <= block.to) {
+                const currentIndentMatch = parentLine.text.match(/^\s*/);
+                const currentIndentLevel = currentIndentMatch ? currentIndentMatch[0].length : 0;
 
-                // Wir prüfen, ob hinter dem Symbol noch Text steht (außer Leerzeichen)
+                // 1. Wir finden das Ende des Inhalts-Blocks (Kinder-Check)
+                let lastChildLine = parentLine.number;
+                for (let i = parentLine.number + 1; i <= state.doc.lines; i++) {
+                    const nextLine = state.doc.line(i);
+                    const nextIndentMatch = nextLine.text.match(/^\s*/);
+                    const nextIndent = nextIndentMatch ? nextIndentMatch[0].length : 0;
+
+                    if (nextLine.text.trim() === "") continue; // Leere Zeilen im Block überspringen
+
+                    if (nextIndent > currentIndentLevel) {
+                        lastChildLine = i; // Es ist ein eingerücktes Kind
+                    } else {
+                        break; // Sibling oder Parent gefunden
+                    }
+                }
+
+                // 2. Weiche: Leeres Toggle entfernen
                 const textAfterSymbol = parentLine.text.substring(matchIndex + matchedSymbol.length).trim();
-                const isEmptyToggle = textAfterSymbol === "";
-
-                if (isEmptyToggle) {
-                    // FALL A: Toggle ist leer -> Symbol ENTFERNEN
-                    // Wir löschen das Symbol und das evtl. folgende Leerzeichen
+                if (textAfterSymbol === "") {
                     const deleteFrom = parentLine.from + matchIndex;
-                    // Wir schauen, ob nach dem Symbol ein Leerzeichen steht, das wir mitlöschen
-                    const hasTrailingSpace = parentLine.text[matchIndex + matchedSymbol.length] === " ";
-                    const deleteTo = deleteFrom + matchedSymbol.length + (hasTrailingSpace ? 1 : 0);
-
+                    const hasSpace = parentLine.text[matchIndex + matchedSymbol.length] === " ";
                     view.dispatch({
-                        changes: { from: deleteFrom, to: deleteTo, insert: "" },
+                        changes: { from: deleteFrom, to: deleteFrom + matchedSymbol.length + (hasSpace ? 1 : 0), insert: "" },
                         selection: { anchor: deleteFrom },
                         userEvent: "delete"
                     });
                     return true;
                 }
 
-                // FALL B: Toggle hat Inhalt -> Neues Toggle darunter erstellen (wie bisher)
-                const currentIndentMatch = parentLine.text.match(/^\s*/);
-                const currentIndentLevel = currentIndentMatch ? currentIndentMatch[0].length : 0;
-
-                let lastChildLine = parentLine.number;
-                for (let i = parentLine.number + 1; i <= state.doc.lines; i++) {
-                    const nextLine = state.doc.line(i);
-                    const nextIndent = nextLine.text.match(/^\s*/)?.[0].length || 0;
-                    if (nextLine.text.trim() === "" || nextIndent > currentIndentLevel) {
-                        lastChildLine = i;
-                    } else {
-                        break;
-                    }
-                }
-
+                // 3. EINFÜGE-STRATEGIE: "Der Sicherheitsabstand"
                 const prefixUntilSymbol = parentLine.text.substring(0, matchIndex);
                 const prefixClean = prefixUntilSymbol + symbolClosed;
 
                 let insertPos: number;
                 let insertText: string;
 
+                // Wir nehmen IMMER die Zeile direkt nach dem letzten Kind
                 if (lastChildLine < state.doc.lines) {
-                    const nextVisibleLine = state.doc.line(lastChildLine + 1);
-                    insertPos = nextVisibleLine.from;
+                    const targetLine = state.doc.line(lastChildLine + 1);
+                    // Wir gehen an den ANFANG der nächsten Zeile.
+                    // Das ist technisch hinter dem \n der Kindzeile.
+                    insertPos = targetLine.from;
                     insertText = prefixClean + " \n";
                 } else {
-                    insertPos = state.doc.line(lastChildLine).to;
+                    // Ende des Dokuments
+                    insertPos = state.doc.line(state.doc.lines).to;
                     insertText = "\n" + prefixClean + " ";
                 }
 

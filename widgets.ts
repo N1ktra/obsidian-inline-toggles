@@ -4,6 +4,7 @@ export class ToggleWidget extends WidgetType {
     constructor(
         public displayIsOpen: boolean,
         public textIsOpen: boolean,
+        readonly pos: number,
         public symbols: { open: string, closed: string }
     ) {
         super();
