@@ -1,6 +1,24 @@
 import { Text } from "@codemirror/state";
 
 /**
+ * Escaped Sonderzeichen in einem String, damit sie sicher in einem Regex
+ * verwendet werden können (z.B. falls jemand '.' als Symbol nutzt).
+ */
+export function escapeRegex(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Erzeugt das zentrale Regex zur Suche nach Toggle-Symbolen.
+ */
+export function getToggleRegex(settings: { symbolOpen: string, symbolClosed: string }): RegExp {
+    const open = escapeRegex(settings.symbolOpen);
+    const closed = escapeRegex(settings.symbolClosed);
+    // Erzeugt z.B. /▼|▶/g
+    return new RegExp(`${open}|${closed}`, 'g');
+}
+
+/**
  * Berechnet die visuelle Spalte. Löst das Problem, dass Tabs im Code die Länge 1 haben,
  * aber visuell z.B. 4 Leerzeichen breit sind.
  */
@@ -30,4 +48,21 @@ export function checkHasChildren(doc: Text, lineNo: number, tabSize: number): bo
         return nextIndent > currentIndent; // Sobald Text gefunden wird: Ist er tiefer?
     }
     return false;
+}
+
+export function getLastChildLineNo(doc: any, lineNo: number, tabSize: number): number {
+    const parentIndent = getVisualCol(doc.line(lineNo).text, tabSize);
+    let lastChild = lineNo;
+
+    for (let i = lineNo + 1; i <= doc.lines; i++) {
+        const line = doc.line(i);
+        if (line.text.trim() === "") continue;
+
+        if (getVisualCol(line.text, tabSize) > parentIndent) {
+            lastChild = i;
+        } else {
+            break;
+        }
+    }
+    return lastChild;
 }
