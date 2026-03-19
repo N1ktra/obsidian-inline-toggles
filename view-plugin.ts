@@ -23,10 +23,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             const builder = new RangeSetBuilder<Decoration>();
             const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
             const { from, to } = view.viewport;
-
-            // DIE NEUE ZEILE:
             const regex = getToggleRegex(settings);
-
             const text = view.state.doc.sliceString(from, to);
             let match;
 
@@ -38,7 +35,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 const isOpenInText = match[0] === settings.symbolOpen;
 
                 builder.add(pos, pos + match[0].length, Decoration.replace({
-                    widget: new ToggleWidget(hasChild ? isOpenInText : false, isOpenInText, settings)
+                    widget: new ToggleWidget(hasChild ? isOpenInText : false, isOpenInText, pos, settings)
                 }));
             }
             return builder.finish();

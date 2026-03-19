@@ -5,12 +5,17 @@ export class ToggleWidget extends WidgetType {
     constructor(
         readonly displayAsOpen: boolean,
         readonly textIsOpen: boolean,
+        readonly pos: number, // Position für den eq-Check
         readonly settings: MyToggleSettings
     ) { super(); }
 
+    // Nur wenn ALLES gleich ist, bleibt das DOM-Element
     eq(other: ToggleWidget) {
-        return other.displayAsOpen === this.displayAsOpen &&
-               other.textIsOpen === this.textIsOpen;
+        if (other.displayAsOpen !== this.displayAsOpen) return false;
+        if (other.textIsOpen !== this.textIsOpen) return false;
+        if (other.pos !== this.pos) return false;
+        return other.settings.symbolOpen === this.settings.symbolOpen &&
+               other.settings.symbolClosed === this.settings.symbolClosed;
     }
 
     toDOM(view: EditorView) {
@@ -18,62 +23,52 @@ export class ToggleWidget extends WidgetType {
         span.className = "my-toggle-icon";
         span.style.cursor = "pointer";
 
-        // Initialen Zustand im DOM speichern
+        // Status für den Click-Handler im DOM parken
         span.dataset.textIsOpen = String(this.textIsOpen);
         span.textContent = this.displayAsOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Wir lesen den Zustand IMMER frisch aus dem DOM-Attribut
             const isCurrentlyOpen = span.dataset.textIsOpen === "true";
-
-            const pos = view.posAtDOM(span);
-            const line = view.state.doc.lineAt(pos);
+            const currentPos = view.posAtDOM(span); // Wir holen die Position lieber live
+            const line = view.state.doc.lineAt(currentPos);
 
             const oldSym = isCurrentlyOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
             const newSym = isCurrentlyOpen ? this.settings.symbolClosed : this.settings.symbolOpen;
 
             view.dispatch({
-                changes: { from: pos, to: pos + oldSym.length, insert: newSym },
+                changes: { from: currentPos, to: currentPos + oldSym.length, insert: newSym },
                 userEvent: "toggle.manual"
             });
 
             const app = (window as any).app;
             view.focus();
-
             view.dispatch({ selection: { anchor: line.from } });
+
             app.commands.executeCommandById(
                 isCurrentlyOpen ? 'editor:fold-more' : 'editor:fold-less'
             );
 
-            // Re-Layout Trigger
-            setTimeout(() => {
-                view.requestMeasure();
-                view.dispatch({
-                    selection: view.state.selection,
-                    scrollIntoView: false
-                });
-            }, 10);
+            //Selection-Update um das Layout zu korrigieren
+            view.dispatch({
+                selection: view.state.selection,
+                scrollIntoView: false
+            });
         };
         return span;
     }
 
-    /**
-     * CodeMirror ruft diese Methode auf, wenn das Widget aktualisiert werden soll,
-     * anstatt toDOM() neu auszuführen.
-     */
     updateDOM(dom: HTMLElement): boolean {
-        // 1. Zustand im DOM aktualisieren, damit der onclick-Handler Bescheid weiß
+        // Zustand für Click-Handler aktualisieren
         dom.dataset.textIsOpen = String(this.textIsOpen);
 
-        // 2. Das Symbol im Icon anpassen (nur wenn nötig)
+        // Symbol aktualisieren (falls sich z.B. die Settings geändert haben)
         const expectedSymbol = this.displayAsOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
         if (dom.textContent !== expectedSymbol) {
             dom.textContent = expectedSymbol;
         }
 
-        // true bedeutet: "Ich habe das Update erfolgreich selbst durchgeführt"
         return true;
     }
 
