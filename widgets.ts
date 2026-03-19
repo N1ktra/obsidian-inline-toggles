@@ -9,8 +9,12 @@ export class ToggleWidget extends WidgetType {
     ) { super(); }
 
     eq(other: ToggleWidget) {
-        return other.displayAsOpen === this.displayAsOpen &&
-               other.textIsOpen === this.textIsOpen;
+        return (
+            other.displayAsOpen === this.displayAsOpen &&
+            other.textIsOpen === this.textIsOpen &&
+            other.settings.placeholderOpen === this.settings.placeholderOpen &&
+            other.settings.placeholderClosed === this.settings.placeholderClosed
+        );
     }
 
     toDOM(view: EditorView) {
@@ -20,7 +24,7 @@ export class ToggleWidget extends WidgetType {
 
         // Initialen Zustand im DOM speichern
         span.dataset.textIsOpen = String(this.textIsOpen);
-        span.textContent = this.displayAsOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
+        span.textContent = this.displayAsOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -31,8 +35,8 @@ export class ToggleWidget extends WidgetType {
             const pos = view.posAtDOM(span);
             const line = view.state.doc.lineAt(pos);
 
-            const oldSym = isCurrentlyOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
-            const newSym = isCurrentlyOpen ? this.settings.symbolClosed : this.settings.symbolOpen;
+            const oldSym = isCurrentlyOpen ? this.settings.placeholderOpen : this.settings.placeholderClosed;
+            const newSym = isCurrentlyOpen ? this.settings.placeholderClosed : this.settings.placeholderOpen;
 
             view.dispatch({
                 changes: { from: pos, to: pos + oldSym.length, insert: newSym },
@@ -68,7 +72,7 @@ export class ToggleWidget extends WidgetType {
         dom.dataset.textIsOpen = String(this.textIsOpen);
 
         // 2. Das Symbol im Icon anpassen (nur wenn nötig)
-        const expectedSymbol = this.displayAsOpen ? this.settings.symbolOpen : this.settings.symbolClosed;
+        const expectedSymbol = this.displayAsOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         if (dom.textContent !== expectedSymbol) {
             dom.textContent = expectedSymbol;
         }

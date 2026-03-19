@@ -25,7 +25,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             const { from, to } = view.viewport;
 
             // DIE NEUE ZEILE:
-            const regex = getToggleRegex(settings);
+            const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
 
             const text = view.state.doc.sliceString(from, to);
             let match;
@@ -35,7 +35,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 const line = view.state.doc.lineAt(pos);
 
                 const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
-                const isOpenInText = match[0] === settings.symbolOpen;
+                const isOpenInText = match[0] === settings.placeholderOpen;
 
                 builder.add(pos, pos + match[0].length, Decoration.replace({
                     widget: new ToggleWidget(hasChild ? isOpenInText : false, isOpenInText, settings)
@@ -64,7 +64,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
 
             // 1. Suche nach Symbolen via zentralem Regex
-            const regex = getToggleRegex(settings);
+            const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
             const match = regex.exec(parentLine.text);
 
             // DEINE SPEZIAL-BEDINGUNG: Cursor am Ende der sichtbaren Toggle-Zeile/Block
@@ -90,7 +90,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
 
                 // 4. EINFÜGE-STRATEGIE: "Der Sicherheitsabstand"
                 const prefixUntilSymbol = parentLine.text.substring(0, matchIndex);
-                const prefixClean = prefixUntilSymbol + settings.symbolClosed;
+                const prefixClean = prefixUntilSymbol + settings.placeholderClosed;
 
                 let insertPos: number;
                 let insertText: string;

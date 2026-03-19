@@ -5,8 +5,7 @@ import { getToggleRegex } from './utils'; // Importiere deine Helfer
 export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
     const cursor = editor.getCursor();
     const lineText = editor.getLine(cursor.line);
-    const { symbolOpen, symbolClosed } = settings;
-    const toggleRegex = new RegExp(`(${getToggleRegex(settings).source})\\s?`, 'g');
+    const toggleRegex = new RegExp(`(${getToggleRegex({textClosed: settings.placeholderClosed, textOpen: settings.placeholderOpen}).source})\\s?`, 'g');
 
     // FALL 1: Toggle entfernen
     if (toggleRegex.test(lineText)) {
@@ -28,7 +27,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
 
-    const textToInsert = `${symbolOpen} `;
+    const textToInsert = `${settings.placeholderOpen} `;
     editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
     // Cursor-Positionierung
@@ -53,11 +52,11 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
         const lineText = editor.getLine(i);
 
         // Wir prüfen direkt gegen die Settings-Symbole
-        if (lineText.includes(settings.symbolOpen)) {
+        if (lineText.includes(settings.placeholderOpen)) {
             editor.setCursor({ line: i, ch: 0 });
             (app as any).commands.executeCommandById('editor:fold-less');
         }
-        else if (lineText.includes(settings.symbolClosed)) {
+        else if (lineText.includes(settings.placeholderClosed)) {
             editor.setCursor({ line: i, ch: 0 });
             (app as any).commands.executeCommandById('editor:fold-more');
         }

@@ -2,14 +2,20 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
 
 export interface MyToggleSettings {
-    symbolClosed: string;
-    symbolOpen: string;
-    debugMode: boolean; // Neu
+    // Was im Markdown-Text steht
+    placeholderClosed: string;
+    placeholderOpen: string;
+    // Was der User im Editor tatsächlich sieht
+    uiSymbolClosed: string;
+    uiSymbolOpen: string;
+    debugMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyToggleSettings = {
-    symbolClosed: '▶',
-    symbolOpen: '▼',
+    placeholderClosed: '[⏵]',
+    placeholderOpen: '[⏷]',
+    uiSymbolClosed: '▶',
+    uiSymbolOpen: '▼',
     debugMode: false
 }
 
@@ -27,29 +33,61 @@ export class MyToggleSettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Toggle Plugin Settings' });
 
+        // --- SEKTION: SOURCE CODE ---
+        containerEl.createEl('h3', { text: 'Source Code (Markdown)' });
+
         new Setting(containerEl)
-            .setName('Source Code - Placeholder for: folded in')
-            .setDesc('This placeholder will be replaced by an Arrow in the live-preview Editor')
+            .setName('Placeholder: Folded In')
+            .setDesc('The exact text in your markdown file that triggers the toggle.')
             .addText(text => text
-                .setValue(this.plugin.settings.symbolClosed)
+                .setPlaceholder('[⏵]')
+                .setValue(this.plugin.settings.placeholderClosed)
                 .onChange(async (value) => {
-                    this.plugin.settings.symbolClosed = value;
+                    this.plugin.settings.placeholderClosed = value;
                     await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl)
-            .setName('Source Code - Placeholder for: folded out')
-            .setDesc('This placeholder will be replaced by an Arrow in the live-preview Editor')
+            .setName('Placeholder: Folded Out')
+            .setDesc('The exact text in your markdown file when expanded.')
             .addText(text => text
-                .setValue(this.plugin.settings.symbolOpen)
+                .setPlaceholder('[⏷]')
+                .setValue(this.plugin.settings.placeholderOpen)
                 .onChange(async (value) => {
-                    this.plugin.settings.symbolOpen = value;
+                    this.plugin.settings.placeholderOpen = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // --- SEKTION: UI APPEARANCE ---
+        containerEl.createEl('h3', { text: 'Visual Appearance (Editor UI)' });
+
+        new Setting(containerEl)
+            .setName('UI Icon: Closed')
+            .setDesc('The arrow symbol shown in the editor when closed.')
+            .addText(text => text
+                .setPlaceholder('▶')
+                .setValue(this.plugin.settings.uiSymbolClosed)
+                .onChange(async (value) => {
+                    this.plugin.settings.uiSymbolClosed = value;
                     await this.plugin.saveSettings();
                 }));
 
         new Setting(containerEl)
-            .setName("Debug Modus")
-            .setDesc("Schreibt detaillierte Infos in die Konsole (Strg+Shift+I), um Fehler bei der Kinder-Erkennung zu finden.")
+            .setName('UI Icon: Open')
+            .setDesc('The arrow symbol shown in the editor when open.')
+            .addText(text => text
+                .setPlaceholder('▼')
+                .setValue(this.plugin.settings.uiSymbolOpen)
+                .onChange(async (value) => {
+                    this.plugin.settings.uiSymbolOpen = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // --- DEBUG ---
+        containerEl.createEl('h3', { text: 'System' });
+        new Setting(containerEl)
+            .setName("Debug Mode")
+            .setDesc("Detaillierte Konsolen-Ausgaben zur Fehlersuche aktivieren.")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.debugMode)
                 .onChange(async (value) => {

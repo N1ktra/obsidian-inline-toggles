@@ -1,17 +1,26 @@
 .my-toggle-icon {
-    transition: transform 0.1s ease-in-out;
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    text-align: center;
+    display: inline-flex;    /* Erlaubt perfektes Zentrieren */
+    align-items: center;     /* Vertikal zentrieren */
+    justify-content: center;  /* Horizontal zentrieren */
+
+    width: 22px;             /* Etwas mehr Platz für den Klickbereich */
+    height: 22px;
+
     cursor: pointer !important;
     color: var(--text-accent);
-    font-size: 0.9em;
+    font-size: 0.85em;       /* Pfeil etwas kleiner für edlen Look */
+    line-height: 1;          /* Verhindert Zeilenabstand-Probleme */
+
     user-select: none;
-    transition: transform 0.1s ease;
+    border-radius: 4px;
+    transition: background-color 0.1s ease, transform 0.1s ease;
 }
 
 .my-toggle-icon:hover {
     background-color: var(--background-modifier-hover);
-    border-radius: 4px;
+}
+
+/* Kleiner visueller Feedback-Effekt beim Klicken */
+.my-toggle-icon:active {
+    transform: scale(0.9);
 }

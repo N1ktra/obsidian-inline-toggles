@@ -11,9 +11,9 @@ export function escapeRegex(text: string): string {
 /**
  * Erzeugt das zentrale Regex zur Suche nach Toggle-Symbolen.
  */
-export function getToggleRegex(settings: { symbolOpen: string, symbolClosed: string }): RegExp {
-    const open = escapeRegex(settings.symbolOpen);
-    const closed = escapeRegex(settings.symbolClosed);
+export function getToggleRegex(settings: { textOpen: string, textClosed: string }): RegExp {
+    const open = escapeRegex(settings.textOpen);
+    const closed = escapeRegex(settings.textClosed);
     // Erzeugt z.B. /▼|▶/g
     return new RegExp(`${open}|${closed}`, 'g');
 }
