@@ -18,12 +18,13 @@ export class ToggleWidget extends WidgetType {
                other.symbols.closed === this.symbols.closed;
     }
 
-    // UPDATE-DOM: Verhindert das Flackern
+    // UPDATE-DOM: Nutzt jetzt die dynamischen Symbole
     updateDOM(dom: HTMLElement, view: EditorView) {
         if (dom.className === "my-toggle-icon") {
-            dom.textContent = this.displayIsOpen ? "▼" : "▶";
+            // Hier nutzen wir jetzt die Settings
+            dom.textContent = this.displayIsOpen ? this.symbols.open : this.symbols.closed;
 
-            // DER FIX: Wir aktualisieren das "Gedächtnis" des DOM-Elements!
+            // Fix für das Gedächtnis des Elements
             (dom as any)._toggleWidget = this;
 
             return true;
@@ -35,18 +36,20 @@ export class ToggleWidget extends WidgetType {
         const span = document.createElement("span");
         span.className = "my-toggle-icon";
         span.style.cursor = "pointer";
-        span.textContent = this.displayIsOpen ? "▼" : "▶";
 
-        // Wir verknüpfen das Element beim Start mit dem aktuellen Zustand
+        // Initiales Setzen der dynamischen Symbole
+        span.textContent = this.displayIsOpen ? this.symbols.open : this.symbols.closed;
+
+        // Verknüpfung für den Click-Handler
         (span as any)._toggleWidget = this;
 
-        // Desktop: Verhindert, dass der Cursor sofort gesetzt wird und es flackert
+        // Event-Handling für Desktop (Verhindert Cursor-Flackern)
         span.onmousedown = (e) => {
             e.preventDefault();
             e.stopPropagation();
         };
 
-        // MOBILE FIX: Nur stopPropagation! KEIN preventDefault, sonst stirbt der Klick!
+        // Mobile Fix (Touch-Events)
         span.ontouchstart = (e) => {
             e.stopPropagation();
         };
@@ -56,7 +59,6 @@ export class ToggleWidget extends WidgetType {
             e.stopPropagation();
 
             const widget = (span as any)._toggleWidget as ToggleWidget;
-
             const currentPos = view.posAtDOM(span);
             const { state } = view;
             const line = state.doc.lineAt(currentPos);
@@ -68,6 +70,7 @@ export class ToggleWidget extends WidgetType {
             let hasTextChildren = false;
             let lastChildLineNumber = line.number;
 
+            // Scan nach eingerückten Zeilen
             for (let i = line.number + 1; i <= state.doc.lines; i++) {
                 const nextLine = state.doc.line(i);
                 const isEmpty = nextLine.text.trim() === "";
@@ -82,14 +85,17 @@ export class ToggleWidget extends WidgetType {
                 }
             }
 
+            // Welches Symbol steht aktuell im Text?
             const oldChar = widget.textIsOpen ? widget.symbols.open : widget.symbols.closed;
 
             if (hasVisualChildren) {
+                // Wechsel zum jeweils anderen Symbol aus den Settings
                 const newChar = widget.textIsOpen ? widget.symbols.closed : widget.symbols.open;
 
                 const previousSelection = state.selection;
                 const prevPos = previousSelection.main.head;
 
+                // Prüfen, ob der Cursor innerhalb der Kinder liegt
                 let cursorInsideChildren = false;
                 if (line.number < state.doc.lines) {
                     const childStart = state.doc.line(line.number + 1).from;
@@ -99,11 +105,13 @@ export class ToggleWidget extends WidgetType {
                     }
                 }
 
+                // 1. Symbol im Text austauschen
                 view.dispatch({
                     changes: { from: currentPos, to: currentPos + oldChar.length, insert: newChar },
                     selection: { anchor: line.from }
                 });
 
+                // 2. Obsidian Folding Befehl triggern
                 if (hasTextChildren) {
                     const app = (window as any).app;
                     if (app) {
@@ -112,6 +120,7 @@ export class ToggleWidget extends WidgetType {
                     }
                 }
 
+                // 3. Cursor-Position heilen
                 if (widget.textIsOpen && cursorInsideChildren) {
                     view.dispatch({ selection: { anchor: line.to } });
                 } else {
@@ -119,6 +128,7 @@ export class ToggleWidget extends WidgetType {
                 }
 
             } else {
+                // Spezialfall: Kein Inhalt -> Erstelle Kind-Zeile mit Platzhalter
                 const newLineText = `\n${currentIndentStr}    - \u200B`;
 
                 view.dispatch({
