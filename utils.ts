@@ -24,13 +24,11 @@ export function getToggleRegex(settings: { symbolOpen: string, symbolClosed: str
  */
 export function getVisualCol(text: string, tabSize: number): number {
     let col = 0;
-    // Wir ignorieren nicht nur Whitespace, sondern auch das Zitat-Zeichen von Obsidian
     const clean = text.replace(/[\u200B\u200C\u200D\uFEFF]/g, "");
     for (const char of clean) {
         if (char === "\t") col += tabSize - (col % tabSize);
         else if (char === " ") col += 1;
-        else if (char === ">") col += 1; // Erlaubt Erkennung in Zitaten/Callouts
-        else break;
+        else break; // Stopp beim ersten echten Zeichen
     }
     return col;
 }
