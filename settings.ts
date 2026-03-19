@@ -12,8 +12,8 @@ export interface MyToggleSettings {
 }
 
 export const DEFAULT_SETTINGS: MyToggleSettings = {
-    placeholderClosed: '[⏵]',
-    placeholderOpen: '[⏷]',
+    placeholderClosed: '|⏵|',
+    placeholderOpen: '|⏷|',
     uiSymbolClosed: '▶',
     uiSymbolOpen: '▼',
     debugMode: false
@@ -40,7 +40,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('Placeholder: Folded In')
             .setDesc('The exact text in your markdown file that triggers the toggle.')
             .addText(text => text
-                .setPlaceholder('[⏵]')
+                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolOpen)
                 .setValue(this.plugin.settings.placeholderClosed)
                 .onChange(async (value) => {
                     this.plugin.settings.placeholderClosed = value;
@@ -51,7 +51,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('Placeholder: Folded Out')
             .setDesc('The exact text in your markdown file when expanded.')
             .addText(text => text
-                .setPlaceholder('[⏷]')
+                .setPlaceholder(DEFAULT_SETTINGS.placeholderOpen)
                 .setValue(this.plugin.settings.placeholderOpen)
                 .onChange(async (value) => {
                     this.plugin.settings.placeholderOpen = value;
@@ -65,7 +65,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('UI Icon: Closed')
             .setDesc('The arrow symbol shown in the editor when closed.')
             .addText(text => text
-                .setPlaceholder('▶')
+                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolClosed)
                 .setValue(this.plugin.settings.uiSymbolClosed)
                 .onChange(async (value) => {
                     this.plugin.settings.uiSymbolClosed = value;
@@ -76,7 +76,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('UI Icon: Open')
             .setDesc('The arrow symbol shown in the editor when open.')
             .addText(text => text
-                .setPlaceholder('▼')
+                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolOpen)
                 .setValue(this.plugin.settings.uiSymbolOpen)
                 .onChange(async (value) => {
                     this.plugin.settings.uiSymbolOpen = value;

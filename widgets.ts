@@ -52,13 +52,10 @@ export class ToggleWidget extends WidgetType {
             );
 
             // Re-Layout Trigger
-            setTimeout(() => {
-                view.requestMeasure();
-                view.dispatch({
-                    selection: view.state.selection,
-                    scrollIntoView: false
-                });
-            }, 10);
+            view.dispatch({
+                selection: view.state.selection,
+                scrollIntoView: false
+            });
         };
         return span;
     }
