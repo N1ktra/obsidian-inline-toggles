@@ -12,15 +12,41 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
 
     const toggleRegex = new RegExp(`(${escapeRegExp(symbolOpen)}|${escapeRegExp(symbolClosed)})\\s?`, 'g');
 
+    // FALL 1: Toggle entfernen
     if (toggleRegex.test(lineText)) {
+        // Wir merken uns, wie lang das entfernte Stück war (Symbol + evtl. Leerzeichen)
+        const match = lineText.match(toggleRegex);
+        const removedLength = match ? match[0].length : 0;
+
         editor.setLine(cursor.line, lineText.replace(toggleRegex, ""));
+
+        // Cursor rutscht nach links, falls er hinter dem gelöschten Toggle stand
+        editor.setCursor({ line: cursor.line, ch: Math.max(0, cursor.ch - removedLength) });
         return;
     }
 
+    // FALL 2: Toggle einfügen
+    // Deine Regex: Überspringt Einrückungen, Listenpunkte, Checkboxen etc.
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
 
-    editor.replaceRange(`${symbolOpen} `, { line: cursor.line, ch: insertPos });
+    const textToInsert = `${symbolOpen} `;
+
+    editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
+
+    // NEUE CURSOR-LOGIK:
+    let newCh = cursor.ch;
+    if (cursor.ch <= insertPos) {
+        // Cursor war VOR oder GENAU AUF der Einfügeposition (z.B. am Zeilenanfang)
+        // -> Wir setzen den Cursor direkt HINTER das neue Symbol und das Leerzeichen!
+        newCh = insertPos + textToInsert.length;
+    } else {
+        // Cursor stand irgendwo rechts im Text
+        // -> Wir schieben den Cursor um die Länge des eingefügten Textes nach rechts
+        newCh = cursor.ch + textToInsert.length;
+    }
+
+    editor.setCursor({ line: cursor.line, ch: newCh });
 }
 
 export function scanAndApplyFold(app: App, settings: MyToggleSettings)

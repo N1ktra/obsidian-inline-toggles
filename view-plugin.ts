@@ -178,61 +178,76 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             if (!state.selection.main.empty) return false;
 
             const pos = state.selection.main.head;
-
-            // DER FIX: Wir holen uns den gesamten *visuellen* Block, den Obsidian auf dem Bildschirm anzeigt.
-            // Ein eingeklappter Block (Zeile 1 bis 5) gilt auf dem Bildschirm als EINE visuelle Zeile.
             const block = view.lineBlockAt(pos);
-
-            // Wir prüfen die allererste Textzeile dieses Blocks (die Toggle-Zeile)
             const parentLine = state.doc.lineAt(block.from);
-            const { symbolClosed } = settings;
+            const { symbolClosed, symbolOpen } = settings;
 
-            const matchIndex = parentLine.text.indexOf(symbolClosed);
+            let matchIndex = parentLine.text.indexOf(symbolClosed);
+            let matchedSymbol = symbolClosed;
 
-            // Wir feuern, wenn die Hauptzeile ein "▶" hat UND der Cursor sich
-            // irgendwo im hinteren Bereich dieses visuellen Blocks befindet.
+            if (matchIndex === -1) {
+                matchIndex = parentLine.text.indexOf(symbolOpen);
+                matchedSymbol = symbolOpen;
+            }
+
+            // Prüfung: Cursor ist in der Toggle-Zeile
             if (matchIndex !== -1 && pos >= parentLine.to && pos <= block.to) {
 
+                // Wir prüfen, ob hinter dem Symbol noch Text steht (außer Leerzeichen)
+                const textAfterSymbol = parentLine.text.substring(matchIndex + matchedSymbol.length).trim();
+                const isEmptyToggle = textAfterSymbol === "";
+
+                if (isEmptyToggle) {
+                    // FALL A: Toggle ist leer -> Symbol ENTFERNEN
+                    // Wir löschen das Symbol und das evtl. folgende Leerzeichen
+                    const deleteFrom = parentLine.from + matchIndex;
+                    // Wir schauen, ob nach dem Symbol ein Leerzeichen steht, das wir mitlöschen
+                    const hasTrailingSpace = parentLine.text[matchIndex + matchedSymbol.length] === " ";
+                    const deleteTo = deleteFrom + matchedSymbol.length + (hasTrailingSpace ? 1 : 0);
+
+                    view.dispatch({
+                        changes: { from: deleteFrom, to: deleteTo, insert: "" },
+                        selection: { anchor: deleteFrom },
+                        userEvent: "delete"
+                    });
+                    return true;
+                }
+
+                // FALL B: Toggle hat Inhalt -> Neues Toggle darunter erstellen (wie bisher)
                 const currentIndentMatch = parentLine.text.match(/^\s*/);
                 const currentIndentLevel = currentIndentMatch ? currentIndentMatch[0].length : 0;
 
-                // Wir suchen das Ende der eingeklappten Kinder
                 let lastChildLine = parentLine.number;
                 for (let i = parentLine.number + 1; i <= state.doc.lines; i++) {
                     const nextLine = state.doc.line(i);
-                    if (nextLine.text.trim() === "") {
-                        lastChildLine = i;
-                        continue;
-                    }
                     const nextIndent = nextLine.text.match(/^\s*/)?.[0].length || 0;
-                    if (nextIndent > currentIndentLevel) {
+                    if (nextLine.text.trim() === "" || nextIndent > currentIndentLevel) {
                         lastChildLine = i;
                     } else {
                         break;
                     }
                 }
 
-                const prefixUntilSymbol = parentLine.text.substring(0, matchIndex + symbolClosed.length);
+                const prefixUntilSymbol = parentLine.text.substring(0, matchIndex);
+                const prefixClean = prefixUntilSymbol + symbolClosed;
 
                 let insertPos: number;
                 let insertText: string;
-                let newCursorPos: number;
 
-                // Wir fügen das neue Toggle sicher am Anfang der nächsten echten Zeile ein
                 if (lastChildLine < state.doc.lines) {
-                    insertPos = state.doc.line(lastChildLine + 1).from;
-                    insertText = prefixUntilSymbol + " \n";
-                    newCursorPos = insertPos + prefixUntilSymbol.length + 1;
+                    const nextVisibleLine = state.doc.line(lastChildLine + 1);
+                    insertPos = nextVisibleLine.from;
+                    insertText = prefixClean + " \n";
                 } else {
                     insertPos = state.doc.line(lastChildLine).to;
-                    insertText = "\n" + prefixUntilSymbol + " ";
-                    newCursorPos = insertPos + insertText.length;
+                    insertText = "\n" + prefixClean + " ";
                 }
 
                 view.dispatch({
                     changes: { from: insertPos, insert: insertText },
-                    selection: { anchor: newCursorPos },
-                    scrollIntoView: true
+                    selection: { anchor: insertPos + prefixClean.length + 1 },
+                    scrollIntoView: true,
+                    userEvent: "input"
                 });
 
                 return true;
