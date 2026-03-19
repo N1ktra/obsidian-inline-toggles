@@ -4,11 +4,13 @@ import MyTogglePlugin from './main';
 export interface MyToggleSettings {
     symbolClosed: string;
     symbolOpen: string;
+    debugMode: boolean; // Neu
 }
 
 export const DEFAULT_SETTINGS: MyToggleSettings = {
     symbolClosed: '▶',
-    symbolOpen: '▼'
+    symbolOpen: '▼',
+    debugMode: false
 }
 
 export class MyToggleSettingTab extends PluginSettingTab {
@@ -42,6 +44,16 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.symbolOpen)
                 .onChange(async (value) => {
                     this.plugin.settings.symbolOpen = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName("Debug Modus")
+            .setDesc("Schreibt detaillierte Infos in die Konsole (Strg+Shift+I), um Fehler bei der Kinder-Erkennung zu finden.")
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.debugMode)
+                .onChange(async (value) => {
+                    this.plugin.settings.debugMode = value;
                     await this.plugin.saveSettings();
                 }));
     }

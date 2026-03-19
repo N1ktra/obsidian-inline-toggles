@@ -2,35 +2,10 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-
-// --- HILFSFUNKTIONEN ---
-
-function getVisualCol(text: string, tabSize: number): number {
-    let col = 0;
-    const clean = text.replace(/[\u200B\u200C\u200D\uFEFF]/g, "");
-    for (let i = 0; i < clean.length; i++) {
-        if (clean[i] === "\t") col += tabSize - (col % tabSize);
-        else if (clean[i] === " ") col += 1;
-        else break;
-    }
-    return col;
-}
-
-function checkHasChildren(doc: Text, lineNumber: number, tabSize: number): boolean {
-    if (lineNumber >= doc.lines) return false;
-    const currentIndent = getVisualCol(doc.line(lineNumber).text, tabSize);
-    for (let i = lineNumber + 1; i <= doc.lines; i++) {
-        const nextLine = doc.line(i);
-        if (nextLine.text.trim() === "") continue;
-        return getVisualCol(nextLine.text, tabSize) > currentIndent;
-    }
-    return false;
-}
-
-// --- VIEW PLUGIN (Icon Rendering & Sync) ---
+import { getVisualCol, checkHasChildren } from "./utils";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
-    const plugin = ViewPlugin.fromClass(class {
+    return ViewPlugin.fromClass(class {
         decorations: DecorationSet;
 
         constructor(view: EditorView) {
@@ -38,95 +13,42 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         update(update: ViewUpdate) {
+            // Icons zeichnen
             if (update.docChanged || update.viewportChanged) {
                 this.decorations = this.buildDecorations(update.view);
-            }
-            if (update.docChanged) {
-                this.processToggleLogic(update.view);
-            }
-        }
-
-        processToggleLogic(view: EditorView) {
-            const { state } = view;
-            const { symbolClosed, symbolOpen } = settings;
-            const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
-            const activeView = (window as any).app.workspace.getActiveFileView();
-            if (!activeView?.editor) return;
-            const editor = activeView.editor;
-
-            const changes: any[] = [];
-            const head = state.selection.main.head;
-            const cursorLine = state.doc.lineAt(head);
-
-            const from = state.doc.lineAt(view.viewport.from).number;
-            const to = state.doc.lineAt(view.viewport.to).number;
-
-            for (let i = from; i <= to; i++) {
-                const line = state.doc.line(i);
-                // @ts-ignore
-                const isFolded = editor.getFold ? editor.getFold(i - 1) : false;
-                const hasChildren = checkHasChildren(state.doc, i, tabSize);
-
-                if (line.text.includes(symbolOpen) && (isFolded || !hasChildren)) {
-                    const idx = line.text.indexOf(symbolOpen);
-                    changes.push({ from: line.from + idx, to: line.from + idx + symbolOpen.length, insert: symbolClosed });
-                } else if (line.text.includes(symbolClosed) && !isFolded && hasChildren) {
-                    const isParent = i < cursorLine.number && getVisualCol(line.text, tabSize) < getVisualCol(cursorLine.text, tabSize);
-                    if (isParent) {
-                        const idx = line.text.indexOf(symbolClosed);
-                        changes.push({ from: line.from + idx, to: line.from + idx + symbolClosed.length, insert: symbolOpen });
-                    }
-                }
-            }
-            if (changes.length > 0) {
-                setTimeout(() => { if (view.state) view.dispatch({ changes, userEvent: "toggle.sync" }); }, 20);
             }
         }
 
         buildDecorations(view: EditorView) {
             const builder = new RangeSetBuilder<Decoration>();
-            const { symbolOpen, symbolClosed } = settings;
             const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
-
-            const escOpen = symbolOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const escClosed = symbolClosed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`${escOpen}|${escClosed}`, 'g');
-
+            const { symbolOpen, symbolClosed } = settings;
             const { from, to } = view.viewport;
-            const text = view.state.doc.sliceString(from, to);
-            let match;
-            let lastPos = -1;
 
+            const text = view.state.doc.sliceString(from, to);
+            const regex = new RegExp(`${symbolOpen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${symbolClosed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
+
+            let match;
             while ((match = regex.exec(text)) !== null) {
                 const pos = from + match.index;
-                if (pos <= lastPos) continue;
-                lastPos = pos;
-
                 const line = view.state.doc.lineAt(pos);
-                const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
-                const textIsOpen = match[0] === symbolOpen;
 
-                builder.add(pos, pos + match[0].length,
-                    Decoration.replace({
-                        widget: new ToggleWidget(hasChild ? textIsOpen : false, textIsOpen, pos, {
-                            open: symbolOpen,
-                            closed: symbolClosed
-                        }),
-                    })
-                );
+                // Hier wird die zentrale Logik aus utils.ts genutzt
+                const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
+                const isOpenInText = match[0] === symbolOpen;
+
+                builder.add(pos, pos + match[0].length, Decoration.replace({
+                    widget: new ToggleWidget(hasChild ? isOpenInText : false, isOpenInText, settings)
+                }));
             }
             return builder.finish();
         }
     }, {
         decorations: v => v.decorations,
-        provide: plugin => [
-            EditorView.atomicRanges.of(view => view.plugin(plugin)?.decorations || Decoration.none)
-        ]
+        provide: p => [EditorView.atomicRanges.of(v => v.plugin(p)?.decorations || Decoration.none)]
     });
-    return Prec.highest(plugin);
 };
 
-// --- ENTER FIX (Deine ursprüngliche Logik) ---
 
 export const createToggleEnterFix = (settings: MyToggleSettings) => {
     return Prec.highest(keymap.of([{
