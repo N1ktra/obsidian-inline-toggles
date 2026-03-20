@@ -3,7 +3,7 @@ import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkHasChildren, getToggleRegex, getLastChildLineNo } from "./utils";
-import { foldedRanges, foldEffect } from "@codemirror/language";
+import { foldedRanges, foldEffect, foldable, foldState } from "@codemirror/language";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -21,25 +21,20 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         buildDecorations(view: EditorView) {
-            const builder = new RangeSetBuilder<Decoration>();
-            const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
+            const { state } = view;
             const { from, to } = view.viewport;
-
-            // DIE NEUE ZEILE:
+            const text = view.state.doc.sliceString(from, to);
             const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
 
-            const text = view.state.doc.sliceString(from, to);
             let match;
-
+            const builder = new RangeSetBuilder<Decoration>();
             while ((match = regex.exec(text)) !== null) {
                 const pos = from + match.index;
                 const line = view.state.doc.lineAt(pos);
-
-                const hasChild = checkHasChildren(view.state.doc, line.number, tabSize);
                 const isOpenInText = match[0] === settings.placeholderOpen;
-
+                const isFoldable = foldable(state, line.from, line.to) != null
                 builder.add(pos, pos + match[0].length, Decoration.replace({
-                    widget: new ToggleWidget(hasChild ? isOpenInText : false, isOpenInText, settings)
+                    widget: new ToggleWidget(isFoldable ? isOpenInText : false, settings)
                 }));
             }
             return builder.finish();
