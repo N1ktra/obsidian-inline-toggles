@@ -74,8 +74,10 @@ export function checkIfLineIsFolded(view: EditorView, line: Line): Boolean{
     const folded = view.state.field(foldState);
     let isCurrentlyFolded = false;
     folded.between(line.from, line.to, (from, to) => {
-        isCurrentlyFolded = true;
-        return false; // Stoppt die weitere Suche für diese Zeile (Performance!)
+        if (from >= line.from && from <= line.to) {
+            isCurrentlyFolded = true;
+            return false; // Gefunden, wir können aufhören
+        }
     });
     return isCurrentlyFolded
 }

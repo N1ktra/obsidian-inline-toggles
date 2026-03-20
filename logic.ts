@@ -55,7 +55,6 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     if (!view) return;
 
     const effects: StateEffect<unknown>[] = [];
-
     // Wir gehen die Zeilen durch
     for (let i = 1; i <= view.state.doc.lines; i++) {
         const line = view.state.doc.line(i);
@@ -63,11 +62,12 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
         const range = foldable(view.state, line.from, line.to)
         if (!range) continue
 
-        // 2. Prüfen, ob wir falten (placeholderClosed) oder öffnen (placeholderOpen) müssen
-        if (lineText.includes(settings.placeholderClosed)) {
+        const lineIsFolded = checkIfLineIsFolded(view, line)
+        console.log(lineIsFolded, i)
+        if (lineText.includes(settings.placeholderClosed) && !lineIsFolded) {
             effects.push(foldEffect.of(range));
         }
-        else if (lineText.includes(settings.placeholderOpen)) {
+        else if (lineText.includes(settings.placeholderOpen) && lineIsFolded) {
             effects.push(unfoldEffect.of(range));
         }
     }

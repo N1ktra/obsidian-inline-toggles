@@ -46,6 +46,10 @@ export class ToggleWidget extends WidgetType {
                 });
             }
         };
+        span.onmousedown = (event: MouseEvent) => {
+            // Das ist oft der entscheidende Punkt für die Tastatur
+            event.preventDefault();
+        };
         return span;
     }
 
