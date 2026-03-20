@@ -6,6 +6,7 @@ import { StateEffect } from "@codemirror/state";
 export class ToggleWidget extends WidgetType {
     constructor(
         readonly isOpen: boolean,
+        readonly hasContent: boolean,
         readonly settings: MyToggleSettings
     ) { super(); }
 
@@ -26,6 +27,7 @@ export class ToggleWidget extends WidgetType {
         // Initialen Zustand im DOM speichern
         span.dataset.isOpen = String(this.isOpen);
         span.classList.add(this.isOpen ? "is-open" : "is-closed");
+        span.classList.add(this.hasContent ? "has-content" : "is-empty");
         span.textContent = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         span.onclick = (e) => {
             e.preventDefault();
@@ -55,11 +57,11 @@ export class ToggleWidget extends WidgetType {
                         effects.push(unfoldEffect.of(range));
                     }
                 }
+
                 view.dispatch({
                     effects: effects,
                     changes: { from: pos, to: pos + oldSym.length, insert: newSym },
-                    selection: { anchor: view.state.selection.main.head },
-                    userEvent: "toggle.fold"
+                    userEvent: "toggle.fold",
                 });
             }
         };
@@ -76,11 +78,11 @@ export class ToggleWidget extends WidgetType {
      */
     updateDOM(dom: HTMLElement): boolean {
         dom.dataset.isOpen = String(this.isOpen);
-        if(this.isOpen){
-            dom.classList.replace("is-closed", "is-open");
-        }else{
-            dom.classList.replace("is-open", "is-closed");
-        }
+        if(this.isOpen) dom.classList.replace("is-closed", "is-open");
+        else dom.classList.replace("is-open", "is-closed");
+        if(this.hasContent) dom.classList.replace("is-empty", "has-content");
+        else dom.classList.replace("has-content", "is-empty");
+
         const expectedSymbol = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         if (dom.textContent !== expectedSymbol) {
             dom.textContent = expectedSymbol;

@@ -10,6 +10,7 @@
     user-select: none;
     border-radius: 4px;
     transition: all 0.15s ease;
+    color: var(--text-faint);
 }
 
 .my-toggle-icon.is-open {
@@ -17,7 +18,7 @@
     background-color: transparent;
 }
 
-.my-toggle-icon.is-closed {
+.my-toggle-icon.is-closed.has-content {
     color: var(--text-accent);
     background-color: rgba(var(--mono-rgb-100), 0.05);
 }
