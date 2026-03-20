@@ -63,7 +63,6 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
         if (!range) continue
 
         const lineIsFolded = checkIfLineIsFolded(view, line)
-        console.log(lineIsFolded, i)
         if (lineText.includes(settings.placeholderClosed) && !lineIsFolded) {
             effects.push(foldEffect.of(range));
         }

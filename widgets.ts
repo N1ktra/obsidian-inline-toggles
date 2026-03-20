@@ -1,6 +1,7 @@
 import { WidgetType, EditorView } from "@codemirror/view";
 import { MyToggleSettings } from "./settings";
-import { foldable, unfoldEffect, foldEffect } from "@codemirror/language";
+import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
+import { StateEffect } from "@codemirror/state";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -37,9 +38,25 @@ export class ToggleWidget extends WidgetType {
 
             const range = foldable(view.state, line.from, line.to);
             if (range){
-                console.log("foldable")
+                const currentFolds = view.state.field(foldState);
+                const effects: StateEffect<any>[] = [];
+
+                if (isCurrentlyOpen) {
+                    effects.push(foldEffect.of(range));
+                } else {
+                    // überprüfen ob da tatsächlich eine Faltung existiert
+                    currentFolds.between(line.from, line.to, (from, to) => {
+                        if (from >= line.from && from <= line.to) {
+                            effects.push(unfoldEffect.of({ from, to }));
+                        }
+                    });
+                    // Falls der Editor oben nichts gefunden hat
+                    if (effects.length === 0) {
+                        effects.push(unfoldEffect.of(range));
+                    }
+                }
                 view.dispatch({
-                    effects: isCurrentlyOpen ? foldEffect.of(range) : unfoldEffect.of(range),
+                    effects: effects,
                     changes: { from: pos, to: pos + oldSym.length, insert: newSym },
                     selection: { anchor: view.state.selection.main.head },
                     userEvent: "toggle.fold"
@@ -47,7 +64,7 @@ export class ToggleWidget extends WidgetType {
             }
         };
         span.onmousedown = (event: MouseEvent) => {
-            // Das ist oft der entscheidende Punkt für die Tastatur
+            // für Mobile verindern, dass die Tastatur angezeigt wird
             event.preventDefault();
         };
         return span;
