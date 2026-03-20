@@ -1,6 +1,7 @@
 import { Plugin } from 'obsidian';
 import { createToggleViewPlugin, createToggleEnterFix } from './view-plugin';
 import { insertOrRemoveToggle, scanAndApplyFold } from './logic';
+import { createFoldTrackerPlugin } from 'fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
 
 export default class MyTogglePlugin extends Plugin {
@@ -13,7 +14,8 @@ export default class MyTogglePlugin extends Plugin {
         // Editor Extension für die Icons
         this.registerEditorExtension([
             createToggleViewPlugin(this.settings),
-            createToggleEnterFix(this.settings)
+            createToggleEnterFix(this.settings),
+            createFoldTrackerPlugin(this.settings)
         ]);
 
         // Befehl zum Einfügen

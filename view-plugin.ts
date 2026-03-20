@@ -33,6 +33,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 const line = view.state.doc.lineAt(pos);
                 const isOpenInText = match[0] === settings.placeholderOpen;
                 const isFoldable = foldable(state, line.from, line.to) != null
+
                 builder.add(pos, pos + match[0].length, Decoration.replace({
                     widget: new ToggleWidget(isFoldable ? isOpenInText : false, settings)
                 }));
