@@ -2,8 +2,9 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkHasChildren, getToggleRegex, getLastChildLineNo } from "./utils";
-import { foldedRanges, foldEffect, foldable } from "@codemirror/language";
+import { checkIfLineIsFoldedIn, getToggleRegex } from "./utils";
+import { foldable, syntaxTree, foldEffect } from "@codemirror/language";
+import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -15,7 +16,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
 
         update(update: ViewUpdate) {
             // Icons zeichnen
-            if (update.docChanged || update.viewportChanged) {
+            if (update.docChanged || update.viewportChanged || update.focusChanged) {
                 this.decorations = this.buildDecorations(update.view);
             }
         }
@@ -55,81 +56,62 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
         key: "Enter",
         run: (view: EditorView) => {
             const { state } = view;
-            if (!state.selection.main.empty) return false;
+            const selection = state.selection.main;
+            if (!selection.empty) return false;
+            const line = state.doc.lineAt(selection.head);
+            if (!line.text.contains(settings.placeholderClosed) && !line.text.contains(settings.placeholderOpen)) return false;
 
-            const pos = state.selection.main.head;
-            const block = view.lineBlockAt(pos);
-            const parentLine = state.doc.lineAt(block.from);
-            const tabSize = (window as any).app?.vault?.getConfig("tabSize") || 4;
+            const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
+            if (!lineIsFoldedIn){ //ausgeklappt
+                insertNewlineAndIndent(view);
+                indentMore(view);
+                return true;
+            }
+            else if(lineIsFoldedIn){ //eingeklappt
+                const { state } = view;
+                const pos = state.selection.main.head;
+                const line = state.doc.lineAt(pos);
+                const range = foldable(state, line.from, line.to);
+                let finalPos = range ? range.to + 1 : line.to + 1;
+                const isAtEof = finalPos > state.doc.length
+                if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
+                console.log(isAtEof)
 
-            // 1. Suche nach Symbolen via zentralem Regex
-            const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
-            const match = regex.exec(parentLine.text);
-
-            // DEINE SPEZIAL-BEDINGUNG: Cursor am Ende der sichtbaren Toggle-Zeile/Block
-            if (match && pos >= parentLine.to && pos <= block.to) {
-                const matchIndex = match.index;
-                const matchedSymbol = match[0];
-
-                // 2. Letztes Kind finden (via Utils)
-                const lastChildLine = getLastChildLineNo(state.doc, parentLine.number, tabSize);
-
-                // 3. Spezialfall: Leeres Toggle entfernen
-                const textAfter = parentLine.text.substring(matchIndex + matchedSymbol.length).trim();
-                if (textAfter === "") {
-                    const deleteFrom = parentLine.from + matchIndex;
-                    const hasSpace = parentLine.text[matchIndex + matchedSymbol.length] === " ";
-                    view.dispatch({
-                        changes: { from: deleteFrom, to: deleteFrom + matchedSymbol.length + (hasSpace ? 1 : 0), insert: "" },
-                        selection: { anchor: deleteFrom },
-                        userEvent: "delete"
-                    });
-                    return true;
-                }
-
-                // 4. EINFÜGE-STRATEGIE: "Der Sicherheitsabstand"
-                const prefixUntilSymbol = parentLine.text.substring(0, matchIndex);
-                const prefixClean = prefixUntilSymbol + settings.placeholderClosed;
-
-                let insertPos: number;
-                let insertText: string;
-                let isAtEof = false;
-                let isFolded = false;
-                // foldedRanges gibt uns einen Baum aller eingeklappten Bereiche
-                foldedRanges(state).between(parentLine.from, parentLine.to, (from, to) => {
-                    // Wenn ein gefalteter Bereich an unserer Zeile startet,
-                    // setzen wir isFolded auf true
-                    if (from >= parentLine.from && from <= parentLine.to) {
-                        isFolded = true;
+                // alle Markdown Symbole bestimmen
+                let mdSymbols = ""
+                syntaxTree(state).iterate({from: line.from, to: line.to,
+                    enter: (node) => {
+                        if (node.name.includes("formatting")) {
+                            mdSymbols += state.doc.sliceString(node.from, node.to);
+                        }
                     }
                 });
+                if (mdSymbols != "") mdSymbols += " "
 
-                if (lastChildLine < state.doc.lines) {
-                    const targetLine = state.doc.line(lastChildLine + 1);
-                    // ANFANG der nächsten Zeile (hinter dem \n des Blocks)
-                    insertPos = targetLine.from;
-                    insertText = prefixClean + " \n";
-                } else {
-                    // Ende des Dokuments
-                    isAtEof = true;
-                    insertPos = state.doc.line(state.doc.lines).to;
-                    insertText = "\n" + prefixClean + " ";
-                }
-
+                // Rest der Zeile löschen und in nächster Zeile einfügen
+                const from = selection.head;
+                const to = line.to
+                const remainingText = state.doc.sliceString(from, to)
+                const insertText = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderClosed}${remainingText}${isAtEof ? "" : "\n"}`;
+                console.log(JSON.stringify(insertText))
                 view.dispatch({
-                    changes: { from: insertPos, insert: insertText },
-                    selection: { anchor: insertPos + prefixClean.length + 1 },
-                    scrollIntoView: true,
-                    userEvent: "input"
+                    changes: [
+                        { from: selection.head, to: line.to, insert: "" },
+                        { from: finalPos, insert: insertText }
+                    ],
+                    selection: { anchor: finalPos + insertText.length - (2 * remainingText.length) - 1 },
+                    userEvent: "input.type",
+                    scrollIntoView: false,
                 });
-                if (isAtEof && isFolded) {
+                if (isAtEof){
                     view.dispatch({
-                        effects: foldEffect.of({ from: parentLine.to, to: insertPos })
+                        effects: foldEffect.of({ from: line.to - remainingText.length, to: finalPos - remainingText.length })
                     });
                 }
 
                 return true;
             }
+
             return false;
         }
     }]));

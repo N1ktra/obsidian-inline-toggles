@@ -1,6 +1,6 @@
 import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { foldState } from "@codemirror/language";
+import { foldState, foldable, foldedRanges } from "@codemirror/language";
 
 /**
  * Escaped Sonderzeichen in einem String, damit sie sicher in einem Regex
@@ -20,64 +20,28 @@ export function getToggleRegex(settings: { textOpen: string, textClosed: string 
     return new RegExp(`${open}|${closed}`, 'g');
 }
 
-/**
- * Berechnet die visuelle Spalte. Löst das Problem, dass Tabs im Code die Länge 1 haben,
- * aber visuell z.B. 4 Leerzeichen breit sind.
- */
-export function getVisualCol(text: string, tabSize: number): number {
-    let col = 0;
-    const clean = text.replace(/[\u200B\u200C\u200D\uFEFF]/g, "");
-    for (const char of clean) {
-        if (char === "\t") col += tabSize - (col % tabSize);
-        else if (char === " ") col += 1;
-        else break; // Stopp beim ersten echten Zeichen
-    }
-    return col;
+export function checkIfLineHasChildren(view: EditorView, line: Line): boolean {
+    const state = view.state;
+    const range = foldable(state, line.from, line.to);
+    return range != null
 }
 
 /**
- * Prüft, ob eine Zeile eingerückte Kinder hat.
+ * Prüft, ob eine Zeile eingeklappt ist
  */
-export function checkHasChildren(doc: Text, lineNo: number, tabSize: number): boolean {
-    if (lineNo >= doc.lines) return false;
-    const currentIndent = getVisualCol(doc.line(lineNo).text, tabSize);
+export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
+    const state = view.state;
+    const range = foldable(state, line.from, line.to);
+    if (!range) return true;
 
-    for (let i = lineNo + 1; i <= doc.lines; i++) {
-        const nextLine = doc.line(i);
-        if (nextLine.text.trim() === "") continue; // Leere Zeilen überspringen
-
-        const nextIndent = getVisualCol(nextLine.text, tabSize);
-        return nextIndent > currentIndent; // Sobald Text gefunden wird: Ist er tiefer?
-    }
-    return false;
-}
-
-export function getLastChildLineNo(doc: any, lineNo: number, tabSize: number): number {
-    const parentIndent = getVisualCol(doc.line(lineNo).text, tabSize);
-    let lastChild = lineNo;
-
-    for (let i = lineNo + 1; i <= doc.lines; i++) {
-        const line = doc.line(i);
-        if (line.text.trim() === "") continue;
-
-        if (getVisualCol(line.text, tabSize) > parentIndent) {
-            lastChild = i;
-        } else {
-            break;
-        }
-    }
-    return lastChild;
-}
-
-
-export function checkIfLineIsFolded(view: EditorView, line: Line): Boolean{
-    const folded = view.state.field(foldState);
-    let isCurrentlyFolded = false;
-    folded.between(line.from, line.to, (from, to) => {
-        if (from >= line.from && from <= line.to) {
-            isCurrentlyFolded = true;
-            return false; // Gefunden, wir können aufhören
+    let isFolded = false;
+    const folded = foldedRanges(state);
+    folded.between(range.from, range.from, (from, to) => {
+        if (from === range.from) {
+            isFolded = true;
+            return false; // Iteration stoppen
         }
     });
-    return isCurrentlyFolded
+
+    return isFolded;
 }

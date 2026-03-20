@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings } from './settings';
-import { checkIfLineIsFolded, getToggleRegex } from './utils'; // Importiere deine Helfer
+import { checkIfLineHasChildren, checkIfLineIsFoldedIn, getToggleRegex } from './utils'; // Importiere deine Helfer
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -14,7 +14,9 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const view = (editor as any).cm as EditorView;
     if (!view) return;
     const cmLine = view.state.doc.line(cursor.line + 1);
-    let isCurrentlyFolded = checkIfLineIsFolded(view, cmLine);
+    const isCurrentlyFolded = checkIfLineIsFoldedIn(view, cmLine);
+    const hasChildren = checkIfLineHasChildren(view, cmLine);
+
 
     // FALL 1: Toggle entfernen
     if (toggleRegex.test(lineText)) {
@@ -36,7 +38,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
 
-    const textToInsert = `${ isCurrentlyFolded ? settings.placeholderClosed : settings.placeholderOpen} `;
+    const textToInsert = `${ isCurrentlyFolded && hasChildren ? settings.placeholderClosed : settings.placeholderOpen} `;
     editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
     // Cursor-Positionierung
@@ -62,7 +64,7 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
         const range = foldable(view.state, line.from, line.to)
         if (!range) continue
 
-        const lineIsFolded = checkIfLineIsFolded(view, line)
+        const lineIsFolded = checkIfLineIsFoldedIn(view, line)
         if (lineText.includes(settings.placeholderClosed) && !lineIsFolded) {
             effects.push(foldEffect.of(range));
         }
