@@ -1,11 +1,18 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings } from './settings';
-import { getToggleRegex } from './utils'; // Importiere deine Helfer
+import { checkIfLineIsFolded, getToggleRegex } from './utils'; // Importiere deine Helfer
+import { EditorView } from '@codemirror/view';
 
 export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
     const cursor = editor.getCursor();
     const lineText = editor.getLine(cursor.line);
     const toggleRegex = new RegExp(`(${getToggleRegex({textClosed: settings.placeholderClosed, textOpen: settings.placeholderOpen}).source})\\s?`, 'g');
+
+    //check if line is folded
+    const view = (editor as any).cm as EditorView;
+    if (!view) return;
+    const cmLine = view.state.doc.line(cursor.line + 1);
+    let isCurrentlyFolded = checkIfLineIsFolded(view, cmLine);
 
     // FALL 1: Toggle entfernen
     if (toggleRegex.test(lineText)) {
@@ -27,7 +34,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
 
-    const textToInsert = `${settings.placeholderOpen} `;
+    const textToInsert = `${ isCurrentlyFolded ? settings.placeholderClosed : settings.placeholderOpen} `;
     editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
     // Cursor-Positionierung

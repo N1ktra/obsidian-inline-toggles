@@ -20,6 +20,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             }
         }
 
+        // Hier wird nur visuell angepasst. Der Text kann tatsächlich einfach bleiben wie er ist.
+        // Dann wird auch korrekt auf indents reagiert (Das toggle muss hier einfach offen bleiben in der Datei)
         buildDecorations(view: EditorView) {
             const { state } = view;
             const { from, to } = view.viewport;

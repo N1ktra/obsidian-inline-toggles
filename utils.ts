@@ -1,4 +1,6 @@
-import { Text } from "@codemirror/state";
+import { Text, Line } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { foldState } from "@codemirror/language";
 
 /**
  * Escaped Sonderzeichen in einem String, damit sie sicher in einem Regex
@@ -65,4 +67,15 @@ export function getLastChildLineNo(doc: any, lineNo: number, tabSize: number): n
         }
     }
     return lastChild;
+}
+
+
+export function checkIfLineIsFolded(view: EditorView, line: Line): Boolean{
+    const folded = view.state.field(foldState);
+    let isCurrentlyFolded = false;
+    folded.between(line.from, line.to, (from, to) => {
+        isCurrentlyFolded = true;
+        return false; // Stoppt die weitere Suche für diese Zeile (Performance!)
+    });
+    return isCurrentlyFolded
 }

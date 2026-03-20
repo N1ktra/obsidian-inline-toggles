@@ -23,11 +23,12 @@ export class ToggleWidget extends WidgetType {
 
         // Initialen Zustand im DOM speichern
         span.dataset.isOpen = String(this.isOpen);
+        span.classList.add(this.isOpen ? "is-open" : "is-closed");
         span.textContent = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-
+            const savedPos = view.state.selection.main.head;
             // Wir lesen den Zustand IMMER frisch aus dem DOM-Attribut
             const isCurrentlyOpen = span.dataset.isOpen === "true";
 
@@ -44,12 +45,12 @@ export class ToggleWidget extends WidgetType {
 
             const app = (window as any).app;
             view.focus();
-
             view.dispatch({ selection: { anchor: line.from } });
             app.commands.executeCommandById(
                 isCurrentlyOpen ? 'editor:fold-more' : 'editor:fold-less'
             );
             // Re-Layout Trigger
+            view.dispatch({ selection: { anchor: savedPos } });
             view.dispatch({
                 selection: view.state.selection,
                 scrollIntoView: false
@@ -65,6 +66,11 @@ export class ToggleWidget extends WidgetType {
     updateDOM(dom: HTMLElement): boolean {
         // 1. Zustand im DOM aktualisieren, damit der onclick-Handler Bescheid weiß
         dom.dataset.isOpen = String(this.isOpen);
+        if(this.isOpen){
+            dom.classList.replace("is-closed", "is-open");
+        }else{
+            dom.classList.replace("is-open", "is-closed");
+        }
 
         // 2. Das Symbol im Icon anpassen (nur wenn nötig)
         const expectedSymbol = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
