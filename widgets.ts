@@ -1,5 +1,6 @@
 import { WidgetType, EditorView } from "@codemirror/view";
 import { MyToggleSettings } from "./settings";
+import { foldable, unfoldEffect, foldEffect } from "@codemirror/language";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -28,33 +29,22 @@ export class ToggleWidget extends WidgetType {
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const savedPos = view.state.selection.main.head;
-            // Wir lesen den Zustand IMMER frisch aus dem DOM-Attribut
             const isCurrentlyOpen = span.dataset.isOpen === "true";
-
             const pos = view.posAtDOM(span);
             const line = view.state.doc.lineAt(pos);
-
             const oldSym = isCurrentlyOpen ? this.settings.placeholderOpen : this.settings.placeholderClosed;
             const newSym = isCurrentlyOpen ? this.settings.placeholderClosed : this.settings.placeholderOpen;
 
-            view.dispatch({
-                changes: { from: pos, to: pos + oldSym.length, insert: newSym },
-                userEvent: "toggle.manual"
-            });
-
-            const app = (window as any).app;
-            view.focus();
-            view.dispatch({ selection: { anchor: line.from } });
-            app.commands.executeCommandById(
-                isCurrentlyOpen ? 'editor:fold-more' : 'editor:fold-less'
-            );
-            // Re-Layout Trigger
-            view.dispatch({ selection: { anchor: savedPos } });
-            view.dispatch({
-                selection: view.state.selection,
-                scrollIntoView: false
-            });
+            const range = foldable(view.state, line.from, line.to);
+            if (range){
+                console.log("foldable")
+                view.dispatch({
+                    effects: isCurrentlyOpen ? foldEffect.of(range) : unfoldEffect.of(range),
+                    changes: { from: pos, to: pos + oldSym.length, insert: newSym },
+                    selection: { anchor: view.state.selection.main.head },
+                    userEvent: "toggle.fold"
+                });
+            }
         };
         return span;
     }
@@ -64,21 +54,16 @@ export class ToggleWidget extends WidgetType {
      * anstatt toDOM() neu auszuführen.
      */
     updateDOM(dom: HTMLElement): boolean {
-        // 1. Zustand im DOM aktualisieren, damit der onclick-Handler Bescheid weiß
         dom.dataset.isOpen = String(this.isOpen);
         if(this.isOpen){
             dom.classList.replace("is-closed", "is-open");
         }else{
             dom.classList.replace("is-open", "is-closed");
         }
-
-        // 2. Das Symbol im Icon anpassen (nur wenn nötig)
         const expectedSymbol = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
         if (dom.textContent !== expectedSymbol) {
             dom.textContent = expectedSymbol;
         }
-
-        // true bedeutet: "Ich habe das Update erfolgreich selbst durchgeführt"
         return true;
     }
 

@@ -2,6 +2,8 @@ import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings } from './settings';
 import { checkIfLineIsFolded, getToggleRegex } from './utils'; // Importiere deine Helfer
 import { EditorView } from '@codemirror/view';
+import { EditorState, StateEffect} from "@codemirror/state";
+import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
 
 export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
     const cursor = editor.getCursor();
@@ -46,32 +48,34 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
 }
 
 export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
-    const view = app.workspace.getActiveViewOfType(MarkdownView);
-    if (!view || !view.editor) return;
+    const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
+    if (!markdownView) return;
 
-    const editor = view.editor;
-    const originalCursor = editor.getCursor();
-    const scrollInfo = editor.getScrollInfo();
-    const lineCount = editor.lineCount();
+    const view = (markdownView.editor as any).cm as EditorView;
+    if (!view) return;
 
-    // Rückwärts-Scan
-    for (let i = lineCount - 1; i >= 0; i--) {
-        const lineText = editor.getLine(i);
+    const effects: StateEffect<unknown>[] = [];
 
-        // Wir prüfen direkt gegen die Settings-Symbole
-        if (lineText.includes(settings.placeholderOpen)) {
-            editor.setCursor({ line: i, ch: 0 });
-            (app as any).commands.executeCommandById('editor:fold-less');
+    // Wir gehen die Zeilen durch
+    for (let i = 1; i <= view.state.doc.lines; i++) {
+        const line = view.state.doc.line(i);
+        const lineText = line.text;
+        const range = foldable(view.state, line.from, line.to)
+        if (!range) continue
+
+        // 2. Prüfen, ob wir falten (placeholderClosed) oder öffnen (placeholderOpen) müssen
+        if (lineText.includes(settings.placeholderClosed)) {
+            effects.push(foldEffect.of(range));
         }
-        else if (lineText.includes(settings.placeholderClosed)) {
-            editor.setCursor({ line: i, ch: 0 });
-            (app as any).commands.executeCommandById('editor:fold-more');
+        else if (lineText.includes(settings.placeholderOpen)) {
+            effects.push(unfoldEffect.of(range));
         }
     }
 
-    // Zustand wiederherstellen
-    editor.setCursor(originalCursor);
-    setTimeout(() => {
-        editor.scrollTo(scrollInfo.left, scrollInfo.top);
-    }, 10); // 10ms Puffer für das Layout
+    // 3. Alle Änderungen in einem EINZIGEN Dispatch senden
+    if (effects.length > 0) {
+        view.dispatch({
+            effects: effects
+        });
+    }
 }

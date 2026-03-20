@@ -3,7 +3,7 @@ import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkHasChildren, getToggleRegex, getLastChildLineNo } from "./utils";
-import { foldedRanges, foldEffect, foldable, foldState } from "@codemirror/language";
+import { foldedRanges, foldEffect, foldable } from "@codemirror/language";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
