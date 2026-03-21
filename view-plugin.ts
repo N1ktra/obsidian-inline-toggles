@@ -5,6 +5,7 @@ import { MyToggleSettings } from "./settings";
 import { checkIfLineIsFoldedIn, getToggleRegex } from "./utils";
 import { foldable, syntaxTree, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
+import { editorLivePreviewField } from "obsidian";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -15,8 +16,10 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         }
 
         update(update: ViewUpdate) {
+            const modeChanged = update.startState.field(editorLivePreviewField) !== update.state.field(editorLivePreviewField);
+
             // Icons zeichnen
-            if (update.docChanged || update.viewportChanged || update.focusChanged) {
+            if (update.docChanged || update.viewportChanged || update.focusChanged || modeChanged) {
                 this.decorations = this.buildDecorations(update.view);
             }
         }
@@ -24,6 +27,10 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         // Hier wird nur visuell angepasst. Der Text kann tatsächlich einfach bleiben wie er ist.
         // Dann wird auch korrekt auf indents reagiert (Das toggle muss hier einfach offen bleiben in der Datei)
         buildDecorations(view: EditorView) {
+            if (view.state.field(editorLivePreviewField) === false) {
+                return Decoration.none;
+            }
+
             const { state } = view;
             const { from, to } = view.viewport;
             const text = view.state.doc.sliceString(from, to);
