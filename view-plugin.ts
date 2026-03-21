@@ -49,7 +49,6 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         widget: new ToggleWidget(isFoldable ? isOpenInText : false, isFoldable, settings)
                     }));
                 }
-
             }
 
             return builder.finish();
@@ -74,6 +73,19 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             const closedIdx = line.text.indexOf(settings.placeholderClosed);
             const pIdx = Math.max(openIdx, closedIdx);
             if (pIdx === -1) return false;
+            const placeholder = pIdx === openIdx ? settings.placeholderOpen : settings.placeholderClosed;
+
+            // alle Markdown Symbole bestimmen
+            let mdSymbols = ""
+            syntaxTree(state).iterate({from: line.from, to: line.to,
+                enter: (node) => {
+                    if (node.name.includes("formatting")) {
+                        console.log(node.name)
+                        mdSymbols += state.doc.sliceString(node.from, node.to);
+                    }
+                }
+            });
+            if (mdSymbols != "") mdSymbols = mdSymbols.trim() + " "
 
             const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
@@ -82,25 +94,10 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 return true;
             }
             else if(lineIsFoldedIn){ //eingeklappt
-                const { state } = view;
-                const pos = state.selection.main.head;
-                const line = state.doc.lineAt(pos);
                 const range = foldable(state, line.from, line.to);
-                const placeholder = pIdx === openIdx ? settings.placeholderOpen : settings.placeholderClosed;
                 let finalPos = range ? range.to + 1 : line.to + 1;
                 const isAtEof = finalPos > state.doc.length
                 if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
-
-                // alle Markdown Symbole bestimmen
-                let mdSymbols = ""
-                syntaxTree(state).iterate({from: line.from, to: line.to,
-                    enter: (node) => {
-                        if (node.name.includes("formatting")) {
-                            mdSymbols += state.doc.sliceString(node.from, node.to);
-                        }
-                    }
-                });
-                if (mdSymbols != "") mdSymbols += " "
 
                 // Falls Toggle Text leer ist, entfernen
                 const textWithoutPlaceholder = line.text.slice(0, pIdx) + line.text.slice(pIdx + placeholder.length);
@@ -113,7 +110,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const from = selection.head;
                 const to = line.to
                 const remainingText = state.doc.sliceString(from, to)
-                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${placeholder}`
+                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderOpen}` // hier immer open, damit es beim evtl. einrücken passt
                 const insertText = `${prefix}${remainingText}${isAtEof ? "" : "\n"}`;
                 const newCursorPos = finalPos + insertText.length - (2 * remainingText.length) - (isAtEof ? 0 : 1)
                 view.dispatch({

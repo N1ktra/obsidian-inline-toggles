@@ -2,6 +2,7 @@ import { WidgetType, EditorView } from "@codemirror/view";
 import { MyToggleSettings } from "./settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
+import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -62,6 +63,16 @@ export class ToggleWidget extends WidgetType {
                     effects: effects,
                     changes: { from: pos, to: pos + oldSym.length, insert: newSym },
                     userEvent: "toggle.fold",
+                });
+            }else{
+                // neues Kind erstellen
+                view.dispatch({ selection: { anchor: line.to } });
+                insertNewlineAndIndent(view);
+                indentMore(view);
+                const currentPos = view.state.selection.main.from;
+
+                view.dispatch({ changes: { from: currentPos, insert: this.settings.placeholderOpen },
+                    selection: { anchor: currentPos + this.settings.placeholderOpen.length }
                 });
             }
         };

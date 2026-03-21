@@ -15,7 +15,7 @@ export default class MyTogglePlugin extends Plugin {
         this.registerEditorExtension([
             createToggleViewPlugin(this.settings),
             createToggleEnterFix(this.settings),
-            createFoldTrackerPlugin(this.settings)
+            createFoldTrackerPlugin(this.settings),
         ]);
 
         // Befehl zum Einfügen
