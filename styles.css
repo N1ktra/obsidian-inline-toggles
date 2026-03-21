@@ -44,14 +44,6 @@
     transform: rotate(0deg);
 }
 
-.my-toggle-icon.is-closed.has-content:hover {
-    color: var(--text-accent-hover);
-}
-
-.my-toggle-icon:hover {
-    background-color: var(--background-modifier-hover);
-    color: var(--text-normal);
-}
 
 .my-toggle-icon:active {
     transform: scale(0.9) rotate(0deg);
@@ -59,4 +51,33 @@
 
 .my-toggle-icon.is-open:active {
     transform: scale(0.9) rotate(90deg);
+}
+
+/* --- HOVER LOGIK (NUR FÜR MAUS-GERÄTE) --- */
+@media (hover: hover) {
+    /* Der Hintergrund taucht nur am PC auf */
+    .my-toggle-icon:hover {
+        background-color: var(--background-modifier-hover);
+    }
+
+    /* Farbe beim OFFENEN Pfeil */
+    .my-toggle-icon.is-open:hover {
+        color: var(--text-normal);
+    }
+
+    /* Farbe beim GESCHLOSSENEN Pfeil mit Inhalt */
+    .my-toggle-icon.is-closed.has-content:hover {
+        color: var(--text-accent-hover);
+        /* Alternativ: filter: brightness(1.2); */
+    }
+}
+
+/* --- TOUCH-SPECIFIC (OPTIONAL) --- */
+
+/* Falls du auf dem Handy ein kurzes Feedback beim Tippen willst,
+   nutze :active statt :hover */
+.my-toggle-icon:active {
+    background-color: var(--background-modifier-hover);
+    transform: scale(0.9);
+    transition: transform 0.05s linear;
 }
