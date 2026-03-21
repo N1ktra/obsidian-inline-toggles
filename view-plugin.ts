@@ -72,10 +72,11 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const pos = state.selection.main.head;
                 const line = state.doc.lineAt(pos);
                 const range = foldable(state, line.from, line.to);
+                const placeholder = range ? settings.placeholderClosed : settings.placeholderOpen
                 let finalPos = range ? range.to + 1 : line.to + 1;
                 const isAtEof = finalPos > state.doc.length
                 if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
-                console.log(isAtEof)
+                console.log("at EoF:", isAtEof)
 
                 // alle Markdown Symbole bestimmen
                 let mdSymbols = ""
@@ -92,26 +93,35 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const from = selection.head;
                 const to = line.to
                 const remainingText = state.doc.sliceString(from, to)
-                const insertText = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderClosed}${remainingText}${isAtEof ? "" : "\n"}`;
-                console.log(JSON.stringify(insertText))
+                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${placeholder}`
+                const insertText = `${prefix}${remainingText}${isAtEof ? "" : "\n"}`;
+                const newCursorPos = finalPos + insertText.length - (2 * remainingText.length) - (isAtEof ? 0 : 1)
                 view.dispatch({
                     changes: [
                         { from: selection.head, to: line.to, insert: "" },
                         { from: finalPos, insert: insertText }
                     ],
-                    selection: { anchor: finalPos + insertText.length - (2 * remainingText.length) - 1 },
+                    selection: { anchor: newCursorPos },
                     userEvent: "input.type",
                     scrollIntoView: false,
                 });
-                if (isAtEof){
+                const foldStart = line.to - remainingText.length
+                const foldEnd = newCursorPos - prefix.length - (isAtEof ? 0 : 1)
+                console.log("foldable range:", foldStart, foldEnd)
+                if (foldStart != foldEnd){
+                    console.log("folding...")
                     view.dispatch({
-                        effects: foldEffect.of({ from: line.to - remainingText.length, to: finalPos - remainingText.length })
+                        effects: foldEffect.of({ from: foldStart, to: foldEnd})
                     });
+                    //Visualization:
+                    // view.dispatch({
+                    //     selection: { anchor: foldStart, head: foldEnd },
+                    //     scrollIntoView: true
+                    // });
                 }
 
                 return true;
             }
-
             return false;
         }
     }]));
