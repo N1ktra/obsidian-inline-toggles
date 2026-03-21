@@ -70,13 +70,13 @@ export class ToggleWidget extends WidgetType {
                 insertNewlineAndIndent(view);
                 indentMore(view);
                 const currentPos = view.state.selection.main.from;
-
+                const insertText = "- ";
                 view.dispatch({
                     changes: [
-                        { from: currentPos, insert: "- " },
+                        { from: currentPos, insert: insertText },
                         { from: pos, to: pos + oldSym.length, insert: this.settings.placeholderOpen } //replace closed symbol
                     ],
-                    selection: { anchor: currentPos + this.settings.placeholderOpen.length },
+                    selection: { anchor: currentPos + insertText.length },
                 });
             }
         };
