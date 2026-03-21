@@ -71,7 +71,6 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
 
     // 3. Alle Änderungen in einem EINZIGEN Dispatch senden
     if (effects.length > 0) {
-        console.log("folding...")
         view.dispatch({
             effects: effects
         });

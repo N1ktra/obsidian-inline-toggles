@@ -2,25 +2,64 @@ import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 import { Line } from "@codemirror/state";
 import { getToggleRegex } from "utils";
+import { MarkdownView } from "obsidian";
 
-export const createFoldTrackerPlugin = (settings: any) => {
+export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
     return ViewPlugin.fromClass(class {
+        private lastMode: string = "";
+        private isSwitching: boolean = true;
+        private switchTimeout: number | null = null;
+
+        constructor(readonly view: EditorView) {
+            // Initialen Modus setzen
+            const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView) {
+                this.lastMode = activeView.getMode();
+            }
+        }
+
+        private triggerLock(duration: number = 300) {
+            this.isSwitching = true;
+            // Bestehenden Timer abbrechen (Reset)
+            if (this.switchTimeout) {
+                window.clearTimeout(this.switchTimeout);
+            }
+            // Neuen Timer starten
+            this.switchTimeout = window.setTimeout(() => {
+                this.isSwitching = false;
+                this.switchTimeout = null;
+                console.log("Fold-Tracker: Editor stabil, Sperre aufgehoben.");
+            }, duration);
+        }
+
         update(update: ViewUpdate) {
+            const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+            console.log(this.lastMode, activeView.getMode())
+            if (activeView) {
+                const currentMode = activeView.getMode();
+
+                // Bei JEDER Änderung des Modus (Reading <-> Editing)
+                if (this.lastMode !== currentMode) {
+                    this.lastMode = currentMode;
+                    this.triggerLock();
+                    return; // Erstes Wechsel-Event sofort blockieren
+                }
+            }
+            if (this.isSwitching) this.triggerLock();
+
+
             for (let tr of update.transactions) {
                 for (let effect of tr.effects) {
                     if (effect.is(foldEffect)) {
                         const pos = effect.value.from;
                         const line = update.state.doc.lineAt(pos);
-
                         // console.log(`Sektion GEFALTET in Zeile: ${line.number}`);
                         // console.log(`Inhalt der Kopfzeile: "${line.text}"`);
                         this.updateToggle(update.view, line, false)
-
                     }
                     else if (effect.is(unfoldEffect)) {
                         const pos = effect.value.from;
                         const line = update.state.doc.lineAt(pos);
-
                         // console.log(`Sektion AUFGEFALTET in Zeile: ${line.number}`);
                         this.updateToggle(update.view, line, true)
                     }
