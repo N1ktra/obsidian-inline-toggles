@@ -33,6 +33,7 @@ export class ToggleWidget extends WidgetType {
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            const rectBefore = span.getBoundingClientRect(); //speichere position für autoscrollen
             const isCurrentlyOpen = span.dataset.isOpen === "true";
             const pos = view.posAtDOM(span);
             const line = view.state.doc.lineAt(pos);
@@ -63,6 +64,13 @@ export class ToggleWidget extends WidgetType {
                     effects: effects,
                     changes: { from: pos, to: pos + oldSym.length, insert: newSym },
                     userEvent: "toggle.fold",
+                });
+                requestAnimationFrame(() => {
+                    const rectAfter = span.getBoundingClientRect();
+                    const difference = rectAfter.top - rectBefore.top;
+                    if (difference !== 0) {
+                        view.scrollDOM.scrollBy(0, difference);
+                    }
                 });
             }else{
                 // neues Kind erstellen

@@ -50,12 +50,10 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
 export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) return;
-
     const view = (markdownView.editor as any).cm as EditorView;
     if (!view) return;
 
     const effects: StateEffect<unknown>[] = [];
-    // Wir gehen die Zeilen durch
     for (let i = 1; i <= view.state.doc.lines; i++) {
         const line = view.state.doc.line(i);
         const lineText = line.text;
@@ -73,6 +71,7 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
 
     // 3. Alle Änderungen in einem EINZIGEN Dispatch senden
     if (effects.length > 0) {
+        console.log("folding...")
         view.dispatch({
             effects: effects
         });

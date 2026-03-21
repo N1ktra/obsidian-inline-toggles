@@ -35,15 +35,17 @@ export const createFoldTrackerPlugin = (settings: any) => {
             const match = regex.exec(text)
             if(match)
             {
+                const targetSymbol = isOpen ? settings.placeholderOpen : settings.placeholderClosed
+                if (match[0] === targetSymbol) return; // nichts machen falls symbol schon korrekt ist
                 const pos = line.from + match.index;
                 window.requestAnimationFrame(() => {
                     view.dispatch({
                         changes: {
                             from: pos,
                             to: pos + match[0].length,
-                            insert: isOpen ? settings.placeholderOpen : settings.placeholderClosed
+                            insert: targetSymbol
                         },
-                        userEvent: "plugin.insert"
+                        userEvent: "plugin.fold.symbol-update"
                     });
                 });
             }
