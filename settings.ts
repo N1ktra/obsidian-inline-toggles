@@ -2,12 +2,8 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
 
 export interface MyToggleSettings {
-    // Was im Markdown-Text steht
     placeholderClosed: string;
     placeholderOpen: string;
-    // Was der User im Editor tatsächlich sieht
-    uiSymbolClosed: string;
-    uiSymbolOpen: string;
     autoInsertBullet: boolean;
     debugMode: boolean;
 }
@@ -15,8 +11,6 @@ export interface MyToggleSettings {
 export const DEFAULT_SETTINGS: MyToggleSettings = {
     placeholderClosed: '|⏵|',
     placeholderOpen: '|⏷|',
-    uiSymbolClosed: '▶',
-    uiSymbolOpen: '▼',
     autoInsertBullet: true,
     debugMode: false
 }
@@ -42,7 +36,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('Placeholder: Folded In')
             .setDesc('The exact text in your markdown file that triggers the toggle.')
             .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolOpen)
+                .setPlaceholder(DEFAULT_SETTINGS.placeholderClosed)
                 .setValue(this.plugin.settings.placeholderClosed)
                 .onChange(async (value) => {
                     this.plugin.settings.placeholderClosed = value;
@@ -57,31 +51,6 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.placeholderOpen)
                 .onChange(async (value) => {
                     this.plugin.settings.placeholderOpen = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        // --- SEKTION: UI APPEARANCE ---
-        containerEl.createEl('h3', { text: 'Visual Appearance (Editor UI)' });
-
-        new Setting(containerEl)
-            .setName('UI Icon: Closed')
-            .setDesc('The arrow symbol shown in the editor when closed.')
-            .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolClosed)
-                .setValue(this.plugin.settings.uiSymbolClosed)
-                .onChange(async (value) => {
-                    this.plugin.settings.uiSymbolClosed = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
-            .setName('UI Icon: Open')
-            .setDesc('The arrow symbol shown in the editor when open.')
-            .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.uiSymbolOpen)
-                .setValue(this.plugin.settings.uiSymbolOpen)
-                .onChange(async (value) => {
-                    this.plugin.settings.uiSymbolOpen = value;
                     await this.plugin.saveSettings();
                 }));
 

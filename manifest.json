@@ -1,11 +1,11 @@
 {
-	"id": "obsidian-example-plugin",
-	"name": "Save Toggle State",
+	"id": "inline-toggles",
+	"name": "Inline Toggles",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "This is an Obsidian Plugin that saves and restores the toggle state reliably.",
 	"author": "Niklas Tran",
-	"authorUrl": "https://flolu.de",
-	"fundingUrl": "https://flolu.de/donations",
+	"authorUrl": "",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }

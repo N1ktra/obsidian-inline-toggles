@@ -3,6 +3,7 @@ import { MyToggleSettings } from "./settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
+import { setIcon } from "obsidian";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -29,7 +30,7 @@ export class ToggleWidget extends WidgetType {
         span.dataset.isOpen = String(this.isOpen);
         span.classList.add(this.isOpen ? "is-open" : "is-closed");
         span.classList.add(this.hasContent ? "has-content" : "is-empty");
-        span.textContent = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
+        setIcon(span, "play");
         span.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -105,11 +106,6 @@ export class ToggleWidget extends WidgetType {
         else dom.classList.replace("is-open", "is-closed");
         if(this.hasContent) dom.classList.replace("is-empty", "has-content");
         else dom.classList.replace("has-content", "is-empty");
-
-        const expectedSymbol = this.isOpen ? this.settings.uiSymbolOpen : this.settings.uiSymbolClosed;
-        if (dom.textContent !== expectedSymbol) {
-            dom.textContent = expectedSymbol;
-        }
         return true;
     }
 

@@ -20,8 +20,8 @@ export default class MyTogglePlugin extends Plugin {
 
         // Befehl zum Einfügen
         this.addCommand({
-            id: 'insert-custom-toggle',
-            name: 'Toggle einfügen/entfernen',
+            id: 'insert-toggle',
+            name: 'Insert/Remove Toggle',
             icon: 'play',
             editorCallback: (editor) => {
                 insertOrRemoveToggle(editor, this.settings);

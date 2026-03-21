@@ -5,28 +5,58 @@
     width: 22px;
     height: 22px;
     cursor: pointer !important;
-    font-size: 0.85em;
-    line-height: 1;
     user-select: none;
     border-radius: 4px;
-    transition: all 0.15s ease;
+
+    /* FIX FÜR DIE VERTIKALE POSITION */
+    vertical-align: middle;
+    position: relative;
+    top: -1px; /* Feinjustierung: Falls es immer noch 1px zu hoch wirkt */
+
+    transition: all 0.15s ease-in-out;
     color: var(--text-faint);
+    transform-origin: center;
+    transform: rotate(0deg);
+}
+
+.my-toggle-icon svg {
+    display: block; /* Verhindert extra Space unter dem SVG */
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1px;
+
+    /* Zentrierung innerhalb des Flex-Containers erzwingen */
+    margin: 0;
 }
 
 .my-toggle-icon.is-open {
     color: var(--text-muted);
     background-color: transparent;
+    transform: rotate(90deg);
 }
 
 .my-toggle-icon.is-closed.has-content {
     color: var(--text-accent);
-    background-color: rgba(var(--mono-rgb-100), 0.05);
+    /* background-color: rgba(var(--mono-rgb-100), 0.03); */
+    transform: rotate(0deg);
+}
+
+.my-toggle-icon.is-closed.has-content:hover {
+    color: var(--text-accent-hover);
 }
 
 .my-toggle-icon:hover {
     background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
 }
 
 .my-toggle-icon:active {
-    transform: scale(0.9);
+    transform: scale(0.9) rotate(0deg);
+}
+
+.my-toggle-icon.is-open:active {
+    transform: scale(0.9) rotate(90deg);
 }
