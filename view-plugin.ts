@@ -70,7 +70,10 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             const selection = state.selection.main;
             if (!selection.empty) return false;
             const line = state.doc.lineAt(selection.head);
-            if (!line.text.contains(settings.placeholderClosed) && !line.text.contains(settings.placeholderOpen)) return false;
+            const openIdx = line.text.indexOf(settings.placeholderOpen);
+            const closedIdx = line.text.indexOf(settings.placeholderClosed);
+            const pIdx = Math.max(openIdx, closedIdx);
+            if (pIdx === -1) return false;
 
             const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
@@ -83,11 +86,10 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const pos = state.selection.main.head;
                 const line = state.doc.lineAt(pos);
                 const range = foldable(state, line.from, line.to);
-                const placeholder = range ? settings.placeholderClosed : settings.placeholderOpen
+                const placeholder = pIdx === openIdx ? settings.placeholderOpen : settings.placeholderClosed;
                 let finalPos = range ? range.to + 1 : line.to + 1;
                 const isAtEof = finalPos > state.doc.length
                 if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
-                console.log("at EoF:", isAtEof)
 
                 // alle Markdown Symbole bestimmen
                 let mdSymbols = ""
@@ -99,6 +101,13 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     }
                 });
                 if (mdSymbols != "") mdSymbols += " "
+
+                // Falls Toggle Text leer ist, entfernen
+                const textWithoutPlaceholder = line.text.slice(0, pIdx) + line.text.slice(pIdx + placeholder.length);
+                if (textWithoutPlaceholder.trim() === mdSymbols.trim()) {
+                    view.dispatch({ changes: { from: line.from + pIdx, to: line.from + pIdx + placeholder.length, insert: "" } });
+                    return true;
+                }
 
                 // Rest der Zeile löschen und in nächster Zeile einfügen
                 const from = selection.head;
@@ -118,9 +127,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 });
                 const foldStart = line.to - remainingText.length
                 const foldEnd = newCursorPos - prefix.length - (isAtEof ? 0 : 1)
-                console.log("foldable range:", foldStart, foldEnd)
                 if (foldStart != foldEnd){
-                    console.log("folding...")
                     view.dispatch({
                         effects: foldEffect.of({ from: foldStart, to: foldEnd})
                     });
