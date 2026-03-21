@@ -79,6 +79,14 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             if (!lineIsFoldedIn){ //ausgeklappt
                 insertNewlineAndIndent(view);
                 indentMore(view);
+                const currentPos = view.state.selection.main.from;
+                const insertText = settings.autoInsertBullet ? "- " : "";
+                view.dispatch({
+                    changes: [
+                        { from: currentPos, insert: insertText },
+                    ],
+                    selection: { anchor: currentPos + insertText.length },
+                });
                 return true;
             }
             else if(lineIsFoldedIn){ //eingeklappt

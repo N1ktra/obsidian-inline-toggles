@@ -78,7 +78,7 @@ export class ToggleWidget extends WidgetType {
                 insertNewlineAndIndent(view);
                 indentMore(view);
                 const currentPos = view.state.selection.main.from;
-                const insertText = "- ";
+                const insertText = this.settings.autoInsertBullet ? "- " : "";
                 view.dispatch({
                     changes: [
                         { from: currentPos, insert: insertText },
