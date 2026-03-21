@@ -110,7 +110,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const from = selection.head;
                 const to = line.to
                 const remainingText = state.doc.sliceString(from, to)
-                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderOpen}` // hier immer open, damit es beim evtl. einrücken passt
+                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderOpen} ` // hier immer open, damit es beim evtl. einrücken passt
                 const insertText = `${prefix}${remainingText}${isAtEof ? "" : "\n"}`;
                 const newCursorPos = finalPos + insertText.length - (2 * remainingText.length) - (isAtEof ? 0 : 1)
                 view.dispatch({

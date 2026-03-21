@@ -38,7 +38,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
 
-    const textToInsert = `${ isCurrentlyFolded && hasChildren ? settings.placeholderClosed : settings.placeholderOpen} `;
+    const textToInsert = `${settings.autoInsertBullet ? "- " : ""}${ isCurrentlyFolded && hasChildren ? settings.placeholderClosed : settings.placeholderOpen} `;
     editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
     // Cursor-Positionierung

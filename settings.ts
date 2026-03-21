@@ -8,6 +8,7 @@ export interface MyToggleSettings {
     // Was der User im Editor tatsächlich sieht
     uiSymbolClosed: string;
     uiSymbolOpen: string;
+    autoInsertBullet: boolean;
     debugMode: boolean;
 }
 
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
     placeholderOpen: '|⏷|',
     uiSymbolClosed: '▶',
     uiSymbolOpen: '▼',
+    autoInsertBullet: true,
     debugMode: false
 }
 
@@ -80,6 +82,18 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.uiSymbolOpen)
                 .onChange(async (value) => {
                     this.plugin.settings.uiSymbolOpen = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        // --- Behavior ---
+        containerEl.createEl('h3', { text: 'Behavior' });
+         new Setting(containerEl)
+            .setName("Auto-Insert Bullet Point")
+            .setDesc("Automatically inserts a bullet point, when creating a Toggle")
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoInsertBullet)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoInsertBullet = value;
                     await this.plugin.saveSettings();
                 }));
 

@@ -73,7 +73,7 @@ export class ToggleWidget extends WidgetType {
 
                 view.dispatch({
                     changes: [
-                        { from: currentPos, insert: this.settings.placeholderOpen },
+                        { from: currentPos, insert: "- " },
                         { from: pos, to: pos + oldSym.length, insert: this.settings.placeholderOpen } //replace closed symbol
                     ],
                     selection: { anchor: currentPos + this.settings.placeholderOpen.length },
