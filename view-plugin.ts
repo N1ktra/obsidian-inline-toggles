@@ -10,8 +10,10 @@ import { editorLivePreviewField } from "obsidian";
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet;
+        regex: RegExp;
 
         constructor(view: EditorView) {
+            this.regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
             this.decorations = this.buildDecorations(view);
         }
 
@@ -27,27 +29,29 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         // Hier wird nur visuell angepasst. Der Text kann tatsächlich einfach bleiben wie er ist.
         // Dann wird auch korrekt auf indents reagiert (Das toggle muss hier einfach offen bleiben in der Datei)
         buildDecorations(view: EditorView) {
-            if (view.state.field(editorLivePreviewField) === false) {
+            const { state } = view;
+            if (state.field(editorLivePreviewField) === false) {
                 return Decoration.none;
             }
 
-            const { state } = view;
-            const { from, to } = view.viewport;
-            const text = view.state.doc.sliceString(from, to);
-            const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
-
             let match;
             const builder = new RangeSetBuilder<Decoration>();
-            while ((match = regex.exec(text)) !== null) {
-                const pos = from + match.index;
-                const line = view.state.doc.lineAt(pos);
-                const isOpenInText = match[0] === settings.placeholderOpen;
-                const isFoldable = foldable(state, line.from, line.to) != null
+            for (const { from, to } of view.visibleRanges) {
+                const text = state.doc.sliceString(from, to);
+                this.regex.lastIndex = 0;
+                while ((match = this.regex.exec(text)) !== null) {
+                    const pos = from + match.index;
+                    const line = state.doc.lineAt(pos);
+                    const isOpenInText = match[0] === settings.placeholderOpen;
+                    const isFoldable = foldable(state, line.from, line.to) != null
 
-                builder.add(pos, pos + match[0].length, Decoration.replace({
-                    widget: new ToggleWidget(isFoldable ? isOpenInText : false, isFoldable, settings)
-                }));
+                    builder.add(pos, pos + match[0].length, Decoration.replace({
+                        widget: new ToggleWidget(isFoldable ? isOpenInText : false, isFoldable, settings)
+                    }));
+                }
+
             }
+
             return builder.finish();
         }
 
