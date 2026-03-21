@@ -2,8 +2,8 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkIfLineIsFoldedIn, getToggleRegex } from "./utils";
-import { foldable, syntaxTree, foldEffect } from "@codemirror/language";
+import { checkIfLineIsFoldedIn, getToggleRegex, getMdSymbolsInLine } from "./utils";
+import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
 
@@ -75,18 +75,6 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             if (pIdx === -1) return false;
             const placeholder = pIdx === openIdx ? settings.placeholderOpen : settings.placeholderClosed;
 
-            // alle Markdown Symbole bestimmen
-            let mdSymbols = ""
-            syntaxTree(state).iterate({from: line.from, to: line.to,
-                enter: (node) => {
-                    if (node.name.includes("formatting")) {
-                        console.log(node.name)
-                        mdSymbols += state.doc.sliceString(node.from, node.to);
-                    }
-                }
-            });
-            if (mdSymbols != "") mdSymbols = mdSymbols.trim() + " "
-
             const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
                 insertNewlineAndIndent(view);
@@ -101,6 +89,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
 
                 // Falls Toggle Text leer ist, entfernen
                 const textWithoutPlaceholder = line.text.slice(0, pIdx) + line.text.slice(pIdx + placeholder.length);
+                const mdSymbols = getMdSymbolsInLine(view, line);
                 if (textWithoutPlaceholder.trim() === mdSymbols.trim()) {
                     view.dispatch({ changes: { from: line.from + pIdx, to: line.from + pIdx + placeholder.length, insert: "" } });
                     return true;

@@ -1,6 +1,6 @@
 import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { foldState, foldable, foldedRanges } from "@codemirror/language";
+import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
 
 /**
  * Escaped Sonderzeichen in einem String, damit sie sicher in einem Regex
@@ -9,7 +9,6 @@ import { foldState, foldable, foldedRanges } from "@codemirror/language";
 export function escapeRegex(text: string): string {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-
 /**
  * Erzeugt das zentrale Regex zur Suche nach Toggle-Symbolen.
  */
@@ -44,4 +43,19 @@ export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
     });
 
     return isFolded;
+}
+
+export function getMdSymbolsInLine(view: EditorView, line: Line): string{
+    const { state } = view;
+    let mdSymbols = ""
+    syntaxTree(state).iterate({from: line.from, to: line.to,
+        enter: (node) => {
+            if (node.name.includes("formatting")) {
+                console.log(node.name)
+                mdSymbols += state.doc.sliceString(node.from, node.to);
+            }
+        }
+    });
+    if (mdSymbols != "") mdSymbols = mdSymbols.trim() + " "
+    return mdSymbols
 }

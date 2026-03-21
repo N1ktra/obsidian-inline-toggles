@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings } from './settings';
-import { checkIfLineHasChildren, checkIfLineIsFoldedIn, getToggleRegex } from './utils'; // Importiere deine Helfer
+import { checkIfLineHasChildren, checkIfLineIsFoldedIn, getToggleRegex, getMdSymbolsInLine } from './utils'; // Importiere deine Helfer
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -37,8 +37,8 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     // Findet Einrückungen, Listenpunkte (- + *), Checkboxen ([ ]) etc.
     const match = lineText.match(/^(\s*[#>\-+\*0-9\.\s]*(\[.?\])?\s*)/);
     const insertPos = match ? match[0].length : 0;
-
-    const textToInsert = `${settings.autoInsertBullet ? "- " : ""}${ isCurrentlyFolded && hasChildren ? settings.placeholderClosed : settings.placeholderOpen} `;
+    const shouldInsertBullet = settings.autoInsertBullet && getMdSymbolsInLine(view, cmLine) === ""
+    const textToInsert = `${shouldInsertBullet ? "- " : ""}${ isCurrentlyFolded && hasChildren ? settings.placeholderClosed : settings.placeholderOpen} `;
     editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
     // Cursor-Positionierung
