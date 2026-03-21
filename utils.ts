@@ -45,17 +45,38 @@ export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
     return isFolded;
 }
 
-export function getMdSymbolsInLine(view: EditorView, line: Line): string{
-    const { state } = view;
-    let mdSymbols = ""
-    syntaxTree(state).iterate({from: line.from, to: line.to,
-        enter: (node) => {
-            if (node.name.includes("formatting")) {
-                console.log(node.name)
-                mdSymbols += state.doc.sliceString(node.from, node.to);
+// export function getMdSymbolsInLine(view: EditorView, line: Line): string{
+//     const { state } = view;
+//     let mdSymbols = ""
+//     syntaxTree(state).iterate({from: line.from, to: line.to,
+//         enter: (node) => {
+//             if (node.name.includes("formatting")) {
+//                 console.log(node.name)
+//                 mdSymbols += state.doc.sliceString(node.from, node.to);
+//             }
+//         }
+//     });
+//     if (mdSymbols != "") mdSymbols = mdSymbols.trim() + " "
+//     return mdSymbols
+// }
+
+export function extractMarkdownSymbols(lineText: string, placeholders: string[]): string {
+    let firstPlaceholderIndex = -1;
+    for (const ph of placeholders) {
+        const idx = lineText.indexOf(ph);
+
+        if (idx !== -1) {
+            if (firstPlaceholderIndex === -1 || idx < firstPlaceholderIndex) {
+                firstPlaceholderIndex = idx;
             }
         }
-    });
-    if (mdSymbols != "") mdSymbols = mdSymbols.trim() + " "
-    return mdSymbols
+    }
+    const textBeforePlaceholder = firstPlaceholderIndex !== -1
+        ? lineText.substring(0, firstPlaceholderIndex)
+        : lineText;
+
+    const regex = /^([ \t]*(?:(?:[-+*]|\d+\.)[ \t]+(?:\[[^▲▼\]]?\][ \t]+)?|#{1,6}[ \t]+|>+[ \t]+))/;
+    const match = textBeforePlaceholder.match(regex);
+
+    return match ? match[0] : "";
 }

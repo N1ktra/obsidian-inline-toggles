@@ -2,7 +2,7 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkIfLineIsFoldedIn, getToggleRegex, getMdSymbolsInLine } from "./utils";
+import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
@@ -89,7 +89,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
 
                 // Falls Toggle Text leer ist, entfernen
                 const textWithoutPlaceholder = line.text.slice(0, pIdx) + line.text.slice(pIdx + placeholder.length);
-                const mdSymbols = getMdSymbolsInLine(view, line);
+                const mdSymbols = extractMarkdownSymbols(line.text, [settings.placeholderClosed, settings.placeholderOpen])
                 if (textWithoutPlaceholder.trim() === mdSymbols.trim()) {
                     view.dispatch({ changes: { from: line.from + pIdx, to: line.from + pIdx + placeholder.length, insert: "" } });
                     return true;
