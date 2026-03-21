@@ -1,4 +1,4 @@
-import { WidgetType, EditorView } from "@codemirror/view";
+import { WidgetType, EditorView, placeholder } from "@codemirror/view";
 import { MyToggleSettings } from "./settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
@@ -71,8 +71,12 @@ export class ToggleWidget extends WidgetType {
                 indentMore(view);
                 const currentPos = view.state.selection.main.from;
 
-                view.dispatch({ changes: { from: currentPos, insert: this.settings.placeholderOpen },
-                    selection: { anchor: currentPos + this.settings.placeholderOpen.length }
+                view.dispatch({
+                    changes: [
+                        { from: currentPos, insert: this.settings.placeholderOpen },
+                        { from: pos, to: pos + oldSym.length, insert: this.settings.placeholderOpen } //replace closed symbol
+                    ],
+                    selection: { anchor: currentPos + this.settings.placeholderOpen.length },
                 });
             }
         };
