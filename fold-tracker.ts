@@ -42,6 +42,7 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
                 // --- Überprüfen, ob gerade zwischen Lese / Bearbeitungsmodus gewechselt wurde ---
                 if (!this.cachedView || update.focusChanged) {
                     this.cachedView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+                    this.triggerLock(); //verhindert das automatische falten, durch den editor (was intern gespeichtert ist)
                 }
                 const activeView = this.cachedView;
                 if (!activeView) return;
