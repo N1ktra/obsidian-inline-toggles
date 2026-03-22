@@ -9,9 +9,11 @@ export let foldTrackerSpec: any;
 export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
     if (!foldTrackerSpec) {
         foldTrackerSpec = ViewPlugin.fromClass(class {
+            private cachedView: MarkdownView | null = null;
             public lastMode: string = "";
-            private isSwitching: boolean = true;
+            private isSwitching: boolean = false;
             private switchTimeout: number | null = null;
+            private toggleRegex: RegExp;
 
             constructor(readonly view: EditorView) {
                 // Initialen Modus setzen
@@ -19,6 +21,7 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
                 if (activeView) {
                     this.lastMode = activeView.getMode();
                 }
+                this.toggleRegex = getToggleRegex({textOpen: settings.placeholderOpen,  textClosed: settings.placeholderClosed});
             }
 
             private triggerLock(duration: number = 300) {
@@ -36,35 +39,37 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
             }
 
             update(update: ViewUpdate) {
-                const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-                // console.log(this.lastMode, "->", activeView.getMode())
-                if (activeView) {
-                    const currentMode = activeView.getMode();
-                    // Bei JEDER Änderung des Modus (Reading <-> Editing)
-                    if (this.lastMode !== currentMode) {
-                        this.lastMode = currentMode;
-                        this.triggerLock();
-                        return; // Erstes Wechsel-Event sofort blockieren
-                    }
+                // --- Überprüfen, ob gerade zwischen Lese / Bearbeitungsmodus gewechselt wurde ---
+                if (!this.cachedView || update.focusChanged) {
+                    this.cachedView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+                }
+                const activeView = this.cachedView;
+                if (!activeView) return;
+                const currentMode = activeView.getMode();
+                // console.log(this.lastMode, "->", currentMode)
+                if (this.lastMode !== currentMode) {
+                    this.lastMode = currentMode;
+                    this.triggerLock();
+                    return; // Erstes Wechsel-Event sofort blockieren
                 }
                 if (this.isSwitching){ //lock so lange, bis keine neuen updates mehr reinkommen
                   this.triggerLock();
                   return;
                 }
 
-
+                // --- Korrekt Falten ---
                 for (let tr of update.transactions) {
                     for (let effect of tr.effects) {
                         if (effect.is(foldEffect)) {
                             const pos = effect.value.from;
                             const line = update.state.doc.lineAt(pos);
-                            console.log(`Sektion GEFALTET in Zeile: ${line.number}`);
+                            // console.log(`Sektion GEFALTET in Zeile: ${line.number}`);
                             this.updateToggle(update.view, line, false)
                         }
                         else if (effect.is(unfoldEffect)) {
                             const pos = effect.value.from;
                             const line = update.state.doc.lineAt(pos);
-                            console.log(`Sektion AUFGEFALTET in Zeile: ${line.number}`);
+                            // console.log(`Sektion AUFGEFALTET in Zeile: ${line.number}`);
                             this.updateToggle(update.view, line, true)
                         }
                     }
@@ -73,9 +78,9 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
 
             updateToggle(view: EditorView, line: Line, isOpen: boolean){
                 // console.log("updating toggle", isOpen)
+                this.toggleRegex.lastIndex = 0;
                 const text = view.state.doc.sliceString(line.from, line.to);
-                const regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
-                const match = regex.exec(text)
+                const match = this.toggleRegex.exec(text)
                 if(match)
                 {
                     const targetSymbol = isOpen ? settings.placeholderOpen : settings.placeholderClosed
