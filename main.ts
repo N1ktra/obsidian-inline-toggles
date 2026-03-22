@@ -9,6 +9,7 @@ export default class MyTogglePlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
+        this.refreshGutterStyle();
         this.addSettingTab(new MyToggleSettingTab(this.app, this));
 
         createFoldTrackerPlugin(this, this.settings);
@@ -75,5 +76,18 @@ export default class MyTogglePlugin extends Plugin {
                 }
             }
         });
+    }
+
+    refreshGutterStyle() {
+        if (this.settings.hideGutterArrows) {
+            document.body.classList.add('hide-gutter-arrows');
+        } else {
+            document.body.classList.remove('hide-gutter-arrows');
+        }
+    }
+
+    // Wichtig: Beim Deaktivieren des Plugins aufräumen!
+    onunload() {
+        document.body.classList.remove('hide-gutter-arrows');
     }
 }

@@ -81,3 +81,13 @@
     transform: scale(0.9);
     transition: transform 0.05s linear;
 }
+
+/* Der Effekt greift NUR, wenn die Klasse aktiv ist */
+body.hide-gutter-arrows .collapse-indicator {
+    opacity: 0 !important;
+    transition: opacity 0.2s !important;
+}
+
+body.hide-gutter-arrows .collapse-indicator:hover {
+    opacity: 1 !important;
+}

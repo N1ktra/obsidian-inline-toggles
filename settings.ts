@@ -5,6 +5,7 @@ export interface MyToggleSettings {
     placeholderClosed: string;
     placeholderOpen: string;
     autoInsertBullet: boolean;
+    hideGutterArrows: boolean;
     debugMode: boolean;
 }
 
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
     placeholderClosed: '|⏵|',
     placeholderOpen: '|⏷|',
     autoInsertBullet: true,
+    hideGutterArrows: true,
     debugMode: false
 }
 
@@ -64,6 +66,19 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.autoInsertBullet = value;
                     await this.plugin.saveSettings();
+                }));
+
+        // --- Visuals ---
+        containerEl.createEl('h3', { text: 'Visuals' });
+         new Setting(containerEl)
+            .setName("Hide Gutter-Arrows")
+            .setDesc("Hides the standard Obsidian Gutter-Arrows, until hovered")
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.hideGutterArrows)
+                .onChange(async (value) => {
+                    this.plugin.settings.hideGutterArrows = value;
+                    await this.plugin.saveSettings();
+                    this.plugin.refreshGutterStyle();
                 }));
 
         // --- DEBUG ---
