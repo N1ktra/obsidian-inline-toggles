@@ -47,7 +47,7 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
                         return; // Erstes Wechsel-Event sofort blockieren
                     }
                 }
-                if (this.isSwitching){
+                if (this.isSwitching){ //lock so lange, bis keine neuen updates mehr reinkommen
                   this.triggerLock();
                   return;
                 }

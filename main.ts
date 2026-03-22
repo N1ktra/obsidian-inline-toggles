@@ -41,7 +41,7 @@ export default class MyTogglePlugin extends Plugin {
         // Auto-Fold beim Tab-Wechsel
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
-                console.log("layout change")
+                // console.log("layout change")
                 this.setFoldTrackerLastMode();
                 scanAndApplyFold(this.app, this.settings);
             })
@@ -71,7 +71,7 @@ export default class MyTogglePlugin extends Plugin {
 
                 if (trackerInstance) {
                     trackerInstance.lastMode = currentMode;
-                    console.log("Tracker lastMode manuell gesetzt auf:", trackerInstance.lastMode);
+                    // console.log("Tracker lastMode manuell gesetzt auf:", trackerInstance.lastMode);
                 }
             }
         });
