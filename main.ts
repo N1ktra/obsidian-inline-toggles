@@ -25,6 +25,10 @@ export default class MyTogglePlugin extends Plugin {
             id: 'insert-toggle',
             name: 'Insert/Remove Toggle',
             icon: 'play',
+            hotkeys: [{
+                    modifiers: ["Mod", "Shift"],
+                    key: "l",
+                },],
             editorCallback: (editor) => {
                 insertOrRemoveToggle(editor, this.settings);
             }
