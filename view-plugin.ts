@@ -1,11 +1,12 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
-import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
+import { RangeSetBuilder, Text, Prec, Range } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
+import { buildLineDecorationFromAttributes } from "toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -35,7 +36,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             }
 
             let match;
-            const builder = new RangeSetBuilder<Decoration>();
+            const decorations: Range<Decoration>[] = [];
+            // const builder = new RangeSetBuilder<Decoration>();
             for (const { from, to } of view.visibleRanges) {
                 const text = state.doc.sliceString(from, to);
                 this.regex.lastIndex = 0;
@@ -43,15 +45,29 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const toggle = parseToggleMatch(match, settings.placeholder)
                     const pos = from + toggle.index;
                     const line = state.doc.lineAt(pos);
-                    const isFoldable = foldable(state, line.from, line.to) != null
+                    const foldRange = foldable(state, line.from, line.to)
+                    const isFoldable = foldRange != null
 
-                    builder.add(pos, pos + match[0].length, Decoration.replace({
+                    const lineDeco = buildLineDecorationFromAttributes(toggle.attributes);
+                    if (lineDeco) {
+                        decorations.push(lineDeco.range(line.from, line.from));
+                        if (foldRange) {
+                            const lastLine = state.doc.lineAt(foldRange.to);
+                            for (let i = line.number + 1; i <= lastLine.number; i++) {
+                                const currentLine = state.doc.line(i);
+                                decorations.push(lineDeco.range(currentLine.from, currentLine.from));
+                            }
+                        }
+                    }
+
+                    const widgetDeco = Decoration.replace({
                         widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributes, settings, toggle.length)
-                    }));
+                    });
+                    decorations.push(widgetDeco.range(pos, pos + match[0].length));
                 }
             }
-
-            return builder.finish();
+            return Decoration.set(decorations, true);
+            // return builder.finish();
         }
 
     }, {
