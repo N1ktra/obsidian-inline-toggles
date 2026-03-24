@@ -2,9 +2,10 @@ import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
 
 export interface PlaceholderSettings {
-    borderSymbol: string;      // z.B. "|"
-    symbolClosed: string;      // z.B. "▶"
-    symbolOpen: string;        // z.B. "⏷"
+    borderSymbol: string;
+    symbolClosed: string;
+    symbolOpen: string;
+    delimiter: string;
 }
 
 export interface MyToggleSettings {
@@ -18,7 +19,8 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
     placeholder: {
         borderSymbol: "|",
         symbolClosed: "⏵",
-        symbolOpen: "⏷"
+        symbolOpen: "⏷",
+        delimiter: " ",
     },
     autoInsertBullet: true,
     hideGutterArrows: true,
@@ -75,6 +77,16 @@ export class MyToggleSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
+        new Setting(containerEl)
+            .setName('Placeholder: Delimiter')
+            .setDesc('The symbol to start a new attribute')
+            .addText(text => text
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.delimiter)
+                .setValue(this.plugin.settings.placeholder.delimiter)
+                .onChange(async (value) => {
+                    this.plugin.settings.placeholder.delimiter = value;
+                    await this.plugin.saveSettings();
+                }));
 
         // --- Behavior ---
         containerEl.createEl('h3', { text: 'Behavior' });

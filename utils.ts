@@ -28,10 +28,11 @@ export function getToggleRegex(settings: PlaceholderSettings): RegExp {
     const b = escapeRegex(settings.borderSymbol);
     const o = escapeRegex(settings.symbolOpen);
     const c = escapeRegex(settings.symbolClosed);
+    const d = escapeRegex(settings.delimiter);
 
     // WICHTIG: (o|c) fängt das Symbol als Gruppe 1 ein
     // [^${b}]* fängt die Attribute als Gruppe 2 ein
-    return new RegExp(`${b}(${o}|${c})(?::([^${b}]*))?${b}`, 'g');
+    return new RegExp(`${b}(${o}|${c})(?:${d}+([^${b}]*))?${b}`, 'g');
 }
 
 export function findToggle(text: string, settings: PlaceholderSettings): ToggleMatch | null {
@@ -109,7 +110,7 @@ export function parseToggleMatch(
 ): ToggleMatch {
     const attrObj: Record<string, string> = {};
     if (match[2]) {
-        match[2].split(':').forEach(pair => {
+        match[2].split(settings.delimiter).forEach(pair => {
             const [key, val] = pair.split('=');
             if (key && val) attrObj[key.trim()] = val.trim();
         });
