@@ -1,12 +1,13 @@
 import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 import { Line } from "@codemirror/state";
-import { getToggleRegex } from "utils";
+import { getToggleRegex, parseToggleMatch, updateToggle } from "utils";
 import { MarkdownView } from "obsidian";
+import { MyToggleSettings } from "settings";
 
 
 export let foldTrackerSpec: any;
-export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
+export const createFoldTrackerPlugin = (plugin: any, settings: MyToggleSettings) => {
     if (!foldTrackerSpec) {
         foldTrackerSpec = ViewPlugin.fromClass(class {
             private cachedView: MarkdownView | null = null;
@@ -21,7 +22,7 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
                 if (activeView) {
                     this.lastMode = activeView.getMode();
                 }
-                this.toggleRegex = getToggleRegex({textOpen: settings.placeholderOpen,  textClosed: settings.placeholderClosed});
+                this.toggleRegex = getToggleRegex(settings.placeholder);
             }
 
             private triggerLock(duration: number = 300) {
@@ -65,34 +66,35 @@ export const createFoldTrackerPlugin = (plugin: any, settings: any) => {
                             const pos = effect.value.from;
                             const line = update.state.doc.lineAt(pos);
                             // console.log(`Sektion GEFALTET in Zeile: ${line.number}`);
-                            this.updateToggle(update.view, line, false)
+                            this.matchToggleToFold(update.view, line, false)
                         }
                         else if (effect.is(unfoldEffect)) {
                             const pos = effect.value.from;
                             const line = update.state.doc.lineAt(pos);
                             // console.log(`Sektion AUFGEFALTET in Zeile: ${line.number}`);
-                            this.updateToggle(update.view, line, true)
+                            this.matchToggleToFold(update.view, line, true)
                         }
                     }
                 }
             }
 
-            updateToggle(view: EditorView, line: Line, isOpen: boolean){
+            matchToggleToFold(view: EditorView, line: Line, isOpen: boolean){
                 // console.log("updating toggle", isOpen)
                 this.toggleRegex.lastIndex = 0;
                 const text = view.state.doc.sliceString(line.from, line.to);
                 const match = this.toggleRegex.exec(text)
                 if(match)
                 {
-                    const targetSymbol = isOpen ? settings.placeholderOpen : settings.placeholderClosed
-                    if (match[0] === targetSymbol) return; // nichts machen falls symbol schon korrekt ist
-                    const pos = line.from + match.index;
+                    const toggle = parseToggleMatch(match, settings.placeholder)
+                    if (toggle.isOpen === isOpen) return; // nichts machen falls symbol schon korrekt ist
+                    const newFullTag = updateToggle(toggle, settings.placeholder, { isOpen: isOpen });
+                    const startPos = line.from + toggle.index;
                     window.requestAnimationFrame(() => {
                         view.dispatch({
                             changes: {
-                                from: pos,
-                                to: pos + match[0].length,
-                                insert: targetSymbol
+                                from: startPos,
+                                to: startPos + toggle.length,
+                                insert: newFullTag
                             },
                             userEvent: "plugin.fold.symbol-update"
                         });

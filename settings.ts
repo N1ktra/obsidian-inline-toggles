@@ -1,17 +1,25 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
 
+export interface PlaceholderSettings {
+    borderSymbol: string;      // z.B. "|"
+    symbolClosed: string;      // z.B. "▶"
+    symbolOpen: string;        // z.B. "⏷"
+}
+
 export interface MyToggleSettings {
-    placeholderClosed: string;
-    placeholderOpen: string;
+    placeholder: PlaceholderSettings; // Hier wird das Unter-Interface genutzt
     autoInsertBullet: boolean;
     hideGutterArrows: boolean;
     debugMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: MyToggleSettings = {
-    placeholderClosed: '|⏵|',
-    placeholderOpen: '|⏷|',
+    placeholder: {
+        borderSymbol: "|",
+        symbolClosed: "⏵",
+        symbolOpen: "⏷"
+    },
     autoInsertBullet: true,
     hideGutterArrows: true,
     debugMode: false
@@ -38,10 +46,10 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('Placeholder: Folded In')
             .setDesc('The exact text in your markdown file that triggers the toggle.')
             .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.placeholderClosed)
-                .setValue(this.plugin.settings.placeholderClosed)
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolClosed)
+                .setValue(this.plugin.settings.placeholder.symbolClosed)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholderClosed = value;
+                    this.plugin.settings.placeholder.symbolClosed = value;
                     await this.plugin.saveSettings();
                 }));
 
@@ -49,12 +57,24 @@ export class MyToggleSettingTab extends PluginSettingTab {
             .setName('Placeholder: Folded Out')
             .setDesc('The exact text in your markdown file when expanded.')
             .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.placeholderOpen)
-                .setValue(this.plugin.settings.placeholderOpen)
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolOpen)
+                .setValue(this.plugin.settings.placeholder.symbolOpen)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholderOpen = value;
+                    this.plugin.settings.placeholder.symbolOpen = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('Placeholder: Border Symbol')
+            .setDesc('The border symbol to start / end a toggle.')
+            .addText(text => text
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.borderSymbol)
+                .setValue(this.plugin.settings.placeholder.borderSymbol)
+                .onChange(async (value) => {
+                    this.plugin.settings.placeholder.borderSymbol = value;
+                    await this.plugin.saveSettings();
+                }));
+
 
         // --- Behavior ---
         containerEl.createEl('h3', { text: 'Behavior' });

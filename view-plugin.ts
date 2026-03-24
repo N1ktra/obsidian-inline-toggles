@@ -2,7 +2,7 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols } from "./utils";
+import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
@@ -13,7 +13,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
         regex: RegExp;
 
         constructor(view: EditorView) {
-            this.regex = getToggleRegex({textOpen: settings.placeholderOpen, textClosed: settings.placeholderClosed});
+            this.regex = getToggleRegex(settings.placeholder);
             this.decorations = this.buildDecorations(view);
         }
 
@@ -40,13 +40,13 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 const text = state.doc.sliceString(from, to);
                 this.regex.lastIndex = 0;
                 while ((match = this.regex.exec(text)) !== null) {
-                    const pos = from + match.index;
+                    const toggle = parseToggleMatch(match, settings.placeholder)
+                    const pos = from + toggle.index;
                     const line = state.doc.lineAt(pos);
-                    const isOpenInText = match[0] === settings.placeholderOpen;
                     const isFoldable = foldable(state, line.from, line.to) != null
 
                     builder.add(pos, pos + match[0].length, Decoration.replace({
-                        widget: new ToggleWidget(isFoldable ? isOpenInText : false, isFoldable, settings)
+                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributes, settings, toggle.length)
                     }));
                 }
             }
@@ -69,11 +69,8 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             const selection = state.selection.main;
             if (!selection.empty) return false;
             const line = state.doc.lineAt(selection.head);
-            const openIdx = line.text.indexOf(settings.placeholderOpen);
-            const closedIdx = line.text.indexOf(settings.placeholderClosed);
-            const pIdx = Math.max(openIdx, closedIdx);
-            if (pIdx === -1) return false;
-            const placeholder = pIdx === openIdx ? settings.placeholderOpen : settings.placeholderClosed;
+            const toggle = findToggle(line.text, settings.placeholder)
+            if (!toggle) return false;
 
             const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
@@ -96,10 +93,10 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
 
                 // Falls Toggle Text leer ist, entfernen
-                const textWithoutPlaceholder = line.text.slice(0, pIdx) + line.text.slice(pIdx + placeholder.length);
-                const mdSymbols = extractMarkdownSymbols(line.text, [settings.placeholderClosed, settings.placeholderOpen])
+                const textWithoutPlaceholder = line.text.slice(0, toggle.index) + line.text.slice(toggle.index + toggle.length);
+                const mdSymbols = extractMarkdownSymbols(line.text, [toggle.fullTag])
                 if (textWithoutPlaceholder.trim() === mdSymbols.trim()) {
-                    view.dispatch({ changes: { from: line.from + pIdx, to: line.from + pIdx + placeholder.length, insert: "" } });
+                    view.dispatch({ changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" } });
                     return true;
                 }
 
@@ -107,7 +104,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const from = selection.head;
                 const to = line.to
                 const remainingText = state.doc.sliceString(from, to)
-                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${settings.placeholderOpen} ` // hier immer open, damit es beim evtl. einrücken passt
+                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${buildToggleTag(true, settings.placeholder)} ` // hier immer open, damit es beim evtl. einrücken passt
                 const insertText = `${prefix}${remainingText}${isAtEof ? "" : "\n"}`;
                 const newCursorPos = finalPos + insertText.length - (2 * remainingText.length) - (isAtEof ? 0 : 1)
                 view.dispatch({
