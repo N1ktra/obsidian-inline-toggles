@@ -77,7 +77,7 @@ export function buildToggleTag(
     // 3. Die Attribute in das Format ":key=value" umwandeln
     // Wenn das Objekt leer ist, wird dieser String einfach leer ("")
     const attrPart = Object.entries(attributes)
-        .map(([key, value]) => `:${key}=${value}`)
+        .map(([key, value]) => `${settings.delimiter}${key}=${value}`)
         .join("");
 
     // 4. Alles zusammenfügen: Border + Icon + Attribute + Border
