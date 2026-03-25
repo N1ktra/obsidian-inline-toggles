@@ -107,7 +107,7 @@ export class ToggleWidget extends WidgetType {
             indentMore(view);
             const currentPos = view.state.selection.main.from;
             const insertText = this.settings.autoInsertBullet ? "- " : "";
-            const newTag = buildToggleTag(true, this.settings.placeholder) //standard open tag
+            const newTag = buildToggleTag(true, this.settings.placeholder, this.attributes)
             view.dispatch({
                 changes: [
                     { from: currentPos, insert: insertText },
