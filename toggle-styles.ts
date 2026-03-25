@@ -24,6 +24,13 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     for (const [key, value] of Object.entries(attributes)) {
         if (!value) continue;
 
+        if (key === 'type') {
+            const colorVar = `var(--callout-${value})`;
+            styleEntries.push(`background-color: rgba(${colorVar}, 0.1)`);
+            styleEntries.push(`border-left: 4px solid rgb(${colorVar})`);
+            continue; // Überspringe den Rest der Schleife für diesen Key
+        }
+
         // Spezialfall: Klasse (soll nicht in den Style-String)
         if (key === 'class' || key === 'cls') {
             classes.push(value);

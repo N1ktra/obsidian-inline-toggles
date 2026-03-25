@@ -55,6 +55,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                             const lastLine = state.doc.lineAt(foldRange.to);
                             for (let i = line.number + 1; i <= lastLine.number; i++) {
                                 const currentLine = state.doc.line(i);
+                                if (currentLine.text === "---") break;
                                 decorations.push(lineDeco.range(currentLine.from, currentLine.from));
                             }
                         }
