@@ -35,28 +35,29 @@ export function getToggleRegex(settings: PlaceholderSettings): RegExp {
     return new RegExp(`${b}(${o}|${c})(?:${d}+([^${b}]*))?${b}`, 'g');
 }
 
+export function parseAttributes(match: RegExpExecArray, settings: PlaceholderSettings){
+    const attrObj: Record<string, string> = {};
+    if (match[2]) {
+        match[2].split(settings.delimiter).forEach(pair => {
+            const [key, val] = pair.split('=');
+            if (key && val) attrObj[key.trim()] = val.trim();
+        });
+    }
+    return attrObj;
+}
+
 export function findToggle(text: string, settings: PlaceholderSettings): ToggleMatch | null {
     const regex = getToggleRegex(settings);
     const match = regex.exec(text);
 
     if (!match) return null;
-
-    // 1. Attribute/Flags parsen (der Teil in match[2])
-    const attrObj: Record<string, string> = {};
-    if (match[2]) {
-        match[2].split(':').forEach(pair => {
-            const [key, val] = pair.split('=');
-            if (key && val) attrObj[key.trim()] = val.trim();
-        });
-    }
-
     return {
         fullTag: match[0],
         index: match.index,
         length: match[0].length,
         symbol: match[1],
         isOpen: match[1] === settings.symbolOpen,
-        attributes: attrObj
+        attributes: parseAttributes(match, settings)
     };
 }
 
@@ -108,13 +109,6 @@ export function parseToggleMatch(
     match: RegExpExecArray,
     settings: PlaceholderSettings
 ): ToggleMatch {
-    const attrObj: Record<string, string> = {};
-    if (match[2]) {
-        match[2].split(settings.delimiter).forEach(pair => {
-            const [key, val] = pair.split('=');
-            if (key && val) attrObj[key.trim()] = val.trim();
-        });
-    }
     const foundSymbol = match[1];
 
     return {
@@ -123,7 +117,7 @@ export function parseToggleMatch(
         length: match[0].length,
         symbol: foundSymbol,
         isOpen: foundSymbol === settings.symbolOpen,
-        attributes: attrObj
+        attributes: parseAttributes(match, settings)
     };
 }
 

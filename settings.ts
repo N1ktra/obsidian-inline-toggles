@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
         borderSymbol: "|",
         symbolClosed: "⏵",
         symbolOpen: "⏷",
-        delimiter: " ",
+        delimiter: ";",
     },
     autoInsertBullet: true,
     hideGutterArrows: true,

@@ -13,10 +13,11 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     // 1. Die Übersetzungs-Map für deine Kürzel
     const translationMap: Record<string, string> = {
         'bg': 'background-color',
-        'color': 'color',
+        'col': 'color',
         'border': 'border-left',
         'weight': 'font-weight',
-        'indent': 'padding-left'
+        'indent': 'padding-left',
+        'size': 'font-size',
     };
 
     // 2. Über alle übergebenen Attribute iterieren
