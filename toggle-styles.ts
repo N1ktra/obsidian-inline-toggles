@@ -5,34 +5,48 @@ import { Decoration } from "@codemirror/view";
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
  */
 export function buildLineDecorationFromAttributes(attributes: Record<string, string>) {
-    // 1. Schneller Check: Sind überhaupt Attribute da?
     if (!attributes || Object.keys(attributes).length === 0) return null;
 
-    let styleString = "";
+    const styleEntries: string[] = [];
     const classes: string[] = [];
 
-    // 2. Hier kommt deine gesamte Logik für alle zukünftigen Attribute rein!
-    if (attributes['bg']) {
-        styleString += `background-color: ${attributes['bg']}; `;
+    // 1. Die Übersetzungs-Map für deine Kürzel
+    const translationMap: Record<string, string> = {
+        'bg': 'background-color',
+        'color': 'color',
+        'border': 'border-left',
+        'weight': 'font-weight',
+        'indent': 'padding-left'
+    };
+
+    // 2. Über alle übergebenen Attribute iterieren
+    for (const [key, value] of Object.entries(attributes)) {
+        if (!value) continue;
+
+        // Spezialfall: Klasse (soll nicht in den Style-String)
+        if (key === 'class' || key === 'cls') {
+            classes.push(value);
+            continue;
+        }
+
+        // Übersetzung suchen: Falls vorhanden, nimm den CSS-Namen, sonst den Key selbst
+        const cssProperty = translationMap[key] || key;
+
+        // Den CSS-Eintrag hinzufügen
+        styleEntries.push(`${cssProperty}: ${value}`);
     }
 
-    if (attributes['color']) {
-        styleString += `color: ${attributes['color']}; `;
+    // 3. Ergebnis zusammenbauen
+    const finalAttributes: Record<string, string> = {};
+    if (styleEntries.length > 0) {
+        finalAttributes['style'] = styleEntries.join('; ') + ';';
     }
-
-    if (attributes['border']) {
-        // Z.B. border=red -> border-left: 2px solid red;
-        styleString += `border-left: 2px solid ${attributes['border']}; padding-left: 5px; `;
+    if (classes.length > 0) {
+        finalAttributes['class'] = classes.join(' ');
     }
+    // console.log(finalAttributes)
 
-    // ... Platz für 100 weitere Attribute ...
-
-    // 3. Wenn keines der Attribute ein Styling ausgelöst hat, abbrechen
-    if (styleString === "" && classes.length === 0) return null;
-
-    // 4. Die fertige Dekoration zurückgeben
     return Decoration.line({
-        attributes: styleString ? { style: styleString } : undefined,
-        class: classes.length > 0 ? classes.join(" ") : undefined
+        attributes: Object.keys(finalAttributes).length > 0 ? finalAttributes : undefined
     });
 }
