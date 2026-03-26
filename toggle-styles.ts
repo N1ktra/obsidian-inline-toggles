@@ -5,6 +5,26 @@ export type LineStyleRule = {
     condition: (index: number, total: number) => boolean;
     decoration: Decoration;
 };
+
+function normalizeAttributes(attributes: Record<string, string>): Record<string, string>{
+    // 1. Die Übersetzungs-Map für deine Kürzel
+    const translationMap: Record<string, string> = {
+        'bg': 'background-color',
+        'col': 'color',
+        'border': 'border-left',
+        'weight': 'font-weight',
+        'indent': 'padding-left',
+        'size': 'font-size',
+    };
+
+    return Object.fromEntries(
+        Object.entries(attributes).map(([key, value]) => [
+            translationMap[key] ?? key, // Übersetze Key, falls in Map
+            value
+        ])
+    );
+}
+
 /**
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
@@ -16,19 +36,17 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     const classes: string[] = [];
     const specialLineStlye: LineStyleRule[] = []
 
-    // 1. Die Übersetzungs-Map für deine Kürzel
-    const translationMap: Record<string, string> = {
-        'bg': 'background-color',
-        'col': 'color',
-        'border': 'border-left',
-        'weight': 'font-weight',
-        'indent': 'padding-left',
-        'size': 'font-size',
-    };
 
     // 2. Über alle übergebenen Attribute iterieren
-    for (const [key, value] of Object.entries(attributes)) {
+    const attr = normalizeAttributes(attributes)
+    for (const [key, value] of Object.entries(attr)) {
         if (!value) continue;
+
+        // Spezialfall: Klasse (soll nicht in den Style-String)
+        if (key === 'class' || key === 'cls') {
+            classes.push(value);
+            continue;
+        }
 
         if (key === 'type') {
             const colorVar = `var(--callout-${value})`;
@@ -38,25 +56,16 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
                 condition: (n) => n === 1,
                 decoration: Decoration.line({
                     attributes: {
-                        style: "font-weight: bold; font-size: 1.15em",
-                        class: 'is-header'
+                        style: `${attr["font-weight"] ? "" : "font-weight: bold;"} ${attr["font-size"] ? "" : "font-size: 1.15em"}`,
+                        class: `${attr["class"] ? "" : 'is-header'}`
                     }
                 })
             })
             continue; // Überspringe den Rest der Schleife für diesen Key
         }
 
-        // Spezialfall: Klasse (soll nicht in den Style-String)
-        if (key === 'class' || key === 'cls') {
-            classes.push(value);
-            continue;
-        }
-
-        // Übersetzung suchen: Falls vorhanden, nimm den CSS-Namen, sonst den Key selbst
-        const cssProperty = translationMap[key] || key;
-
         // Den CSS-Eintrag hinzufügen
-        styleEntries.push(`${cssProperty}: ${value}`);
+        styleEntries.push(`${key}: ${value}`);
     }
 
     // 3. Ergebnis zusammenbauen
