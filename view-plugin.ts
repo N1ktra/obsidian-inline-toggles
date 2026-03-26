@@ -100,6 +100,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                         { from: currentPos, insert: insertText },
                     ],
                     selection: { anchor: currentPos + insertText.length },
+                    userEvent: "inline-toggles.auto-bullet"
                 });
                 return true;
             }
@@ -121,7 +122,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     } else {
                         view.dispatch({
                             changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" },
-                            userEvent: "delete.backward"
+                            userEvent: "inline-toggles.remove-toggle"
                         });
                         return true;
                     }
@@ -137,17 +138,18 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 view.dispatch({
                     changes: [
                         { from: selection.head, to: line.to, insert: "" },
-                        { from: finalPos, insert: insertText }
+                        { from: finalPos, insert: insertText },
                     ],
                     selection: { anchor: newCursorPos },
-                    userEvent: "input.type",
+                    userEvent: "inline-toggles.new-line",
                     scrollIntoView: false,
                 });
                 const foldStart = line.to - remainingText.length
                 const foldEnd = newCursorPos - prefix.length - (isAtEof ? 0 : 1)
                 if (foldStart != foldEnd){
+                    //Automatisch Ausklappen "rückgängig" machen
                     view.dispatch({
-                        effects: foldEffect.of({ from: foldStart, to: foldEnd})
+                        effects: foldEffect.of({ from: foldStart, to: foldEnd}),
                     });
                     //Visualization:
                     // view.dispatch({

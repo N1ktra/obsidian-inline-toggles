@@ -91,7 +91,7 @@ export class ToggleWidget extends WidgetType {
             view.dispatch({
                 effects: effects,
                 changes: { from: pos, to: pos + this.length, insert: newTag },
-                userEvent: "toggle.fold",
+                userEvent: "inline-toggles.toggle-fold",
             });
             requestAnimationFrame(() => {
                 const rectAfter = span.getBoundingClientRect();
@@ -114,6 +114,7 @@ export class ToggleWidget extends WidgetType {
                     { from: pos, to: pos + this.length, insert: newTag } //replace closed symbol
                 ],
                 selection: { anchor: currentPos + insertText.length },
+                userEvent: "inline-toggles.create-new-child"
             });
         }
     }

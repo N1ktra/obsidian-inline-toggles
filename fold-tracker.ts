@@ -62,6 +62,7 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: MyTogg
 
                 // --- Korrekt Falten ---
                 for (let tr of update.transactions) {
+                    if (tr.isUserEvent("inline-toggles")) continue;
                     for (let effect of tr.effects) {
                         if (effect.is(foldEffect)) {
                             const pos = effect.value.from;
