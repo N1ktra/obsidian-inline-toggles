@@ -4,7 +4,7 @@ import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
-import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
+import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
 import { buildLineDecorationFromAttributes } from "./toggle-styles";
 
@@ -109,12 +109,22 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                 const isAtEof = finalPos > state.doc.length
                 if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
 
-                // Falls Toggle Text leer ist, entfernen
+                // Falls Toggle Text leer ist -> einrücken -> dann entfernen
                 const textWithoutPlaceholder = line.text.slice(0, toggle.index) + line.text.slice(toggle.index + toggle.length);
-                const mdSymbols = extractMarkdownSymbols(line.text, [toggle.fullTag])
-                if (textWithoutPlaceholder.trim() === mdSymbols.trim()) {
-                    view.dispatch({ changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" } });
-                    return true;
+                const mdSymbols = extractMarkdownSymbols(line.text, settings.placeholder);
+                const hasIndent = /^[ \t]/.test(line.text);
+                const isEffectivelyEmpty = textWithoutPlaceholder.trim() === mdSymbols.trim();
+                if (isEffectivelyEmpty) {
+                    if (hasIndent) {
+                        indentLess(view);
+                        return true;
+                    } else {
+                        view.dispatch({
+                            changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" },
+                            userEvent: "delete.backward"
+                        });
+                        return true;
+                    }
                 }
 
                 // Rest der Zeile löschen und in nächster Zeile einfügen

@@ -30,17 +30,15 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
         return;
     }else{
         // FALL 2: Toggle einfügen
-        const newToggle = buildToggleTag(!(isCurrentlyFolded && hasChildren), settings.placeholder)
-        const insertPos = extractMarkdownSymbols(lineText, []).length
-        const shouldInsertBullet = settings.autoInsertBullet && insertPos === 0;
-        const textToInsert = `${shouldInsertBullet ? "- " : ""}${newToggle} `;
+        const newToggle = buildToggleTag(!(isCurrentlyFolded && hasChildren), settings.placeholder);
+        const mdSymbols = extractMarkdownSymbols(lineText, settings.placeholder);
+        const insertPos = mdSymbols.length;
+        const shouldInsertBullet = settings.autoInsertBullet && mdSymbols.trim() === "";
+        const textToInsert = `${shouldInsertBullet ? "- " : ""}${newToggle}${lineText[insertPos] === " " ? "" : " "}`;
         editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
 
         // Cursor-Positionierung
-        let newCh = cursor.ch <= insertPos
-            ? insertPos + textToInsert.length
-            : cursor.ch + textToInsert.length;
-
+        let newCh = cursor.ch <= insertPos ? insertPos + textToInsert.length : cursor.ch + textToInsert.length;
         editor.setCursor({ line: cursor.line, ch: newCh });
     }
 

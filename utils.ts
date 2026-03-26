@@ -181,23 +181,20 @@ export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
 //     return mdSymbols
 // }
 
-export function extractMarkdownSymbols(lineText: string, placeholders: string[]): string {
-    let firstPlaceholderIndex = -1;
-    for (const ph of placeholders) {
-        const idx = lineText.indexOf(ph);
+export function extractMarkdownSymbols(lineText: string, settings: PlaceholderSettings): string {
+    // 1. Das Toggle finden
+    const toggle = findToggle(lineText, settings);
+    const cleanText = toggle ? lineText.replace(toggle.fullTag, "") : lineText;
 
-        if (idx !== -1) {
-            if (firstPlaceholderIndex === -1 || idx < firstPlaceholderIndex) {
-                firstPlaceholderIndex = idx;
-            }
-        }
-    }
-    const textBeforePlaceholder = firstPlaceholderIndex !== -1
-        ? lineText.substring(0, firstPlaceholderIndex)
-        : lineText;
+    // 3. Regex Vorbereitung
+    const o = escapeRegex(settings.symbolOpen);
+    const c = escapeRegex(settings.symbolClosed);
+    const mdRegex = new RegExp(
+        `^([ \\t]*(?:(?:[-+*]|\\d+\\.)[ \\t]+(?:\\[[^${o}${c}\\s\\]]?\\][ \\t]+)?|#{1,6}[ \\t]+|>+[ \\t]+)?)`
+    );
 
-    const regex = /^([ \t]*(?:(?:[-+*]|\d+\.)[ \t]+(?:\[[^▲▼\]]?\][ \t]+)?|#{1,6}[ \t]+|>+[ \t]+))/;
-    const match = textBeforePlaceholder.match(regex);
-
-    return match ? match[0] : "";
+    const mdMatch = cleanText.match(mdRegex);
+    if (!mdMatch || mdMatch[0] === "") return "";
+    const result = mdMatch[0];
+    return result.trim() === "" ? result : result.trimEnd() + " ";
 }
