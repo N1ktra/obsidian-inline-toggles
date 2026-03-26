@@ -47,17 +47,15 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const line = state.doc.lineAt(pos);
                     const foldRange = foldable(state, line.from, line.to)
                     const isFoldable = foldRange != null
-                    const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : 0
+                    const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : line.number
+                    const numLines = lastlineNumber - line.number
 
                     const lineDecos = buildLineDecorationFromAttributes(toggle.attributes);
                     if (lineDecos) {
-                        applyRulesToLine(decorations, lineDecos, 0, lastlineNumber - line.number, line)
-                        if (foldRange){
-                            for (let i = line.number + 1; i <= lastlineNumber; i++) {
-                                const currentLine = state.doc.line(i);
-                                if (currentLine.text === "---") break;
-                                applyRulesToLine(decorations, lineDecos, i - line.number, lastlineNumber - line.number, currentLine)
-                            }
+                        for (let i = line.number; i <= lastlineNumber; i++) {
+                            const currentLine = state.doc.line(i);
+                            if (currentLine.text === "---") break;
+                            applyRulesToLine(decorations, lineDecos, i - line.number, numLines, currentLine)
                         }
                     }
 
