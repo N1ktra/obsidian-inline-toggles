@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
 
 export interface PlaceholderSettings {
@@ -124,5 +124,60 @@ export class MyToggleSettingTab extends PluginSettingTab {
                     this.plugin.settings.debugMode = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName("Danger Zone")
+            .addButton((btn) => {
+                btn.setButtonText("Reset all Settings")
+                    .setWarning()
+                    .onClick(async () => {
+                        new ConfirmResetModal(this.app, async () => {
+                            this.plugin.settings = structuredClone(DEFAULT_SETTINGS);
+                            await this.plugin.saveSettings();
+
+                            this.display();
+
+                            new Notice("Reset successful!");
+                        }).open();
+                    });
+            });
+    }
+}
+
+class ConfirmResetModal extends Modal {
+    onSubmit: () => void;
+
+    constructor(app: App, onSubmit: () => void) {
+        super(app);
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+
+        contentEl.createEl("h2", { text: "Reset all Settings?" });
+        contentEl.createEl("p", {
+            text: "Are you sure, you want to reset all Settings? All of your changes will be lost!"
+        });
+
+        // Die zwei Buttons nebeneinander
+        new Setting(contentEl)
+            .addButton((btn) => btn
+                .setButtonText("Cancel")
+                .onClick(() => {
+                    this.close(); // Schließt das Fenster, ohne etwas zu tun
+                }))
+            .addButton((btn) => btn
+                .setButtonText("Yes, Reset")
+                .setWarning() // Roter Button für Gefahr
+                .onClick(() => {
+                    this.onSubmit(); // Führt deine Reset-Logik aus
+                    this.close();    // Schließt das Fenster danach
+                }));
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty(); // Räumt den Speicher auf
     }
 }

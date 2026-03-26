@@ -54,7 +54,8 @@ export default class MyTogglePlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const loadedData = await this.loadData();
+        this.settings = this.deepMerge(DEFAULT_SETTINGS, loadedData);
     }
 
     async saveSettings() {
@@ -93,5 +94,33 @@ export default class MyTogglePlugin extends Plugin {
     // Wichtig: Beim Deaktivieren des Plugins aufräumen!
     onunload() {
         document.body.classList.remove('hide-gutter-arrows');
+    }
+
+    deepMerge<T extends object>(target: T, source: any): T {
+        // Wenn source leer oder kein Objekt ist, geben wir einfach die Defaults zurück
+        if (!source || typeof source !== 'object') return target;
+
+        // Wir erstellen eine frische Kopie des Ziels (Defaults)
+        const output = { ...target } as Record<string, any>;
+
+        for (const key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                const sourceValue = source[key];
+                const targetValue = output[key];
+
+                // Wenn BEIDE Werte Objekte sind (und keine Arrays) -> gehe eine Ebene tiefer!
+                if (
+                    sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue) &&
+                    targetValue && typeof targetValue === 'object' && !Array.isArray(targetValue)
+                ) {
+                    output[key] = this.deepMerge(targetValue, sourceValue);
+                } else {
+                    // Ansonsten (Strings, Booleans, Arrays) einfach überschreiben
+                    output[key] = sourceValue;
+                }
+            }
+        }
+
+        return output as T;
     }
 }
