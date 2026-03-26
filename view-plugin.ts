@@ -6,7 +6,7 @@ import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findTogg
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
-import { buildLineDecorationFromAttributes } from "./toggle-styles";
+import { applyRulesToLine, buildLineDecorationFromAttributes } from "./toggle-styles";
 import { LineStyleRule } from "./toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
@@ -38,7 +38,6 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
 
             let match;
             const decorations: Range<Decoration>[] = [];
-            // const builder = new RangeSetBuilder<Decoration>();
             for (const { from, to } of view.visibleRanges) {
                 const text = state.doc.sliceString(from, to);
                 this.regex.lastIndex = 0;
@@ -50,25 +49,14 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const isFoldable = foldRange != null
                     const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : 0
 
-                    const lineDeco = buildLineDecorationFromAttributes(toggle.attributes);
-                    if (lineDeco) {
-                        const hasSpecial = lineDeco.special.length > 0
-                        //First Line
-                        decorations.push(lineDeco.default.range(line.from, line.from));
-                        if(hasSpecial){
-                            const activeRule = lineDeco.special.find(rule => rule.condition(1, lastlineNumber))
-                            if (activeRule) decorations.push(activeRule.decoration.range(line.from, line.from))
-                        }
-                        //Folded lines
-                        if (foldRange) {
+                    const lineDecos = buildLineDecorationFromAttributes(toggle.attributes);
+                    if (lineDecos) {
+                        applyRulesToLine(decorations, lineDecos, 0, lastlineNumber - line.number, line)
+                        if (foldRange){
                             for (let i = line.number + 1; i <= lastlineNumber; i++) {
                                 const currentLine = state.doc.line(i);
                                 if (currentLine.text === "---") break;
-                                decorations.push(lineDeco.default.range(currentLine.from, currentLine.from));
-                                if(hasSpecial){
-                                    const activeRule = lineDeco.special.find(rule => rule.condition(i, lastlineNumber))
-                                    if (activeRule) decorations.push(activeRule.decoration.range(currentLine.from, currentLine.from))
-                                }
+                                applyRulesToLine(decorations, lineDecos, i - line.number, lastlineNumber - line.number, currentLine)
                             }
                         }
                     }
@@ -80,7 +68,6 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 }
             }
             return Decoration.set(decorations, true);
-            // return builder.finish();
         }
 
     }, {

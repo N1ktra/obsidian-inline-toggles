@@ -1,10 +1,18 @@
 import { Decoration } from "@codemirror/view";
+import { Line, Range } from "@codemirror/state";
 
 
 export type LineStyleRule = {
-    condition: (index: number, total: number) => boolean;
+    condition: (index: number, num_lines: number, lineText: string) => boolean;
     decoration: Decoration;
 };
+
+export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line){
+    const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text))
+    activeRules.forEach(rule =>{
+        decorations.push(rule.decoration.range(line.from, line.from))
+    })
+}
 
 function normalizeAttributes(attributes: Record<string, string>): Record<string, string>{
     // 1. Die Übersetzungs-Map für deine Kürzel
@@ -29,13 +37,12 @@ function normalizeAttributes(attributes: Record<string, string>): Record<string,
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
  */
-export function buildLineDecorationFromAttributes(attributes: Record<string, string>) {
-    if (!attributes || Object.keys(attributes).length === 0) return null;
+export function buildLineDecorationFromAttributes(attributes: Record<string, string>): LineStyleRule[] {
+    if (!attributes || Object.keys(attributes).length === 0) return [];
 
     const styleEntries: string[] = [];
     const classes: string[] = [];
-    const specialLineStlye: LineStyleRule[] = []
-
+    const lineStlyes: LineStyleRule[] = []
 
     // 2. Über alle übergebenen Attribute iterieren
     const attr = normalizeAttributes(attributes)
@@ -52,12 +59,12 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             const colorVar = `var(--callout-${value})`;
             styleEntries.push(`background-color: rgba(${colorVar}, 0.1)`);
             styleEntries.push(`border-left: 4px solid rgb(${colorVar})`);
-            specialLineStlye.push({
-                condition: (n) => n === 1,
+            lineStlyes.push({
+                condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
                 decoration: Decoration.line({
+                    class: "is-header",
                     attributes: {
-                        style: `${attr["font-weight"] ? "" : "font-weight: bold;"} ${attr["font-size"] ? "" : "font-size: 1.15em"}`,
-                        class: `${attr["class"] ? "" : 'is-header'}`
+                        style: "font-weight: bold; font-size: 1.15em;",
                     }
                 })
             })
@@ -76,10 +83,11 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     if (classes.length > 0) {
         finalAttributes['class'] = classes.join(' ');
     }
-    // console.log(finalAttributes)
 
-    return {
-        default: Decoration.line({ attributes: Object.keys(finalAttributes).length > 0 ? finalAttributes : undefined }),
-        special: specialLineStlye
-    };
+    // Die angegebenen Attribute anwenden (überschreibt bisherige LineStlyes)
+    lineStlyes.push({
+        condition: () => true,
+        decoration: Decoration.line({ attributes: Object.keys(finalAttributes).length > 0 ? finalAttributes : undefined }),
+    });
+    return lineStlyes;
 }
