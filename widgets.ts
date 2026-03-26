@@ -4,7 +4,7 @@ import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/langu
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { setIcon } from "obsidian";
-import { areAttributesEqual, buildToggleTag } from "utils";
+import { areAttributesEqual, buildToggleTag } from "./utils";
 
 export class ToggleWidget extends WidgetType {
     constructor(

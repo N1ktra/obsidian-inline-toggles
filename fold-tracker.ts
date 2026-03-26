@@ -1,13 +1,14 @@
 import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
-import { Line } from "@codemirror/state";
-import { getToggleRegex, parseToggleMatch, updateToggle } from "utils";
+import { Extension, Line } from "@codemirror/state";
+import { getToggleRegex, parseToggleMatch, updateToggle } from "./utils";
 import { MarkdownView } from "obsidian";
-import { MyToggleSettings } from "settings";
+import { MyToggleSettings } from "./settings";
+import MyTogglePlugin from "./main";
 
 
-export let foldTrackerSpec: any;
-export const createFoldTrackerPlugin = (plugin: any, settings: MyToggleSettings) => {
+export let foldTrackerSpec: Extension | null = null;
+export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: MyToggleSettings) => {
     if (!foldTrackerSpec) {
         foldTrackerSpec = ViewPlugin.fromClass(class {
             private cachedView: MarkdownView | null = null;

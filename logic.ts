@@ -12,7 +12,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     //check if line is folded
     const view = (editor as any).cm as EditorView;
     if (!view) return;
-    const cmLine = view.state.doc.line(cursor.line + 1);
+    const cmLine = view.state.doc.line(Math.min(cursor.line + 1, view.state.doc.lines));
     const isCurrentlyFolded = checkIfLineIsFoldedIn(view, cmLine);
     const hasChildren = checkIfLineHasChildren(view, cmLine);
 

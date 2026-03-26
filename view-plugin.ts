@@ -6,7 +6,7 @@ import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findTogg
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
-import { buildLineDecorationFromAttributes } from "toggle-styles";
+import { buildLineDecorationFromAttributes } from "./toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {

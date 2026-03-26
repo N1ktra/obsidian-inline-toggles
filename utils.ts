@@ -1,7 +1,7 @@
 import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
-import { MyToggleSettings, PlaceholderSettings } from "settings";
+import { MyToggleSettings, PlaceholderSettings } from "./settings";
 
 
 export interface ToggleMatch {
@@ -39,8 +39,8 @@ export function parseAttributes(match: RegExpExecArray, settings: PlaceholderSet
     const attrObj: Record<string, string> = {};
     if (match[2]) {
         match[2].split(settings.delimiter).forEach(pair => {
-            const [key, val] = pair.split('=');
-            if (key && val) attrObj[key.trim()] = val.trim();
+            const [key, val] = pair.split('=').map(s => s?.trim());
+            if (key && val) attrObj[key] = val;
         });
     }
     return attrObj;
