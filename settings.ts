@@ -12,6 +12,7 @@ export interface MyToggleSettings {
     placeholder: PlaceholderSettings; // Hier wird das Unter-Interface genutzt
     autoInsertBullet: boolean;
     hideGutterArrows: boolean;
+    standardToggleHeaderStyle: string;
     debugMode: boolean;
 }
 
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
     },
     autoInsertBullet: true,
     hideGutterArrows: true,
+    standardToggleHeaderStyle: "font-weight: bold; font-size: 1.15em;",
     debugMode: false
 }
 
@@ -112,6 +114,20 @@ export class MyToggleSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                     this.plugin.refreshGutterStyle();
                 }));
+         const headerSetting = new Setting(containerEl)
+            .setName("Standard Toggle Header Style")
+            .setDesc("Standard style for the header of a toggle, if it has the attribute 'type=...'")
+            .addText(text => {
+                text.inputEl.style.width = '100%'; // Nutzt die gesamte Breite
+                text.setValue(this.plugin.settings.standardToggleHeaderStyle)
+                    .onChange(async (value) => {
+                        this.plugin.settings.standardToggleHeaderStyle = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+        headerSetting.settingEl.style.display = 'block';
+        headerSetting.controlEl.style.marginTop = '10px';
+
 
         // --- DEBUG ---
         containerEl.createEl('h3', { text: 'System' });

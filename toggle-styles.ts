@@ -1,5 +1,6 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
+import { MyToggleSettings } from "./settings";
 
 
 export type LineStyleRule = {
@@ -37,7 +38,7 @@ function normalizeAttributes(attributes: Record<string, string>): Record<string,
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
  */
-export function buildLineDecorationFromAttributes(attributes: Record<string, string>): LineStyleRule[] {
+export function buildLineDecorationFromAttributes(attributes: Record<string, string>, settings: MyToggleSettings): LineStyleRule[] {
     if (!attributes || Object.keys(attributes).length === 0) return [];
 
     const styleEntries: string[] = [];
@@ -62,9 +63,9 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             lineStlyes.push({
                 condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
                 decoration: Decoration.line({
-                    class: "is-header",
                     attributes: {
-                        style: "font-weight: bold; font-size: 1.15em;",
+                        class: "is-header",
+                        style: settings.standardToggleHeaderStyle,
                     }
                 })
             })

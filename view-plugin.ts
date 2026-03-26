@@ -50,7 +50,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : line.number
                     const numLines = lastlineNumber - line.number
 
-                    const lineDecos = buildLineDecorationFromAttributes(toggle.attributes);
+                    const lineDecos = buildLineDecorationFromAttributes(toggle.attributes, settings);
                     if (lineDecos) {
                         for (let i = line.number; i <= lastlineNumber; i++) {
                             const currentLine = state.doc.line(i);
