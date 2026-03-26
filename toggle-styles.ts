@@ -1,5 +1,10 @@
 import { Decoration } from "@codemirror/view";
 
+
+export type LineStyleRule = {
+    condition: (index: number, total: number) => boolean;
+    decoration: Decoration;
+};
 /**
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
@@ -9,6 +14,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
 
     const styleEntries: string[] = [];
     const classes: string[] = [];
+    const specialLineStlye: LineStyleRule[] = []
 
     // 1. Die Übersetzungs-Map für deine Kürzel
     const translationMap: Record<string, string> = {
@@ -28,6 +34,15 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             const colorVar = `var(--callout-${value})`;
             styleEntries.push(`background-color: rgba(${colorVar}, 0.1)`);
             styleEntries.push(`border-left: 4px solid rgb(${colorVar})`);
+            specialLineStlye.push({
+                condition: (n) => n === 1,
+                decoration: Decoration.line({
+                    attributes: {
+                        style: "font-weight: bold; font-size: 1.15em",
+                        class: 'is-header'
+                    }
+                })
+            })
             continue; // Überspringe den Rest der Schleife für diesen Key
         }
 
@@ -54,7 +69,8 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     }
     // console.log(finalAttributes)
 
-    return Decoration.line({
-        attributes: Object.keys(finalAttributes).length > 0 ? finalAttributes : undefined
-    });
+    return {
+        default: Decoration.line({ attributes: Object.keys(finalAttributes).length > 0 ? finalAttributes : undefined }),
+        special: specialLineStlye
+    };
 }

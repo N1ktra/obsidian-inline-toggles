@@ -7,6 +7,7 @@ import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
 import { buildLineDecorationFromAttributes } from "./toggle-styles";
+import { LineStyleRule } from "./toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -47,16 +48,27 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const line = state.doc.lineAt(pos);
                     const foldRange = foldable(state, line.from, line.to)
                     const isFoldable = foldRange != null
+                    const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : 0
 
                     const lineDeco = buildLineDecorationFromAttributes(toggle.attributes);
                     if (lineDeco) {
-                        decorations.push(lineDeco.range(line.from, line.from));
+                        const hasSpecial = lineDeco.special.length > 0
+                        //First Line
+                        decorations.push(lineDeco.default.range(line.from, line.from));
+                        if(hasSpecial){
+                            const activeRule = lineDeco.special.find(rule => rule.condition(1, lastlineNumber))
+                            if (activeRule) decorations.push(activeRule.decoration.range(line.from, line.from))
+                        }
+                        //Folded lines
                         if (foldRange) {
-                            const lastLine = state.doc.lineAt(foldRange.to);
-                            for (let i = line.number + 1; i <= lastLine.number; i++) {
+                            for (let i = line.number + 1; i <= lastlineNumber; i++) {
                                 const currentLine = state.doc.line(i);
                                 if (currentLine.text === "---") break;
-                                decorations.push(lineDeco.range(currentLine.from, currentLine.from));
+                                decorations.push(lineDeco.default.range(currentLine.from, currentLine.from));
+                                if(hasSpecial){
+                                    const activeRule = lineDeco.special.find(rule => rule.condition(i, lastlineNumber))
+                                    if (activeRule) decorations.push(activeRule.decoration.range(currentLine.from, currentLine.from))
+                                }
                             }
                         }
                     }
