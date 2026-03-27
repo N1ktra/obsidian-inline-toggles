@@ -184,19 +184,18 @@ export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
 // }
 
 export function extractMarkdownSymbols(lineText: string, settings: PlaceholderSettings): string {
-    // 1. Das Toggle finden
     const toggle = findToggle(lineText, settings);
     const cleanText = toggle ? lineText.replace(toggle.fullTag, "") : lineText;
-
-    // 3. Regex Vorbereitung
-    const o = escapeRegex(settings.symbolOpen);
-    const c = escapeRegex(settings.symbolClosed);
     const mdRegex = new RegExp(
-        `^([ \\t]*(?:(?:[-+*]|\\d+\\.)[ \\t]+(?:\\[[^${o}${c}\\s\\]]?\\][ \\t]+)?|#{1,6}[ \\t]+|>+[ \\t]+)?)`
+        `^([ \\t]*(?:(?:[-+*]|\\d+\\.)[ \\t]+(?:\\[[ xX]\\][ \\t]+)?|#{1,6}[ \\t]+|>+[ \\t]+)?)`
     );
 
     const mdMatch = cleanText.match(mdRegex);
     if (!mdMatch || mdMatch[0] === "") return "";
     const result = mdMatch[0];
-    return result.trim() === "" ? result : result.trimEnd() + " ";
+
+    // Falls nur Whitespace gematcht wurde, geben wir diesen zurück,
+    // ansonsten stellen wir sicher, dass ein Leerzeichen am Ende steht.
+    const final = result.trim() === "" ? result : result.trimEnd() + " ";
+    return final;
 }
