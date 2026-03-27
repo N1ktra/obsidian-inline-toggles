@@ -32,14 +32,16 @@ export function getToggleRegex(settings: PlaceholderSettings): RegExp {
 
     // WICHTIG: (o|c) fängt das Symbol als Gruppe 1 ein
     // [^${b}]* fängt die Attribute als Gruppe 2 ein
-    return new RegExp(`${b}(${o}|${c})(?:${d}+([^${b}]*))?${b}`, 'g');
+    // return new RegExp(`${b}(${o}|${c})(?:${d}+([^${b}]*))?${b}`, 'g');
+    // Wir machen den Delimiter optional (${d}*) und erlauben, dass die Gruppe 2 direkt mit dem Text beginnt.
+    return new RegExp(`${b}(${o}|${c})${d}*([^${b}]*)?${b}`, 'g');
 }
 
-export function parseAttributes(match: RegExpExecArray, settings: PlaceholderSettings){
+export function parseAttributes(attrString: string | null, settings: PlaceholderSettings){
     const attrObj: Record<string, string> = {};
-    if (match[2]) {
-        match[2].split(settings.delimiter).forEach(pair => {
-            const [key, val] = pair.split('=').map(s => s?.trim());
+    if (attrString && attrString != "") {
+        attrString.split(settings.delimiter).forEach(pair => {
+            const [key, val] = pair.split(':').map(s => s?.trim());
             if (key && val) attrObj[key] = val;
         });
     }
@@ -57,7 +59,7 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
         length: match[0].length,
         symbol: match[1],
         isOpen: match[1] === settings.symbolOpen,
-        attributes: parseAttributes(match, settings)
+        attributes: parseAttributes(match[2], settings)
     };
 }
 
@@ -78,7 +80,7 @@ export function buildToggleTag(
     // 3. Die Attribute in das Format ":key=value" umwandeln
     // Wenn das Objekt leer ist, wird dieser String einfach leer ("")
     const attrPart = Object.entries(attributes)
-        .map(([key, value]) => `${settings.delimiter}${key}=${value}`)
+        .map(([key, value]) => `${settings.delimiter}${key}: ${value}`)
         .join("");
 
     // 4. Alles zusammenfügen: Border + Icon + Attribute + Border
@@ -117,7 +119,7 @@ export function parseToggleMatch(
         length: match[0].length,
         symbol: foundSymbol,
         isOpen: foundSymbol === settings.symbolOpen,
-        attributes: parseAttributes(match, settings)
+        attributes: parseAttributes(match[2], settings)
     };
 }
 
