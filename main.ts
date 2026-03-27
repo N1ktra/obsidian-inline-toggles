@@ -1,8 +1,9 @@
 import { MarkdownView, Plugin } from 'obsidian';
 import { createToggleViewPlugin, createToggleEnterFix } from './view-plugin';
-import { insertOrRemoveToggle, scanAndApplyFold } from './logic';
+import { editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './logic';
 import { createFoldTrackerPlugin, foldTrackerSpec } from './fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
+import { findToggle } from './utils';
 
 export default class MyTogglePlugin extends Plugin {
     settings!: MyToggleSettings;
@@ -22,7 +23,7 @@ export default class MyTogglePlugin extends Plugin {
 
         // Befehl zum Einfügen
         this.addCommand({
-            id: 'insert-toggle',
+            id: 'inline-toggles.insert-toggle',
             name: 'Insert/Remove Toggle',
             icon: 'play',
             hotkeys: [{
@@ -35,13 +36,25 @@ export default class MyTogglePlugin extends Plugin {
         });
 
         this.addCommand({
-            id: 'reset-foldings',
+            id: 'inline-toggles.reset-foldings',
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
             editorCallback: (editor) => {
                 scanAndApplyFold(this.app, this.settings);
             }
         });
+
+        this.addCommand({
+            id: 'inline-toggles.edit-attributes',
+            name: 'Edit Attributes',
+            editorCallback: async (editor) => {
+                const cursor = editor.getCursor();
+                const lineText = editor.getLine(cursor.line)
+                const toggle = findToggle(lineText, this.settings.placeholder)
+                if (!toggle) return
+                await editToggleAttributes(toggle, cursor.line, editor, this.app, this.settings.placeholder);
+            }
+        })
 
         // Auto-Fold beim Tab-Wechsel
         this.registerEvent(

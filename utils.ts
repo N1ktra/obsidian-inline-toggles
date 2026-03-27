@@ -11,6 +11,7 @@ export interface ToggleMatch {
     symbol: string;
     isOpen: boolean;      // Status (true = offen, false = geschlossen)
     attributes: Record<string, string>; // Die Flags als Objekt: { bg: "red" }
+    attributeString: string;
 }
 /**
  * Escaped Sonderzeichen in einem String, damit sie sicher in einem Regex
@@ -59,7 +60,8 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
         length: match[0].length,
         symbol: match[1],
         isOpen: match[1] === settings.symbolOpen,
-        attributes: parseAttributes(match[2], settings)
+        attributes: parseAttributes(match[2], settings),
+        attributeString: match[2],
     };
 }
 
@@ -72,7 +74,8 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
 export function buildToggleTag(
     isOpen: boolean,
     settings: PlaceholderSettings,
-    attributes: Record<string, string> = {}
+    attributes: Record<string, string> = {},
+    attributeString?: string,
 ): string {
     const b = settings.borderSymbol;
     const icon = isOpen ? settings.symbolOpen : settings.symbolClosed;
@@ -84,7 +87,7 @@ export function buildToggleTag(
         .join("");
 
     // 4. Alles zusammenfügen: Border + Icon + Attribute + Border
-    return `${b}${icon}${attrPart}${b}`;
+    return `${b}${icon}${attributeString ?? attrPart}${b}`;
 }
 
 /**
@@ -93,14 +96,15 @@ export function buildToggleTag(
 export function updateToggle(
     toggle: ToggleMatch,
     settings: PlaceholderSettings,
-    changes: { isOpen?: boolean; attributes?: Record<string, string> }
+    changes: { isOpen?: boolean; attributes?: Record<string, string>; attributeString?: string}
 ): string {
     // Wenn in 'changes' nichts steht, nehmen wir die alten Werte aus 'toggle'
-    const newState = changes.isOpen !== undefined ? changes.isOpen : toggle.isOpen;
-    const newAttrs = changes.attributes !== undefined ? changes.attributes : toggle.attributes;
+    const newState = changes.isOpen ?? toggle.isOpen;
+    const newAttrs = changes.attributes ?? toggle.attributes;
+    const newAttrString = changes.attributeString ?? toggle.attributeString
 
     // Nutzt unsere bewährte build-Funktion
-    return buildToggleTag(newState, settings, newAttrs);
+    return buildToggleTag(newState, settings, newAttrs, newAttrString);
 }
 
 /**
@@ -119,7 +123,8 @@ export function parseToggleMatch(
         length: match[0].length,
         symbol: foundSymbol,
         isOpen: foundSymbol === settings.symbolOpen,
-        attributes: parseAttributes(match[2], settings)
+        attributes: parseAttributes(match[2], settings),
+        attributeString: match[2] || "",
     };
 }
 
