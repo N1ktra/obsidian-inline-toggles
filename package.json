@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "inline-toggles",
 	"version": "1.0.0",
-	"description": "This is an example plugin for Obsidian. This plugin counts the lines of the active file and prints it in the status bar.",
+	"description": "This is an Obsidian Plugin that saves and restores the toggle state reliably.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
