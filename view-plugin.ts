@@ -1,5 +1,5 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
-import { RangeSetBuilder, Text, Prec, Range } from "@codemirror/state";
+import { RangeSetBuilder, Text, Prec, Range, RangeSet } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
 import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
@@ -11,12 +11,14 @@ import { LineStyleRule } from "./toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
-        decorations: DecorationSet;
+        decorations: DecorationSet = Decoration.none;
+        atomicDecorations: DecorationSet = Decoration.none
+        normalDecorations: DecorationSet = Decoration.none
         regex: RegExp;
 
         constructor(view: EditorView) {
             this.regex = getToggleRegex(settings.placeholder);
-            this.decorations = this.buildDecorations(view);
+            this.buildDecorations(view);
         }
 
         update(update: ViewUpdate) {
@@ -24,7 +26,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
 
             // Icons zeichnen
             if (update.docChanged || update.viewportChanged || update.focusChanged || modeChanged) {
-                this.decorations = this.buildDecorations(update.view);
+                this.buildDecorations(update.view);
             }
         }
 
@@ -37,7 +39,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             }
 
             let match;
-            const decorations: Range<Decoration>[] = [];
+            const atomicList: Range<Decoration>[] = [];
+            const normalList: Range<Decoration>[] = [];
             for (const { from, to } of view.visibleRanges) {
                 const text = state.doc.sliceString(from, to);
                 this.regex.lastIndex = 0;
@@ -55,22 +58,30 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         for (let i = line.number; i <= lastlineNumber; i++) {
                             const currentLine = state.doc.line(i);
                             if (currentLine.text === "---") break;
-                            applyRulesToLine(decorations, lineDecos, i - line.number, numLines, currentLine)
+                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine)
                         }
                     }
 
                     const widgetDeco = Decoration.replace({
                         widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributes, settings, toggle.length)
                     });
-                    decorations.push(widgetDeco.range(pos, pos + match[0].length));
+                    atomicList.push(widgetDeco.range(pos, pos + match[0].length));
                 }
             }
-            return Decoration.set(decorations, true);
+
+            this.atomicDecorations = Decoration.set(atomicList, true);
+            this.normalDecorations = Decoration.set(normalList, true);
+
+            // 3. Zusammenführen für die Anzeige
+            this.decorations = RangeSet.join([this.atomicDecorations, this.normalDecorations]);
         }
 
     }, {
         decorations: v => v.decorations,
-        provide: p => [EditorView.atomicRanges.of(v => v.plugin(p)?.decorations || Decoration.none)]
+        provide: p => [
+            // Das sorgt dafür, dass nur die Widgets "atomic" sind
+            EditorView.atomicRanges.of(v => v.plugin(p)?.atomicDecorations || Decoration.none)
+        ]
     });
 };
 
