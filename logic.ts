@@ -77,15 +77,10 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
 }
 
 export async function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
-    const prompt = new CommandStylePrompt(
-        app,
-        "Edit Attributes...",
-        toggle.attributeString ?? ""
-    );
+    // Wir öffnen das Modal und geben ihm mit, was es bei Erfolg tun soll
+    const prompt = new CommandStylePrompt(app, "Edit Attributes:", toggle.attributeString ?? "", (userInput) => {
 
-    const userInput = await prompt.openAndGetValue();
-
-    if (userInput !== null) {
+        // Dieser Code wird nur ausgeführt, wenn der User auf "Speichern" klickt
         const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
 
         editor.replaceRange(
@@ -93,5 +88,12 @@ export async function editToggleAttributes(toggle: ToggleMatch, lineNumber: numb
             { line: lineNumber, ch: toggle.index },
             { line: lineNumber, ch: toggle.index + toggle.length }
         );
-    }
+
+    });
+
+    prompt.open();
+
+    // Das Feld fokussieren und initialen Text setzen
+    prompt.inputEl.value = toggle.attributeString ?? "";
+    prompt.inputEl.focus();
 }
