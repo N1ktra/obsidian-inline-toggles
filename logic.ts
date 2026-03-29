@@ -4,7 +4,7 @@ import { checkIfLineHasChildren, checkIfLineIsFoldedIn, getToggleRegex, extractM
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
-import { askUser } from './modals';
+import { CommandStylePrompt } from './modals';
 
 export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
     const cursor = editor.getCursor();
@@ -76,14 +76,22 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     }
 }
 
-export async function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, seettings: PlaceholderSettings){
-    const userInput = await askUser(app, "Edit Attributes of Toggle:", "Enter a CSS-Style String...", toggle.attributeString);
-    const newToggleString = updateToggle(toggle, seettings, {attributeString: userInput});
-    if (userInput) {
-        console.log(userInput)
-        editor.replaceRange(newToggleString,
+export async function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
+    const prompt = new CommandStylePrompt(
+        app,
+        "Edit Attributes...",
+        toggle.attributeString ?? ""
+    );
+
+    const userInput = await prompt.openAndGetValue();
+
+    if (userInput !== null) {
+        const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
+
+        editor.replaceRange(
+            newToggleString,
             { line: lineNumber, ch: toggle.index },
             { line: lineNumber, ch: toggle.index + toggle.length }
-        )
+        );
     }
 }

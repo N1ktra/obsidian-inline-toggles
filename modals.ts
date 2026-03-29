@@ -1,76 +1,45 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, SuggestModal } from "obsidian";
 
-export async function askUser(app: App, title: string, label: string, placeholder: string): Promise<string> {
-    return new Promise((resolve) => {
-        new PromptModal(app, title, label, placeholder, (result) => {
-            resolve(result);
-        }).open();
-    });
-}
+export class CommandStylePrompt extends SuggestModal<string> {
+    private resolve?: (value: string | null) => void;
+    private initialValue: string;
 
-// Eine generische Modal-Klasse
-export class PromptModal extends Modal {
-    private result: string = "";
-
-    constructor(
-        app: App,
-        private title: string,
-        private label: string,
-        private placeholder: string,
-        private onSubmit: (result: string) => void
-    ) {
+    constructor(app: App, placeholder: string, initialValue: string) {
         super(app);
+        this.setPlaceholder(placeholder);
+        this.initialValue = initialValue;
+
+        // Das sorgt dafür, dass das Modal oben klebt (wie die Palette)
+        this.modalEl.addClass("mod-complex");
     }
 
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl("h2", { text: this.title });
+    // Diese Methode wird aufgerufen, um die "Vorschläge" anzuzeigen
+    getSuggestions(query: string): string[] {
+        // Wir geben einfach den aktuellen Input als einzigen "Vorschlag" zurück
+        // So kann der User mit Enter bestätigen
+        return [query || this.initialValue];
+    }
 
-        const inputSetting = new Setting(contentEl)
-            .setName(this.label)
-            // Wir machen das Label unsichtbar oder setzen es darüber,
-            // damit das Textfeld die ganze Breite nutzen kann
-            .addText((text) => {
-                text.setValue(this.placeholder);
-                text.onChange((value) => (this.result = value));
+    renderSuggestion(value: string, el: HTMLElement) {
+        el.createEl("div", { text: `Bestätigen: ${value}` });
+        el.addClass("mod-complex");
+    }
 
-                // 1. Die Textbox breit machen
-                text.inputEl.style.width = "100%";
+    onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
+        if (this.resolve)
+            this.resolve(item);
+    }
 
-                // 2. Event Listener für die Enter-Taste
-                text.inputEl.addEventListener("keydown", (event: KeyboardEvent) => {
-                    if (event.key === "Enter") {
-                        // Verhindert, dass das Enter-Event andere Funktionen auslöst
-                        // oder einen Zeilenumbruch im Editor erzeugt
-                        event.preventDefault();
-                        event.stopPropagation();
+    // Hilfsfunktion, um es mit async/await nutzbar zu machen
+    async openAndGetValue(): Promise<string | null> {
+        return new Promise((resolve) => {
+            this.resolve = resolve;
+            this.open();
 
-                        this.close();
-                        this.onSubmit(this.result);
-                    }
-                });
-
-                // Fokus setzen
-                setTimeout(() => text.inputEl.focus(), 10);
-            });
-
-        // 1. Das gesamte Setting-Item auf Block umstellen
-        inputSetting.settingEl.style.display = "block";
-        inputSetting.settingEl.style.borderTop = "none"; // Optional: Trennlinie oben entfernen
-
-        // 2. Abstand unter dem Label (Name/Description Bereich) vergrößern
-        // .infoEl ist der Container für Name und Desc
-        inputSetting.infoEl.style.marginBottom = "15px";
-
-        // 3. Sicherstellen, dass die Controls (Input) auch 100% nutzen
-        inputSetting.controlEl.style.width = "100%";
-
-        new Setting(contentEl)
-            .addButton((btn) =>
-                btn.setButtonText("OK").setCta().onClick(() => {
-                    this.close();
-                    this.onSubmit(this.result);
-                })
-            );
+            // Setzt den initialen Wert in das Input-Feld
+            const inputEl = this.inputEl;
+            inputEl.value = this.initialValue;
+            inputEl.focus();
+        });
     }
 }
