@@ -35,6 +35,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
             const { state } = view;
             if (state.field(editorLivePreviewField) === false) {
                 this.decorations = Decoration.none;
+                this.normalDecorations = Decoration.none;
+                this.atomicDecorations = Decoration.none;
                 return;
             }
 
