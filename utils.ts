@@ -156,10 +156,10 @@ export function checkIfLineHasChildren(view: EditorView, line: Line): boolean {
 /**
  * Prüft, ob eine Zeile eingeklappt ist
  */
-export function checkIfLineIsFoldedIn(view: EditorView, line: Line): boolean {
+export function checkIfToggleIsFoldedIn(view: EditorView, line: Line): boolean {
     const state = view.state;
     const range = foldable(state, line.from, line.to);
-    if (!range) return true;
+    if (!range) return true; //soll true sein, denn ein Toggle ohne Kinder wird als eingeklappt behandelt
 
     let isFolded = false;
     const folded = foldedRanges(state);

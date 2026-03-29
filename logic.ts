@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from './settings';
-import { checkIfLineHasChildren, checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch } from './utils';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch } from './utils';
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -14,7 +14,7 @@ export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings)
     const view = (editor as any).cm as EditorView;
     if (!view) return;
     const cmLine = view.state.doc.line(Math.min(cursor.line + 1, view.state.doc.lines));
-    const isCurrentlyFolded = checkIfLineIsFoldedIn(view, cmLine);
+    const isCurrentlyFolded = checkIfToggleIsFoldedIn(view, cmLine);
     const hasChildren = checkIfLineHasChildren(view, cmLine);
 
     const toggle = findToggle(lineText, settings.placeholder)
@@ -57,7 +57,7 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
         const range = foldable(view.state, line.from, line.to)
         if (!range) continue
 
-        const lineIsFolded = checkIfLineIsFoldedIn(view, line)
+        const lineIsFolded = checkIfToggleIsFoldedIn(view, line)
         const toggle = findToggle(line.text, settings.placeholder);
         if (!toggle) continue
         if (!toggle.isOpen && !lineIsFolded) {

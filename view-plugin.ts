@@ -2,12 +2,11 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec, Range, RangeSet } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkIfLineIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
+import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
 import { applyRulesToLine, buildLineDecorationFromAttributes } from "./toggle-styles";
-import { LineStyleRule } from "./toggle-styles";
 
 export const createToggleViewPlugin = (settings: MyToggleSettings) => {
     return ViewPlugin.fromClass(class {
@@ -59,7 +58,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         attributes: { style: "font-size: 0; opacity: 0;" }
                     });
                     const widgetDeco = Decoration.replace({
-                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributes, settings, toggle.length)
+                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributeString, toggle.length, settings)
                     });
                     atomicList.push(hideText.range(pos, pos + match[0].length));
                     atomicList.push(widgetDeco.range(pos, pos + match[0].length));
@@ -111,11 +110,11 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             if (!toggle) return false;
 
             // Auswahl ist noch vor dem Toggle -> Dann nichts anders machen
-            if (state.selection.mainIndex < toggle.index){
+            if (selection.anchor - line.from <= toggle.index){
                 return false;
             }
 
-            const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
+            const lineIsFoldedIn = checkIfToggleIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
                 insertNewlineAndIndent(view);
                 indentMore(view);

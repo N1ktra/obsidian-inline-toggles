@@ -9,17 +9,19 @@ import { areAttributesEqual, buildToggleTag } from "./utils";
 export class ToggleWidget extends WidgetType {
     constructor(
         readonly isOpen: boolean,
-        readonly hasContent: boolean,
-        readonly attributes: Record<string, string>,
+        readonly hasChildren: boolean,
+        readonly attributeString: string,
+        readonly fullLength: number,
         readonly settings: MyToggleSettings,
-        readonly length: number
+
     ) { super(); }
 
     eq(other: ToggleWidget) {
         // 1. Einfache Werte zuerst (Booleans sind blitzschnell)
         if (this.isOpen !== other.isOpen) return false;
-        if (this.hasContent !== other.hasContent) return false;
-        if (this.length !== other.length) return false;
+        if (this.hasChildren !== other.hasChildren) return false;
+        if (this.fullLength !== other.fullLength) return false;
+        if (this.attributeString === other.attributeString) return false;
 
         // 2. Referenz-Check für Settings
         if (this.settings.placeholder !== other.settings.placeholder) {
@@ -28,8 +30,7 @@ export class ToggleWidget extends WidgetType {
             if (this.settings.placeholder.borderSymbol !== other.settings.placeholder.borderSymbol) return false;
         }
 
-        // 3. Vergleich der Attribute (z.B. :bg=red)
-        return areAttributesEqual(this.attributes, other.attributes);
+        return true;
     }
 
     toDOM(view: EditorView) {
@@ -39,7 +40,7 @@ export class ToggleWidget extends WidgetType {
 
         // Initialen Zustand im DOM speichern
         span.classList.add(this.isOpen ? "is-open" : "is-closed");
-        span.classList.add(this.hasContent ? "has-content" : "is-empty");
+        span.classList.add(this.hasChildren ? "has-content" : "is-empty");
         setIcon(span, "play");
         span.onclick = (e) => this.handleClick(e, view, span);
         span.onmousedown = (event: MouseEvent) => {
@@ -56,7 +57,7 @@ export class ToggleWidget extends WidgetType {
     updateDOM(dom: HTMLElement, view: EditorView): boolean {
         if(this.isOpen) dom.classList.replace("is-closed", "is-open");
         else dom.classList.replace("is-open", "is-closed");
-        if(this.hasContent) dom.classList.replace("is-empty", "has-content");
+        if(this.hasChildren) dom.classList.replace("is-empty", "has-content");
         else dom.classList.replace("has-content", "is-empty");
         dom.onclick = (e) => this.handleClick(e, view, dom);
         return true;
@@ -87,10 +88,10 @@ export class ToggleWidget extends WidgetType {
                     effects.push(unfoldEffect.of(range));
                 }
             }
-            const newTag = buildToggleTag(!this.isOpen, this.settings.placeholder, this.attributes)
+            const newTag = buildToggleTag(!this.isOpen, this.settings.placeholder, undefined, this.attributeString)
             view.dispatch({
                 effects: effects,
-                changes: { from: pos, to: pos + this.length, insert: newTag },
+                changes: { from: pos, to: pos + this.fullLength, insert: newTag },
                 userEvent: "inline-toggles.toggle-fold",
             });
             requestAnimationFrame(() => {
@@ -107,11 +108,11 @@ export class ToggleWidget extends WidgetType {
             indentMore(view);
             const currentPos = view.state.selection.main.from;
             const insertText = this.settings.autoInsertBullet ? "- " : "";
-            const newTag = buildToggleTag(true, this.settings.placeholder, this.attributes)
+            const newTag = buildToggleTag(true, this.settings.placeholder, undefined, this.attributeString)
             view.dispatch({
                 changes: [
                     { from: currentPos, insert: insertText },
-                    { from: pos, to: pos + this.length, insert: newTag } //replace closed symbol
+                    { from: pos, to: pos + this.fullLength, insert: newTag } //replace closed symbol
                 ],
                 selection: { anchor: currentPos + insertText.length },
                 userEvent: "inline-toggles.create-new-child"
