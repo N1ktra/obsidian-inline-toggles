@@ -9,10 +9,17 @@ export type LineStyleRule = {
     isMark?: boolean
 };
 
-export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line){
+export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line, toggleIndex: number){
     const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text))
     activeRules.forEach(rule =>{
-        decorations.push(rule.decoration.range(line.from, rule.isMark ? line.to : line.from))
+        if (rule.isMark){
+            if (toggleIndex > line.from)
+                decorations.push(rule.decoration.range(line.from, toggleIndex))
+            if (line.to > toggleIndex)
+                decorations.push(rule.decoration.range(toggleIndex, line.to))
+        }else{
+            decorations.push(rule.decoration.range(line.from, line.from))
+        }
     })
 }
 
