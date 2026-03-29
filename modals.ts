@@ -4,7 +4,6 @@ export class CommandStylePrompt extends SuggestModal<string> {
     private initialValue: string;
     private onSubmit: (value: string) => void;
 
-    // Wir übergeben eine onSubmit-Funktion an den Konstruktor
     constructor(app: App, placeholder: string, initialValue: string, onSubmit: (value: string) => void) {
         super(app);
         this.setPlaceholder(placeholder);
@@ -13,8 +12,17 @@ export class CommandStylePrompt extends SuggestModal<string> {
         this.modalEl.addClass("mod-complex");
     }
 
+    // Wird automatisch ausgeführt, sobald .open() aufgerufen wird
+    onOpen() {
+        super.onOpen();
+        this.inputEl.value = this.initialValue;
+        // Zwingt Obsidian, die Vorschläge mit dem neuen Wert zu aktualisieren
+        this.inputEl.dispatchEvent(new Event('input'));
+    }
+
     getSuggestions(query: string): string[] {
-        return [query || this.initialValue, "CANCEL"];
+        // Wir nehmen exakt das, was im Feld steht, auch wenn es leer ("") ist
+        return [this.inputEl.value, "CANCEL"];
     }
 
     renderSuggestion(value: string, el: HTMLElement) {
@@ -22,18 +30,15 @@ export class CommandStylePrompt extends SuggestModal<string> {
             el.createEl("div", { text: "X Cancel" });
             el.style.color = "var(--text-error)";
         } else {
-            el.createEl("div", { text: `Save: ${value}` });
+            // Visuelles Feedback, damit der User sieht, dass er gerade alles löscht
+            const displayText = value === "" ? "(Remove all Attributes)" : value;
+            el.createEl("div", { text: `New String: '${displayText}'` });
         }
     }
 
     onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
-        // Wenn nicht abgebrochen wurde, führen wir einfach die übergebene Funktion aus
         if (item !== "CANCEL") {
-            this.onSubmit(item);
+            this.onSubmit(item); // Kann jetzt auch ein leerer String "" sein
         }
     }
-
-    // WICHTIG: Kein onClose nötig! Kein Promise, kein Timeout.
-    // Wenn der User ESC drückt oder daneben klickt, geht das Modal einfach zu
-    // und es passiert nichts. Genau so ist Obsidian designt.
 }
