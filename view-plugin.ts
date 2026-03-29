@@ -86,6 +86,11 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
             const toggle = findToggle(line.text, settings.placeholder)
             if (!toggle) return false;
 
+            // Auswahl ist noch vor dem Toggle -> Dann nichts anders machen
+            if (state.selection.mainIndex < toggle.index){
+                return false;
+            }
+
             const lineIsFoldedIn = checkIfLineIsFoldedIn(view, line)
             if (!lineIsFoldedIn){ //ausgeklappt
                 insertNewlineAndIndent(view);
