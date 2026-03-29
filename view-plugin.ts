@@ -62,9 +62,14 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         }
                     }
 
+                    //Der Text wird unsichtbar (0px), aber er bleibt da. Das gibt dem Cursor eine echte "Heimat" zum Blinken.
+                    const hideText = Decoration.mark({
+                        attributes: { style: "font-size: 0; opacity: 0;" }
+                    });
                     const widgetDeco = Decoration.replace({
                         widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributes, settings, toggle.length)
                     });
+                    atomicList.push(hideText.range(pos, pos + match[0].length));
                     atomicList.push(widgetDeco.range(pos, pos + match[0].length));
                 }
             }
