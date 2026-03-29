@@ -6,12 +6,13 @@ import { MyToggleSettings } from "./settings";
 export type LineStyleRule = {
     condition: (index: number, num_lines: number, lineText: string) => boolean;
     decoration: Decoration;
+    isMark?: boolean
 };
 
 export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line){
     const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text))
     activeRules.forEach(rule =>{
-        decorations.push(rule.decoration.range(line.from, line.from))
+        decorations.push(rule.decoration.range(line.from, rule.isMark ? line.to : line.from))
     })
 }
 
@@ -59,12 +60,13 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
         if (key === 'type') {
             const colorVar = `var(--callout-${value})`;
             styleEntries.push(`background-color: rgba(${colorVar}, 0.1)`);
-            styleEntries.push(`border-left: 4px solid rgb(${colorVar})`);
+            styleEntries.push(`box-shadow: inset 4px 0 0 0 rgb(${colorVar})`)
             lineStlyes.push({
                 condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
-                decoration: Decoration.line({
+                isMark: true,
+                decoration: Decoration.mark({
                     attributes: {
-                        class: "is-header",
+                        class: "toggle-header",
                         style: settings.standardToggleHeaderStyle,
                     }
                 })
