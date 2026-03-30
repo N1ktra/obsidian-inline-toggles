@@ -204,3 +204,13 @@ export function extractMarkdownSymbols(lineText: string, settings: PlaceholderSe
     const final = result.trim() === "" ? result : result.trimEnd() + " ";
     return final;
 }
+
+export function setSelection(view: EditorView, from: number, to: number){
+    requestAnimationFrame(() => {
+        //Visualization:
+        view.dispatch({
+            selection: { anchor: from, head: to },
+            scrollIntoView: true
+        });
+    });
+}

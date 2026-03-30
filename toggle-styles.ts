@@ -17,14 +17,14 @@ function createLineDeco(style: string){
     })
 }
 
-export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line, toggleIndex: number, isFoldedIn: boolean){
+export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line, togglePos: number, isFoldedIn: boolean){
     const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text, isFoldedIn))
     activeRules.forEach(rule =>{
         if (rule.isMark){
-            if (toggleIndex > line.from)
-                decorations.push(rule.decoration.range(line.from, toggleIndex))
-            if (line.to > toggleIndex)
-                decorations.push(rule.decoration.range(toggleIndex, line.to))
+            if (togglePos > line.from)
+                decorations.push(rule.decoration.range(line.from, togglePos))
+            if (line.to > togglePos)
+                decorations.push(rule.decoration.range(togglePos, line.to))
         }else{
             decorations.push(rule.decoration.range(line.from, line.from))
         }
@@ -88,7 +88,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             })
             lineStlyes.push({
                 condition: (index) => index === 0,
-                decoration: createLineDeco("padding-top: 5px; border-radius: 5px 5px 0 0")
+                decoration: createLineDeco("padding-top: 10px; border-radius: 5px 5px 0 0")
             })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0 && isFoldedIn,

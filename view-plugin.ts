@@ -2,7 +2,7 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap }
 import { RangeSetBuilder, Text, Prec, Range, RangeSet } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "./settings";
-import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch } from "./utils";
+import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch, setSelection } from "./utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
 import { editorLivePreviewField } from "obsidian";
@@ -49,8 +49,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 let previousToggleLine = -1;
                 while ((match = this.regex.exec(text)) !== null) {
                     const toggle = parseToggleMatch(match, settings.placeholder);
-                    const pos = from + toggle.index;
-                    const line = state.doc.lineAt(pos);
+                    const togglePos = from + toggle.index;
+                    const line = state.doc.lineAt(togglePos);
 
                     // Toggle Widget
                     const foldRange = foldable(state, line.from, line.to);
@@ -63,8 +63,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const widgetDeco = Decoration.replace({
                         widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributeString, toggle.length, settings)
                     });
-                    atomicList.push(hideText.range(pos, pos + match[0].length));
-                    atomicList.push(widgetDeco.range(pos, pos + match[0].length));
+                    atomicList.push(hideText.range(togglePos, togglePos + match[0].length));
+                    atomicList.push(widgetDeco.range(togglePos, togglePos + match[0].length));
 
                     // Falls mehrere Widgets in einer Zeile sind, nicht doppelt das Line Styling
                     if (previousToggleLine === line.number) continue;
@@ -80,10 +80,10 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                             const currentLine = state.doc.line(i);
                             if (currentLine.text === "---"){
                                 //Falls --- soll die vorherige Zeile unten abgerundet sein, als wäre sie die letzte
-                                applyRulesToLine(normalList, lineDecos, i - numLines, i - numLines, previousLine, toggle.index, isFoldedIn)
+                                applyRulesToLine(normalList, lineDecos, i - numLines, i - numLines, previousLine, togglePos, isFoldedIn)
                                 break;
                             }
-                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, toggle.index, isFoldedIn)
+                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, togglePos, isFoldedIn)
                             previousLine = currentLine
                         }
                     }
@@ -186,10 +186,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                         effects: foldEffect.of({ from: foldStart, to: foldEnd}),
                     });
                     //Visualization:
-                    // view.dispatch({
-                    //     selection: { anchor: foldStart, head: foldEnd },
-                    //     scrollIntoView: true
-                    // });
+                    // setSelection(view, foldStart, foldEnd);
                 }
 
                 return true;
