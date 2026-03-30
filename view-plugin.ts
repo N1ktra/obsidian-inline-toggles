@@ -48,13 +48,14 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                 this.regex.lastIndex = 0;
                 let previousToggleLine = -1;
                 while ((match = this.regex.exec(text)) !== null) {
-                    const toggle = parseToggleMatch(match, settings.placeholder)
+                    const toggle = parseToggleMatch(match, settings.placeholder);
                     const pos = from + toggle.index;
                     const line = state.doc.lineAt(pos);
 
                     // Toggle Widget
-                    const foldRange = foldable(state, line.from, line.to)
-                    const isFoldable = foldRange != null
+                    const foldRange = foldable(state, line.from, line.to);
+                    const isFoldable = foldRange != null;
+                    const isFoldedIn = checkIfToggleIsFoldedIn(view, line);
                     //Der Text wird unsichtbar (0px), aber er bleibt da. Das gibt dem Cursor eine echte "Heimat" zum Blinken.
                     const hideText = Decoration.mark({
                         attributes: { style: "font-size: 0; opacity: 0;" }
@@ -77,7 +78,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         for (let i = line.number; i <= lastlineNumber; i++) {
                             const currentLine = state.doc.line(i);
                             if (currentLine.text === "---") break;
-                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, toggle.index)
+                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, toggle.index, isFoldedIn)
                         }
                     }
                 }
