@@ -74,11 +74,17 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                     const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : line.number
                     const numLines = lastlineNumber - line.number
                     const lineDecos = buildLineDecorationFromAttributes(toggle.attributes, settings);
+                    let previousLine = line;
                     if (lineDecos) {
                         for (let i = line.number; i <= lastlineNumber; i++) {
                             const currentLine = state.doc.line(i);
-                            if (currentLine.text === "---") break;
+                            if (currentLine.text === "---"){
+                                //Falls --- soll die vorherige Zeile unten abgerundet sein, als wäre sie die letzte
+                                applyRulesToLine(normalList, lineDecos, i - numLines, i - numLines, previousLine, toggle.index, isFoldedIn)
+                                break;
+                            }
                             applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, toggle.index, isFoldedIn)
+                            previousLine = currentLine
                         }
                     }
                 }
