@@ -80,7 +80,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
     const actions: SuggestionAction[] = [
         {
             label: "Save as new Attribute-String ✅",
-            description: "This is the description",
+            description: "Save this string as the Toggles Attributes.",
             onSelect(userInput, evt) {
                 const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
                 editor.replaceRange(
@@ -93,7 +93,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
         },
         {
             label: "Cancel ❌",
-            description: "Discard changed, keep the current string.",
+            description: "Discard changes, keep the current string.",
             onSelect() {
 
             },
