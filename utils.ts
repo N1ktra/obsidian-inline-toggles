@@ -83,8 +83,8 @@ export function buildToggleTag(
     // 3. Die Attribute in das Format ":key=value" umwandeln
     // Wenn das Objekt leer ist, wird dieser String einfach leer ("")
     const attrPart = Object.entries(attributes)
-        .map(([key, value]) => `${settings.delimiter}${key}: ${value}`)
-        .join("");
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(`${settings.delimiter} `);
 
     // 4. Alles zusammenfügen: Border + Icon + Attribute + Border
     return `${b}${icon}${attributeString ?? attrPart}${b}`;
@@ -101,10 +101,9 @@ export function updateToggle(
     // Wenn in 'changes' nichts steht, nehmen wir die alten Werte aus 'toggle'
     const newState = changes.isOpen ?? toggle.isOpen;
     const newAttrs = changes.attributes ?? toggle.attributes;
-    const newAttrString = changes.attributeString ?? toggle.attributeString
 
     // Nutzt unsere bewährte build-Funktion
-    return buildToggleTag(newState, settings, newAttrs, newAttrString);
+    return buildToggleTag(newState, settings, newAttrs, changes.attributeString);
 }
 
 /**

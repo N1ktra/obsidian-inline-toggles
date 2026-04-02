@@ -4,7 +4,7 @@ import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extrac
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
-import { CommandStylePrompt } from './modals';
+import { GenericActionModal, SuggestionAction } from './modals';
 
 export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
     const cursor = editor.getCursor();
@@ -76,24 +76,50 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     }
 }
 
-export async function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
-    // Wir öffnen das Modal und geben ihm mit, was es bei Erfolg tun soll
-    const prompt = new CommandStylePrompt(app, "Edit Attributes:", toggle.attributeString ?? "", (userInput) => {
+export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
+    const actions: SuggestionAction[] = [
+        {
+            label: "Save as new Attribute-String ✅",
+            description: "This is the description",
+            onSelect(userInput, evt) {
+                const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
+                editor.replaceRange(
+                    newToggleString,
+                    { line: lineNumber, ch: toggle.index },
+                    { line: lineNumber, ch: toggle.index + toggle.length }
+                );
+            },
+            alwaysShow: true,
+        },
+        {
+            label: "Cancel ❌",
+            description: "Discard changed, keep the current string.",
+            onSelect() {
 
-        // Dieser Code wird nur ausgeführt, wenn der User auf "Speichern" klickt
-        const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
+            },
+            alwaysShow: true
+        }
+    ];
 
-        editor.replaceRange(
-            newToggleString,
-            { line: lineNumber, ch: toggle.index },
-            { line: lineNumber, ch: toggle.index + toggle.length }
-        );
+    new GenericActionModal(app, "Type CSS-Style String...", actions, toggle.attributeString ?? "").open();
+}
 
-    });
+export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
+    const standardCallouts = ["note", "abstract", "info", "todo", "tip", "success", "question", "warning", "failure", "danger", "bug", "example", "quote"];
 
-    prompt.open();
-
-    // Das Feld fokussieren und initialen Text setzen
-    prompt.inputEl.value = toggle.attributeString ?? "";
-    prompt.inputEl.focus();
+    const actions: SuggestionAction[] = standardCallouts.map(id => ({
+        label: id,
+        onSelect(userInput, evt) {
+            const newAttrs = toggle.attributes;
+            newAttrs["type"] = id;
+            const newToggleString = updateToggle(toggle, settings, { attributes: newAttrs });
+            console.log(newToggleString)
+            editor.replaceRange(
+                newToggleString,
+                { line: lineNumber, ch: toggle.index },
+                { line: lineNumber, ch: toggle.index + toggle.length }
+            );
+        },
+    }))
+    new GenericActionModal(app, "Choose a new Toggle style...", actions).open()
 }

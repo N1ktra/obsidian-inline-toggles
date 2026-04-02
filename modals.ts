@@ -1,44 +1,64 @@
 import { App, SuggestModal } from "obsidian";
 
-export class CommandStylePrompt extends SuggestModal<string> {
-    private initialValue: string;
-    private onSubmit: (value: string) => void;
+export interface SuggestionAction {
+    label: string;
+    description?: string;
+    cssClass?: string;
+    alwaysShow?: boolean; // Wenn true, wird dieser Eintrag vom Suchfilter ignoriert
+    onSelect: (userInput: string, evt: MouseEvent | KeyboardEvent) => void;
+}
 
-    constructor(app: App, placeholder: string, initialValue: string, onSubmit: (value: string) => void) {
+export class GenericActionModal extends SuggestModal<SuggestionAction> {
+    private items: SuggestionAction[];
+    private initialValue: string;
+
+    constructor(
+        app: App,
+        placeholder: string,
+        items: SuggestionAction[],
+        initialValue: string = ""
+    ) {
         super(app);
         this.setPlaceholder(placeholder);
+        this.items = items;
         this.initialValue = initialValue;
-        this.onSubmit = onSubmit;
         this.modalEl.addClass("mod-complex");
     }
 
-    // Wird automatisch ausgeführt, sobald .open() aufgerufen wird
     onOpen() {
         super.onOpen();
-        this.inputEl.value = this.initialValue;
-        // Zwingt Obsidian, die Vorschläge mit dem neuen Wert zu aktualisieren
-        this.inputEl.dispatchEvent(new Event('input'));
-    }
 
-    getSuggestions(query: string): string[] {
-        // Wir nehmen exakt das, was im Feld steht, auch wenn es leer ("") ist
-        return [this.inputEl.value, "CANCEL"];
-    }
-
-    renderSuggestion(value: string, el: HTMLElement) {
-        if (value === "CANCEL") {
-            el.createEl("div", { text: "X Cancel" });
-            el.style.color = "var(--text-error)";
-        } else {
-            // Visuelles Feedback, damit der User sieht, dass er gerade alles löscht
-            const displayText = value === "" ? "(Remove all Attributes)" : value;
-            el.createEl("div", { text: `New String: '${displayText}'` });
+        if (this.initialValue) {
+            this.inputEl.value = this.initialValue;
+            // Markiert den Text, damit der User ihn beim ersten Tastendruck sofort überschreibt
+            this.inputEl.select();
+            this.inputEl.dispatchEvent(new Event('input'));
         }
     }
 
-    onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent) {
-        if (item !== "CANCEL") {
-            this.onSubmit(item); // Kann jetzt auch ein leerer String "" sein
+    getSuggestions(query: string): SuggestionAction[] {
+        const queryLower = query.toLowerCase();
+
+        return this.items.filter(item =>
+            // Entweder das alwaysShow Flag ist gesetzt, oder der Text passt zur Suche
+            item.alwaysShow || item.label.toLowerCase().includes(queryLower)
+        );
+    }
+
+    renderSuggestion(item: SuggestionAction, el: HTMLElement) {
+        if (item.cssClass) {
+            el.addClass(item.cssClass);
         }
+
+        el.createEl("div", { text: item.label });
+
+        if (item.description) {
+            el.createEl("small", { text: item.description, cls: "suggestion-note" });
+        }
+    }
+
+    onChooseSuggestion(item: SuggestionAction, evt: MouseEvent | KeyboardEvent) {
+        const currentText = this.inputEl.value;
+        item.onSelect(currentText, evt);
     }
 }

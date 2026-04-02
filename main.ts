@@ -1,6 +1,6 @@
 import { MarkdownView, Plugin } from 'obsidian';
 import { createToggleViewPlugin, createToggleEnterFix } from './view-plugin';
-import { editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './logic';
+import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './logic';
 import { createFoldTrackerPlugin, foldTrackerSpec } from './fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
 import { findToggle } from './utils';
@@ -47,12 +47,24 @@ export default class MyTogglePlugin extends Plugin {
         this.addCommand({
             id: 'inline-toggles.edit-attributes',
             name: 'Edit Attributes',
+            editorCallback: (editor) => {
+                const cursor = editor.getCursor();
+                const lineText = editor.getLine(cursor.line)
+                const toggle = findToggle(lineText, this.settings.placeholder)
+                if (!toggle) return
+                editToggleAttributes(toggle, cursor.line, editor, this.app, this.settings.placeholder);
+            }
+        })
+
+        this.addCommand({
+            id: 'inline-toggles.change_type',
+            name: 'Change Type',
             editorCallback: async (editor) => {
                 const cursor = editor.getCursor();
                 const lineText = editor.getLine(cursor.line)
                 const toggle = findToggle(lineText, this.settings.placeholder)
                 if (!toggle) return
-                await editToggleAttributes(toggle, cursor.line, editor, this.app, this.settings.placeholder);
+                changeToggleType(toggle, cursor.line, editor, this.app, this.settings.placeholder);
             }
         })
 
@@ -60,7 +72,7 @@ export default class MyTogglePlugin extends Plugin {
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
                 // console.log("layout change")
-                this.setFoldTrackerLastMode();
+                this.setLastModeOfFoldTracker();
                 scanAndApplyFold(this.app, this.settings);
             })
         );
@@ -78,7 +90,7 @@ export default class MyTogglePlugin extends Plugin {
     /**
      * Setzt die letzte gespeicherten Editor-View (preview / source)
      */
-    private setFoldTrackerLastMode(){
+    private setLastModeOfFoldTracker(){
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) return;
         const currentMode = activeView.getMode();
