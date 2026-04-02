@@ -4,6 +4,36 @@ import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/langu
 import { MyToggleSettings, PlaceholderSettings } from "./settings";
 
 
+export const calloutIconMap: Record<string, string> = {
+    note: "pencil",
+    abstract: "clipboard-list",
+    summary: "clipboard-list",
+    tldr: "clipboard-list",
+    info: "info",
+    todo: "check-circle-2",
+    tip: "flame",
+    hint: "flame",
+    important: "flame",
+    success: "check",
+    check: "check",
+    done: "check",
+    question: "help-circle",
+    help: "help-circle",
+    faq: "help-circle",
+    warning: "alert-triangle",
+    caution: "alert-triangle",
+    attention: "alert-triangle",
+    failure: "x-circle",
+    fail: "x-circle",
+    missing: "x-circle",
+    danger: "zap",
+    error: "zap",
+    bug: "bug",
+    example: "list",
+    quote: "quote",
+    cite: "quote"
+};
+
 export interface ToggleMatch {
     fullTag: string;      // Der komplette Text, z.B. "|⏷:bg=red|"
     index: number;        // Startposition in der Zeile

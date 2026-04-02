@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from './settings';
-import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch } from './utils';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap } from './utils';
 import { EditorView } from '@codemirror/view';
 import { EditorState, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -105,7 +105,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
 }
 
 export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
-    const standardCallouts = ["note", "abstract", "info", "todo", "tip", "success", "question", "warning", "failure", "danger", "bug", "example", "quote"];
+    const standardCallouts = ["info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
 
     const actions: SuggestionAction[] = standardCallouts.map(id => ({
         label: id,
@@ -113,13 +113,14 @@ export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor
             const newAttrs = toggle.attributes;
             newAttrs["type"] = id;
             const newToggleString = updateToggle(toggle, settings, { attributes: newAttrs });
-            console.log(newToggleString)
             editor.replaceRange(
                 newToggleString,
                 { line: lineNumber, ch: toggle.index },
                 { line: lineNumber, ch: toggle.index + toggle.length }
             );
         },
+        icon: calloutIconMap[id.toLocaleLowerCase()] || "chevron-right",
+        color: `rgb(var(--callout-${id}))`,
     }))
     new GenericActionModal(app, "Choose a new Toggle style...", actions).open()
 }
