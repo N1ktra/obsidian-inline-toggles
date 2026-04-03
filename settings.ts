@@ -89,11 +89,25 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName("Maintenance & Actions")
-            .setDesc("Save your configuration or update all existing toggles in your vault.")
+            .setName("Save & Apply")
+            .setDesc(
+                createFragment((f) => {
+                    f.createSpan({ text: "Choose how to save your changes:" });
+                    f.createEl("br");
+                    // Kurze, knappe Gegenüberstellung
+                    f.createEl("small", {
+                        text: "• Save Only: Updates future toggles. Existing ones will break.",
+                        cls: "setting-item-description"
+                    });
+                    f.createEl("br");
+                    f.createEl("small", {
+                        text: "• Migrate: Fixes all existing toggles before saving. (⚠️ overwrites whole vault!)",
+                        cls: "setting-item-description"
+                    });
+                })
+            )
             .addButton(btn => btn
-                .setButtonText('Save Settings')
-                .setCta()
+                .setButtonText('Save for Future Toggles')
                 .onClick(async () => {
                     const newSettings = this.tempPlaceholder;
                     this.plugin.settings.placeholder = { ...newSettings };
@@ -103,7 +117,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 })
             )
             .addButton(btn => btn
-                .setButtonText('Migrate Vault')
+                .setButtonText('Save & Migrate Entire Vault')
                 .setWarning()
                 .onClick(async () => {
                     new ConfirmModal(this.app,
