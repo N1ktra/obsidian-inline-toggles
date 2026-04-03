@@ -1,8 +1,8 @@
-import { App, MarkdownView, Editor, EditorPosition } from 'obsidian';
+import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from './settings';
-import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap } from './utils';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap } from './utils';
 import { EditorView } from '@codemirror/view';
-import { ChangeSpec, EditorSelection, EditorState, Line, SelectionRange, StateEffect, TransactionSpec} from "@codemirror/state";
+import { ChangeSpec, Line, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
 import { GenericActionModal, SuggestionAction } from './modals';
 

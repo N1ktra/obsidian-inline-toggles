@@ -5,7 +5,6 @@ import { createFoldTrackerPlugin, foldTrackerSpec } from './fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
 import { findToggle } from './utils';
 import { EditorView } from '@codemirror/view';
-import { Line, SelectionRange, TransactionSpec } from '@codemirror/state';
 
 export default class MyTogglePlugin extends Plugin {
     settings!: MyToggleSettings;

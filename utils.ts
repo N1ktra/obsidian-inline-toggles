@@ -2,7 +2,7 @@ import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
 import { MyToggleSettings, PlaceholderSettings } from "./settings";
-import { App, TFile } from "obsidian";
+import { App } from "obsidian";
 
 
 export const calloutIconMap: Record<string, string> = {
