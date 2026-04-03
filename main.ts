@@ -4,6 +4,8 @@ import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndAp
 import { createFoldTrackerPlugin, foldTrackerSpec } from './fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
 import { findToggle } from './utils';
+import { EditorView } from '@codemirror/view';
+import { Line, SelectionRange, TransactionSpec } from '@codemirror/state';
 
 export default class MyTogglePlugin extends Plugin {
     settings!: MyToggleSettings;
@@ -31,7 +33,15 @@ export default class MyTogglePlugin extends Plugin {
                     key: "l",
                 },],
             editorCallback: (editor) => {
-                insertOrRemoveToggle(editor, this.settings);
+                const view = (editor as any).cm as EditorView;
+                if (!view) return;
+                const changes: any[] = [];
+                view.state.selection.ranges.forEach(range => {
+                    changes.push(insertOrRemoveToggle(range, view, this.settings));
+                });
+                view.dispatch({
+                    changes: changes
+                });
             }
         });
 

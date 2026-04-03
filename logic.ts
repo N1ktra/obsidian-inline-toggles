@@ -1,48 +1,44 @@
-import { App, MarkdownView, Editor } from 'obsidian';
+import { App, MarkdownView, Editor, EditorPosition } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from './settings';
 import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap } from './utils';
 import { EditorView } from '@codemirror/view';
-import { EditorState, StateEffect} from "@codemirror/state";
+import { ChangeSpec, EditorSelection, EditorState, Line, SelectionRange, StateEffect, TransactionSpec} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
 import { GenericActionModal, SuggestionAction } from './modals';
 
-export function insertOrRemoveToggle(editor: Editor, settings: MyToggleSettings) {
-    const cursor = editor.getCursor();
-    const lineText = editor.getLine(cursor.line);
+export function insertOrRemoveToggle(selection: SelectionRange, view: EditorView, settings: MyToggleSettings): ChangeSpec {
 
-    //check if line is folded
-    const view = (editor as any).cm as EditorView;
-    if (!view) return;
-    const cmLine = view.state.doc.line(Math.min(cursor.line + 1, view.state.doc.lines));
-    const isCurrentlyFolded = checkIfToggleIsFoldedIn(view, cmLine);
-    const hasChildren = checkIfLineHasChildren(view, cmLine);
-
-    const toggle = findToggle(lineText, settings.placeholder)
+    const line: Line = view.state.doc.lineAt(selection.from);
+    const toggle = findToggle(line.text, settings.placeholder)
     if (toggle) {
-        // FALL 1: Toggle entfernen
-        const removedLength = toggle.length
-        editor.setLine(cursor.line, lineText.replace(toggle.fullTag, ""));
-
-        // Cursor-Korrektur
-        editor.setCursor({
-            line: cursor.line,
-            ch: Math.max(0, cursor.ch - removedLength)
-        });
-        return;
+        return removeToggle(line, toggle);
     }else{
-        // FALL 2: Toggle einfügen
-        const newToggle = buildToggleTag(!(isCurrentlyFolded && hasChildren), settings.placeholder);
-        const mdSymbols = extractMarkdownSymbols(lineText, settings.placeholder);
-        const insertPos = mdSymbols.length;
-        const shouldInsertBullet = settings.autoInsertBullet && mdSymbols.trim() === "";
-        const textToInsert = `${shouldInsertBullet ? "- " : ""}${newToggle}${lineText[insertPos] === " " ? "" : " "}`;
-        editor.replaceRange(textToInsert, { line: cursor.line, ch: insertPos });
-
-        // Cursor-Positionierung
-        let newCh = cursor.ch <= insertPos ? insertPos + textToInsert.length : cursor.ch + textToInsert.length;
-        editor.setCursor({ line: cursor.line, ch: newCh });
+        return insertToggle(line, settings, view);
     }
+}
 
+function insertToggle(line: Line, settings: MyToggleSettings, view: EditorView): ChangeSpec{
+    const isCurrentlyFolded = checkIfToggleIsFoldedIn(view, line);
+    const hasChildren = checkIfLineHasChildren(view, line);
+    const newToggle = buildToggleTag(!(isCurrentlyFolded && hasChildren), settings.placeholder);
+    const mdSymbols = extractMarkdownSymbols(line.text, settings.placeholder);
+    const insertPos = mdSymbols.length;
+    const shouldInsertBullet = settings.autoInsertBullet && mdSymbols.trim() === "";
+    const textToInsert = `${shouldInsertBullet ? "- " : ""}${newToggle}${line.text[insertPos] === " " ? "" : " "}`;
+
+    return {
+        from: line.from + insertPos,
+        to: line.from + insertPos,
+        insert: textToInsert
+    };
+}
+
+function removeToggle(line: Line, toggle: ToggleMatch): ChangeSpec{
+    return {
+        from: line.from + toggle.index,
+        to: line.from + toggle.index + toggle.length,
+        insert: ""
+    }
 }
 
 export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
