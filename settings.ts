@@ -223,12 +223,12 @@ export class MyToggleSettingTab extends PluginSettingTab {
                     });
             })
             .addButton((btn) => {
-                btn.setButtonText("Remove All Toggles")
+                btn.setButtonText("Remove ALL Toggles from Vault")
                     .setWarning()
                     .onClick(async () => {
                         new ConfirmModal(this.app,
                             "Remove all Toggles?",
-                            "Are you sure you want to remove ALL Toggles from your Vault? This action cannot be reversed. Backup your Vault first!",
+                            "Are you sure you want to remove ALL Toggles from your entire Vault? This action cannot be reversed. Backup your Vault first!",
                             "Yes, Remove",
                             async () => {
                                 const modifiedFilesCount = await processAllToggles(this.app, this.plugin.settings.placeholder, (toggle) => {
