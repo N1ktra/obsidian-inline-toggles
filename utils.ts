@@ -2,6 +2,7 @@ import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
 import { MyToggleSettings, PlaceholderSettings } from "./settings";
+import { App, TFile } from "obsidian";
 
 
 export const calloutIconMap: Record<string, string> = {
@@ -61,11 +62,11 @@ export function getToggleRegex(settings: PlaceholderSettings): RegExp {
     const c = escapeRegex(settings.symbolClosed);
     const d = escapeRegex(settings.delimiter);
 
-    // WICHTIG: (o|c) fängt das Symbol als Gruppe 1 ein
-    // [^${b}]* fängt die Attribute als Gruppe 2 ein
-    // return new RegExp(`${b}(${o}|${c})(?:${d}+([^${b}]*))?${b}`, 'g');
-    // Wir machen den Delimiter optional (${d}*) und erlauben, dass die Gruppe 2 direkt mit dem Text beginnt.
-    return new RegExp(`${b}(${o}|${c})${d}*([^${b}]*)?${b}`, 'g');
+    // Erklärung der Gruppen:
+    // match[0] = Der komplette Match (z.B. "%%⏷type: success%%")
+    // match[1] = Das Symbol (o|c)
+    // match[2] = Die Attribute (.*?) stoppt automatisch beim nächsten Border-Symbol
+    return new RegExp(`${b}(${o}|${c})${d}*(.*?)${b}`, 'g');
 }
 
 export function parseAttributes(attrString: string | null, settings: PlaceholderSettings){
@@ -242,4 +243,30 @@ export function setSelection(view: EditorView, from: number, to: number){
             scrollIntoView: true
         });
     });
+}
+
+export async function migrateToggles(app: App, oldSettings: PlaceholderSettings, newSettings: PlaceholderSettings){
+    const files = app.vault.getMarkdownFiles();
+    const oldRegex = getToggleRegex(oldSettings);
+
+    let filesProcessed = 0;
+    for (const file of files){
+        await app.vault.process(file, (content) => {
+            // Prüfen ob überhaupt ein toggle existiert (Performance)
+            if (!content.includes(oldSettings.borderSymbol)) return content;
+            if (!content.includes(oldSettings.symbolClosed) && !content.includes(oldSettings.symbolOpen)) return content;
+
+            const newContent = content.replace(oldRegex, (fullMatch, symbol, attributes) => {
+                const simulatedMatch = [fullMatch, symbol, attributes];
+                const oldToggle = parseToggleMatch(simulatedMatch as any, oldSettings);
+                const newToggle = buildToggleTag(oldToggle.isOpen, newSettings, oldToggle.attributes);
+                // console.log({oldToggle, newToggle});
+                return newToggle;
+            });
+            if (content != newContent) filesProcessed++;
+            return newContent;
+        });
+
+    }
+    return filesProcessed;
 }

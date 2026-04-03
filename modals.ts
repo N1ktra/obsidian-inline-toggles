@@ -1,4 +1,4 @@
-import { App, setIcon, SuggestModal } from "obsidian";
+import { App, Modal, setIcon, Setting, SuggestModal } from "obsidian";
 
 export interface SuggestionAction {
     label: string;
@@ -87,5 +87,63 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
     onChooseSuggestion(item: SuggestionAction, evt: MouseEvent | KeyboardEvent) {
         const currentText = this.inputEl.value;
         item.onSelect(currentText, evt);
+    }
+}
+
+export class ConfirmModal extends Modal {
+    private title: string;
+    private message: string;
+    private confirmText: string;
+    private isWarning: boolean;
+    private onSubmit: () => void | Promise<void>;
+
+    constructor(
+        app: App,
+        title: string,
+        message: string,
+        confirmText: string,
+        onSubmit: () => void | Promise<void>,
+        isWarning: boolean = false
+    ) {
+        super(app);
+        this.title = title;
+        this.message = message;
+        this.confirmText = confirmText;
+        this.onSubmit = onSubmit;
+        this.isWarning = isWarning;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+
+        contentEl.createEl("h2", { text: this.title });
+        contentEl.createEl("p", { text: this.message });
+
+        new Setting(contentEl)
+            .addButton((btn) => btn
+                .setButtonText("Cancel")
+                .onClick(() => {
+                    this.close();
+                }))
+            .addButton((btn) => {
+                btn.setButtonText(this.confirmText);
+
+                // Rot für destruktive Aktionen, Blau/Akzent für normale Aktionen
+                if (this.isWarning) {
+                    btn.setWarning();
+                } else {
+                    btn.setCta();
+                }
+
+                btn.onClick(async () => {
+                    await this.onSubmit();
+                    this.close();
+                });
+            });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }

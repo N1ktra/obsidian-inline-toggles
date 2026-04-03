@@ -1,5 +1,7 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
+import { migrateToggles } from './utils';
+import { ConfirmModal } from './modals';
 
 export interface PlaceholderSettings {
     borderSymbol: string;
@@ -31,17 +33,17 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
 
 export class MyToggleSettingTab extends PluginSettingTab {
     plugin: MyTogglePlugin;
+    private tempPlaceholder: PlaceholderSettings;
 
     constructor(app: App, plugin: MyTogglePlugin) {
         super(app, plugin);
         this.plugin = plugin;
+        this.tempPlaceholder = { ...plugin.settings.placeholder };
     }
 
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-
-        containerEl.createEl('h2', { text: 'Toggle Plugin Settings' });
 
         // --- SEKTION: SOURCE CODE ---
         containerEl.createEl('h3', { text: 'Source Code (Markdown)' });
@@ -53,8 +55,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolClosed)
                 .setValue(this.plugin.settings.placeholder.symbolClosed)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholder.symbolClosed = value;
-                    await this.plugin.saveSettings();
+                    this.tempPlaceholder.symbolClosed = value;
                 }));
 
         new Setting(containerEl)
@@ -64,8 +65,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolOpen)
                 .setValue(this.plugin.settings.placeholder.symbolOpen)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholder.symbolOpen = value;
-                    await this.plugin.saveSettings();
+                    this.tempPlaceholder.symbolOpen = value;
                 }));
 
         new Setting(containerEl)
@@ -75,8 +75,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.borderSymbol)
                 .setValue(this.plugin.settings.placeholder.borderSymbol)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholder.borderSymbol = value;
-                    await this.plugin.saveSettings();
+                    this.tempPlaceholder.borderSymbol = value;
                 }));
 
         new Setting(containerEl)
@@ -86,9 +85,38 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.delimiter)
                 .setValue(this.plugin.settings.placeholder.delimiter)
                 .onChange(async (value) => {
-                    this.plugin.settings.placeholder.delimiter = value;
-                    await this.plugin.saveSettings();
+                    this.tempPlaceholder.delimiter = value;
                 }));
+
+        new Setting(containerEl)
+            .setName('Update & Migrate All Files')
+            .setDesc('This will replace the old placeholder with the new one in EVERY file in your vault.')
+            .addButton(btn => btn
+                .setButtonText('Migrate Vault')
+                .setCta()
+                .onClick(async () => {
+                    new ConfirmModal(this.app,
+                        "Migrate Placeholders?",
+                        "This will replace the old placeholders in every file of your vault. Do you want to proceed?",
+                        "Update & Migrate",
+                        async () => {
+                            const oldSetting = this.plugin.settings.placeholder;
+                            const newSetting = this.tempPlaceholder;
+                            if (newSetting.symbolClosed === oldSetting.symbolClosed && newSetting.symbolOpen === oldSetting.symbolOpen && newSetting.borderSymbol === oldSetting.borderSymbol && newSetting.delimiter === oldSetting.delimiter){
+                                new Notice("No changes detected.");
+                                return;
+                            }
+
+                            const modifiedFilesCount = await migrateToggles(this.app, oldSetting, newSetting);
+
+                            this.plugin.settings.placeholder = { ...newSetting };
+                            await this.plugin.saveSettings();
+                            new Notice(`Migrated ${modifiedFilesCount} Files. You might have to reopen current Tabs.`);
+                            this.display();
+                        }
+                    ).open();
+                })
+            )
 
         // --- Behavior ---
         containerEl.createEl('h3', { text: 'Behavior' });
@@ -147,53 +175,19 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 btn.setButtonText("Reset all Settings")
                     .setWarning()
                     .onClick(async () => {
-                        new ConfirmResetModal(this.app, async () => {
-                            this.plugin.settings = structuredClone(DEFAULT_SETTINGS);
-                            await this.plugin.saveSettings();
-
-                            this.display();
-
-                            new Notice("Reset successful!");
-                        }).open();
+                        new ConfirmModal(this.app,
+                            "Reset all Settings?",
+                            "Are you sure you want to reset All Settings? All of your changes will be lost!",
+                            "Yes, Reset",
+                            async () => {
+                                this.plugin.settings = structuredClone(DEFAULT_SETTINGS);
+                                await this.plugin.saveSettings();
+                                this.display();
+                                new Notice("Reset successful!");
+                            },
+                            true,
+                        ).open();
                     });
             });
-    }
-}
-
-class ConfirmResetModal extends Modal {
-    onSubmit: () => void;
-
-    constructor(app: App, onSubmit: () => void) {
-        super(app);
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-
-        contentEl.createEl("h2", { text: "Reset all Settings?" });
-        contentEl.createEl("p", {
-            text: "Are you sure, you want to reset all Settings? All of your changes will be lost!"
-        });
-
-        // Die zwei Buttons nebeneinander
-        new Setting(contentEl)
-            .addButton((btn) => btn
-                .setButtonText("Cancel")
-                .onClick(() => {
-                    this.close(); // Schließt das Fenster, ohne etwas zu tun
-                }))
-            .addButton((btn) => btn
-                .setButtonText("Yes, Reset")
-                .setWarning() // Roter Button für Gefahr
-                .onClick(() => {
-                    this.onSubmit(); // Führt deine Reset-Logik aus
-                    this.close();    // Schließt das Fenster danach
-                }));
-    }
-
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty(); // Räumt den Speicher auf
     }
 }
