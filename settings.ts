@@ -89,11 +89,22 @@ export class MyToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Update & Migrate All Files')
-            .setDesc('This will replace the old placeholder with the new one in EVERY file in your vault.')
+            .setName("Maintenance & Actions")
+            .setDesc("Save your configuration or update all existing toggles in your vault.")
+            .addButton(btn => btn
+                .setButtonText('Save Settings')
+                .setCta()
+                .onClick(async () => {
+                    const newSettings = this.tempPlaceholder;
+                    this.plugin.settings.placeholder = { ...newSettings };
+                    await this.plugin.saveSettings();
+                    new Notice("Settings saved!\nYou might have to reopen current Tabs.");
+                    this.display();
+                })
+            )
             .addButton(btn => btn
                 .setButtonText('Migrate Vault')
-                .setCta()
+                .setWarning()
                 .onClick(async () => {
                     new ConfirmModal(this.app,
                         "Migrate Placeholders?",
@@ -118,7 +129,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
 
                             this.plugin.settings.placeholder = { ...newSettings };
                             await this.plugin.saveSettings();
-                            new Notice(`Migrated ${modifiedFilesCount} Files. You might have to reopen current Tabs.`);
+                            new Notice(`Migrated ${modifiedFilesCount} Files.\nYou might have to reopen current Tabs.`);
                             this.display();
                         }
                     ).open();
