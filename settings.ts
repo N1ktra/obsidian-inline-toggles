@@ -18,7 +18,7 @@ export interface MyToggleSettings {
 
 export const DEFAULT_SETTINGS: MyToggleSettings = {
     placeholder: {
-        borderSymbol: "|",
+        borderSymbol: "%%",
         symbolClosed: "⏵",
         symbolOpen: "⏷",
         delimiter: ";",
