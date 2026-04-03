@@ -37,7 +37,7 @@ export default class MyTogglePlugin extends Plugin {
                 if (!view) return;
                 const changes: any[] = [];
                 view.state.selection.ranges.forEach(range => {
-                    changes.push(insertOrRemoveToggle(range, view, this.settings));
+                    changes.push(insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings));
                 });
                 view.dispatch({
                     changes: changes

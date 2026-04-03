@@ -6,15 +6,25 @@ import { ChangeSpec, EditorSelection, EditorState, Line, SelectionRange, StateEf
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
 import { GenericActionModal, SuggestionAction } from './modals';
 
-export function insertOrRemoveToggle(selection: SelectionRange, view: EditorView, settings: MyToggleSettings): ChangeSpec {
-
+export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: MyToggleSettings): ChangeSpec[] {
+    const changes: ChangeSpec[] = []
     const line: Line = view.state.doc.lineAt(selection.from);
     const toggle = findToggle(line.text, settings.placeholder)
     if (toggle) {
-        return removeToggle(line, toggle);
+        changes.push(removeToggle(line, toggle));
     }else{
-        return insertToggle(line, settings, view);
+        changes.push(insertToggle(line, settings, view));
     }
+
+    const range = foldable(view.state, line.from, line.to)
+    if (range && range.to < view.state.doc.length && range.to < selection.to){
+        // gehe zum ende der Foldable range
+        changes.push(insertOrRemoveToggle({from: range.to + 1, to: selection.to}, view, settings));
+    }else if (!range && line.to < view.state.doc.length && line.to < selection.to){
+        // gehe zur nächsten Zeile
+        changes.push(insertOrRemoveToggle({from: line.to + 1, to: selection.to}, view, settings));
+    }
+    return changes;
 }
 
 function insertToggle(line: Line, settings: MyToggleSettings, view: EditorView): ChangeSpec{
