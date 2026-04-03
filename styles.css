@@ -91,3 +91,18 @@ body.hide-gutter-arrows .collapse-indicator {
 body.hide-gutter-arrows .collapse-indicator:hover {
     opacity: 1 !important;
 }
+
+/* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
+.placeholder-action-setting {
+    flex-wrap: wrap !important;
+}
+
+/* Die Buttons sollen auf Mobile die volle Breite unter dem Text einnehmen */
+.placeholder-action-setting .setting-item-control {
+    flex: 1 0 100% !important;
+    display: flex !important;
+    flex-direction: column !important; /* Stapelt die Buttons übereinander */
+    gap: 8px !important;
+    margin-top: 12px !important;
+    align-items: stretch !important; /* Macht beide Buttons gleich breit */
+}
