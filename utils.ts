@@ -97,7 +97,7 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
 }
 
 /**
- * Erzeugt einen fertigen Toggle-Tag String (z.B. |⏷:bg=red|)
+ * Erzeugt einen fertigen Toggle-Tag String (z.B. %%⏷type: info%%)
  * * @param isOpen - Bestimmt, ob das "Open" oder "Closed" Symbol genutzt wird
  * @param settings - Deine PlaceholderSettings (borderSymbol, placeholderOpen, etc.)
  * @param attributes - Ein Objekt mit Key-Value Paaren (z.B. { bg: "red" })
