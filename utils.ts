@@ -245,7 +245,7 @@ export function setSelection(view: EditorView, from: number, to: number){
     });
 }
 
-export async function migrateToggles(app: App, oldSettings: PlaceholderSettings, newSettings: PlaceholderSettings){
+export async function processAllToggles(app: App, oldSettings: PlaceholderSettings, transformFn: (toggle: ToggleMatch) => string){
     const files = app.vault.getMarkdownFiles();
     const oldRegex = getToggleRegex(oldSettings);
 
@@ -259,9 +259,7 @@ export async function migrateToggles(app: App, oldSettings: PlaceholderSettings,
             const newContent = content.replace(oldRegex, (fullMatch, symbol, attributes) => {
                 const simulatedMatch = [fullMatch, symbol, attributes];
                 const oldToggle = parseToggleMatch(simulatedMatch as any, oldSettings);
-                const newToggle = buildToggleTag(oldToggle.isOpen, newSettings, oldToggle.attributes);
-                // console.log({oldToggle, newToggle});
-                return newToggle;
+                return transformFn(oldToggle);
             });
             if (content != newContent) filesProcessed++;
             return newContent;

@@ -1,6 +1,6 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from './main';
-import { migrateToggles } from './utils';
+import { buildToggleTag, processAllToggles } from './utils';
 import { ConfirmModal } from './modals';
 
 export interface PlaceholderSettings {
@@ -100,16 +100,23 @@ export class MyToggleSettingTab extends PluginSettingTab {
                         "This will replace the old placeholders in every file of your vault. Do you want to proceed?",
                         "Update & Migrate",
                         async () => {
-                            const oldSetting = this.plugin.settings.placeholder;
-                            const newSetting = this.tempPlaceholder;
-                            if (newSetting.symbolClosed === oldSetting.symbolClosed && newSetting.symbolOpen === oldSetting.symbolOpen && newSetting.borderSymbol === oldSetting.borderSymbol && newSetting.delimiter === oldSetting.delimiter){
+                            const oldSettings = this.plugin.settings.placeholder;
+                            const newSettings = this.tempPlaceholder;
+                            if (!newSettings){
+                                new Notice("Error, Settings cannot be loaded");
+                                return;
+                            }
+                            if (newSettings.symbolClosed === oldSettings.symbolClosed && newSettings.symbolOpen === oldSettings.symbolOpen && newSettings.borderSymbol === oldSettings.borderSymbol && newSettings.delimiter === oldSettings.delimiter){
                                 new Notice("No changes detected.");
                                 return;
                             }
 
-                            const modifiedFilesCount = await migrateToggles(this.app, oldSetting, newSetting);
+                            // const modifiedFilesCount = await migrateToggles(this.app, oldSetting, newSetting);
+                            const modifiedFilesCount = await processAllToggles(this.app, oldSettings, (toggle) => {
+                                return buildToggleTag(toggle.isOpen, newSettings, toggle.attributes);
+                            });
 
-                            this.plugin.settings.placeholder = { ...newSetting };
+                            this.plugin.settings.placeholder = { ...newSettings };
                             await this.plugin.saveSettings();
                             new Notice(`Migrated ${modifiedFilesCount} Files. You might have to reopen current Tabs.`);
                             this.display();
@@ -184,6 +191,24 @@ export class MyToggleSettingTab extends PluginSettingTab {
                                 await this.plugin.saveSettings();
                                 this.display();
                                 new Notice("Reset successful!");
+                            },
+                            true,
+                        ).open();
+                    });
+            })
+            .addButton((btn) => {
+                btn.setButtonText("Remove All Toggles")
+                    .setWarning()
+                    .onClick(async () => {
+                        new ConfirmModal(this.app,
+                            "Remove all Toggles?",
+                            "Are you sure you want to remove ALL Toggles from your Vault? This action cannot be reversed. Backup your Vault first!",
+                            "Yes, Remove",
+                            async () => {
+                                const modifiedFilesCount = await processAllToggles(this.app, this.plugin.settings.placeholder, (toggle) => {
+                                    return ""
+                                });
+                                new Notice(`Reset successful!. Modified ${modifiedFilesCount} Files.`);
                             },
                             true,
                         ).open();
