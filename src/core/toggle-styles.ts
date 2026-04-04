@@ -9,10 +9,10 @@ export type LineStyleRule = {
     isMark?: boolean
 };
 
-function createLineDeco(style: string){
+function createLineDeco(newClass: string){
     return Decoration.line({
         attributes: {
-            style: style
+            class: newClass
         }
     })
 }
@@ -32,7 +32,7 @@ export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: Li
 }
 
 function normalizeAttributes(attributes: Record<string, string>): Record<string, string>{
-    // 1. Die Übersetzungs-Map für deine Kürzel
+    // 1. Die Übersetzungs-Map für Kürzel
     const translationMap: Record<string, string> = {
         'bg': 'background-color',
         'col': 'color',
@@ -65,8 +65,6 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
     const attr = normalizeAttributes(attributes)
     for (const [key, value] of Object.entries(attr)) {
         if (!value) continue;
-
-        // Spezialfall: Klasse (soll nicht in den Style-String)
         if (key === 'class' || key === 'cls') {
             classes.push(value);
             continue;
@@ -74,31 +72,22 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
 
         if (key === 'type') {
             const colorVar = `var(--callout-${value})`;
-            styleEntries.push(`background-color: rgba(${colorVar}, 0.1)`);
-            styleEntries.push(`box-shadow: inset 4px 0 0 0 rgb(${colorVar})`)
+            const inlineStyle = `--inline-toggles-bg: rgba(${colorVar}, 0.1); --inline-toggles-border: rgb(${colorVar});`;
+            styleEntries.push(inlineStyle);
+            classes.push("inline-toggles-colored");
             lineStlyes.push({
-                condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
-                isMark: true,
-                decoration: Decoration.mark({
-                    attributes: {
-                        class: "toggle-header",
-                        style: settings.standardToggleHeaderStyle,
-                    }
-                })
-            })
-            lineStlyes.push({
-                condition: (index) => index === 0,
-                decoration: createLineDeco("padding-top: 10px; border-radius: 5px 5px 0 0")
+                condition: (index, num_lines, lineText, isFoldedIn) => index === 0,
+                decoration: createLineDeco("inline-toggles-header")
             })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0 && isFoldedIn,
-                decoration: createLineDeco("border-radius: 5px")
+                decoration: createLineDeco("inline-toggles-header-folded")
             })
             lineStlyes.push({
                 condition: (index, numLines) => index === numLines,
-                decoration: createLineDeco("padding-bottom: 10px; border-radius: 0 0 5px 5px")
+                decoration: createLineDeco("inline-toggles-footer")
             })
-            continue; // Überspringe den Rest der Schleife für diesen Key
+            continue;
         }
 
         // Den CSS-Eintrag hinzufügen

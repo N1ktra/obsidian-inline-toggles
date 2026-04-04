@@ -65,7 +65,7 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: MyTogg
                     if (effect.is(layoutChangedEffect)) {
                         this.lastMode = currentMode;
                     }
-                    if (effect.is(foldEffect)) {
+                    else if (effect.is(foldEffect)) {
                         const pos = effect.value.from;
                         const line = update.state.doc.lineAt(pos);
                         // console.log(`Sektion GEFALTET in Zeile: ${line.number}`);
