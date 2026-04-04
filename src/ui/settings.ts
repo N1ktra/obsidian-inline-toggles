@@ -90,7 +90,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Save & Apply")
-            .setClass("inline-toggle-placeholder-action-setting")
+            .setClass("inline-toggles-placeholder-action-setting")
             .setDesc(
                 createFragment((f) => {
                     f.createSpan({ text: "Choose how to save your changes:" });

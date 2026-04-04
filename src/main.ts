@@ -1,11 +1,13 @@
 import { MarkdownView, Plugin } from 'obsidian';
 import { createToggleViewPlugin, createToggleEnterFix } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
-import { createFoldTrackerPlugin, foldTrackerSpec } from './editor/fold-tracker';
+import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './ui/settings';
 import { findToggle } from './utils/utils';
 import { EditorView } from '@codemirror/view';
+import { StateEffect } from '@codemirror/state';
 
+export const layoutChangedEffect = StateEffect.define<void>();
 export default class MyTogglePlugin extends Plugin {
     settings!: MyToggleSettings;
 
@@ -14,12 +16,11 @@ export default class MyTogglePlugin extends Plugin {
         this.refreshGutterStyle();
         this.addSettingTab(new MyToggleSettingTab(this.app, this));
 
-        createFoldTrackerPlugin(this, this.settings);
         // Editor Extension für die Icons
         this.registerEditorExtension([
             createToggleViewPlugin(this.settings, this.app),
             createToggleEnterFix(this.settings),
-            foldTrackerSpec ? foldTrackerSpec : [],
+            createFoldTrackerPlugin(this, this.settings)
         ]);
 
         // Befehl zum Einfügen
@@ -80,8 +81,16 @@ export default class MyTogglePlugin extends Plugin {
         // Auto-Fold beim Tab-Wechsel
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
-                // console.log("layout change")
-                this.setLastModeOfFoldTracker();
+                this.app.workspace.iterateAllLeaves((leaf) => {
+                    if (leaf.view instanceof MarkdownView) {
+                        const cm = (leaf.view.editor as any).cm;
+                        if (cm) {
+                            cm.dispatch({
+                                effects: layoutChangedEffect.of()
+                            });
+                        }
+                    }
+                });
                 scanAndApplyFold(this.app, this.settings);
             })
         );
@@ -94,27 +103,6 @@ export default class MyTogglePlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
-    }
-
-    /**
-     * Setzt die letzte gespeicherten Editor-View (preview / source)
-     */
-    private setLastModeOfFoldTracker(){
-        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!activeView) return;
-        const currentMode = activeView.getMode();
-        this.app.workspace.iterateAllLeaves((leaf) => {
-            if (leaf.view instanceof MarkdownView && leaf.view.editor) {
-                // @ts-ignore
-                const cm = leaf.view.editor.cm;
-                const trackerInstance = cm.plugin(foldTrackerSpec);
-
-                if (trackerInstance) {
-                    trackerInstance.lastMode = currentMode;
-                    // console.log("Tracker lastMode manuell gesetzt auf:", trackerInstance.lastMode);
-                }
-            }
-        });
     }
 
     refreshGutterStyle() {
