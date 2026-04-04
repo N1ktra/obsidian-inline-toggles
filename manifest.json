@@ -3,7 +3,7 @@
 	"name": "Inline Toggles",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is an Obsidian Plugin that saves and restores the toggle state reliably.",
+	"description": "Create reliable inline toggles that save their state directly in Markdown. Features custom CSS attributes for rich styling in Live Preview while remaining clean and readable in Source mode.",
 	"author": "Niklas Tran",
 	"authorUrl": "",
 	"fundingUrl": "",

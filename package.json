@@ -1,15 +1,24 @@
 {
 	"name": "inline-toggles",
 	"version": "1.0.0",
-	"description": "This is an Obsidian Plugin that saves and restores the toggle state reliably.",
+	"description": "Reliable inline toggles that save their state in Markdown. Features custom CSS attributes for rich styling in Live Preview while remaining clean and readable in Source mode.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": [
+		"obsidian",
+		"plugin",
+		"toggle",
+		"inline",
+		"notion",
+		"collapsible",
+		"markdown",
+		"styling"
+	],
+	"author": "Niklas Tran",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^25.5.0",

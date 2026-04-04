@@ -1,4 +1,4 @@
-.my-toggle-icon {
+.inline-toggle-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -19,7 +19,7 @@
     transform: rotate(0deg);
 }
 
-.my-toggle-icon svg {
+.inline-toggle-icon svg {
     display: block; /* Verhindert extra Space unter dem SVG */
     width: 14px;
     height: 14px;
@@ -32,41 +32,41 @@
     margin: 0;
 }
 
-.my-toggle-icon.is-open {
+.inline-toggle-icon.is-open {
     color: var(--text-muted);
     background-color: transparent;
     transform: rotate(90deg);
 }
 
-.my-toggle-icon.is-closed.has-content {
+.inline-toggle-icon.is-closed.has-content {
     color: var(--text-accent);
     /* background-color: rgba(var(--mono-rgb-100), 0.03); */
     transform: rotate(0deg);
 }
 
 
-.my-toggle-icon:active {
+.inline-toggle-icon:active {
     transform: scale(0.9) rotate(0deg);
 }
 
-.my-toggle-icon.is-open:active {
+.inline-toggle-icon.is-open:active {
     transform: scale(0.9) rotate(90deg);
 }
 
 /* --- HOVER LOGIK (NUR FÜR MAUS-GERÄTE) --- */
 @media (hover: hover) {
     /* Der Hintergrund taucht nur am PC auf */
-    .my-toggle-icon:hover {
+    .inline-toggle-icon:hover {
         background-color: var(--background-modifier-hover);
     }
 
     /* Farbe beim OFFENEN Pfeil */
-    .my-toggle-icon.is-open:hover {
+    .inline-toggle-icon.is-open:hover {
         color: var(--text-normal);
     }
 
     /* Farbe beim GESCHLOSSENEN Pfeil mit Inhalt */
-    .my-toggle-icon.is-closed.has-content:hover {
+    .inline-toggle-icon.is-closed.has-content:hover {
         color: var(--text-accent-hover);
         /* Alternativ: filter: brightness(1.2); */
     }
@@ -76,7 +76,7 @@
 
 /* Falls du auf dem Handy ein kurzes Feedback beim Tippen willst,
    nutze :active statt :hover */
-.my-toggle-icon:active {
+.inline-toggle-icon:active {
     background-color: var(--background-modifier-hover);
     transform: scale(0.9);
     transition: transform 0.05s linear;
@@ -93,12 +93,12 @@ body.hide-gutter-arrows .collapse-indicator:hover {
 }
 
 /* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
-.placeholder-action-setting {
+.inline-toggle-placeholder-action-setting {
     flex-wrap: wrap !important;
 }
 
 /* Die Buttons sollen auf Mobile die volle Breite unter dem Text einnehmen */
-.placeholder-action-setting .setting-item-control {
+.inline-toggle-placeholder-action-setting .setting-item-control {
     flex: 1 0 100% !important;
     display: flex !important;
     flex-direction: column !important; /* Stapelt die Buttons übereinander */

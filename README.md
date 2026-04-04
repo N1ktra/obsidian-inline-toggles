@@ -1,49 +1,44 @@
-<div align="center">
-  <h1>🪨 Obsidian Plugin Creation</h1>
-  <p>How to create your own Obsidian plugin</p>
-</div>
+# Inline Toggles for Obsidian
 
-# About Obsidian
+Inline Toggles brings **Notion-style** collapsible sections directly to your Markdown lines. The collapse state is saved directly in your file (`%%⏷%%` / `%%⏵%%`), ensuring your view remains perfectly synced across desktop and mobile.
 
-- [Obsidian](https://obsidian.md) is a **note taking** app based on Markdown files
-- It's **extensible**
+## ✨ Why Inline Toggles?
 
-# About this plugin
+Unlike standard Obsidian callouts, Inline Toggles offer a more fluid writing experience:
+- **Interactive Widgets**: In Live Preview, toggles become clickable icons to instantly expand or collapse sections.
+- **No Syntax Overhead**: Stop prefixing every line with `>`. Just write normal text or indented lists.
+- **No Layout Jumps**: Editing content doesn't force the view to switch to raw source code. You type exactly where you read.
+- **Reliable State**: Your vault remembers what was collapsed—even after syncing or restarting Obsidian.
+- **Flexible Placeholders**: Use any symbols you like to define your toggles. While `%%` is the default, you can customize the border and icons to fit your aesthetic.
 
-- Simple plugin, that counts the number of lines of the active file
-- The line count will be visible in the status bar
+## 🚀 Usage
 
-# Resources
+### Basic Syntax
 
-- Official [Obsidian Plugin Template](https://github.com/obsidianmd/obsidian-sample-plugin)
-- Unofficial [Obsidian Plugin Developer Docs](https://marcus.se.net/obsidian-plugin-docs)
+| Source Mode (Markdown) | Live Preview (Result) |
+| :--- | :--- |
+| `%%⏷type: info%%` This is a toggle header<br>&nbsp;&nbsp;&nbsp;&nbsp;This text will be collapsed.<br>&nbsp;&nbsp;&nbsp;&nbsp;Just use indentation to group content. | ![Toggle Preview](assets/preview.png) |
 
-# Usage
+### Commands & Hotkeys
+- **Insert/Remove Toggle**: `Ctrl/Cmd + Shift + L`
+- **Edit Attributes**: Opens a modal for quick styling (via command or **Right-Click** on the widget).
+- **Change Type**: Cycle through callout types (via command or **Right-Click** on the widget).
 
-**Requirement**
+## 🎨 Styling & CSS
 
-- [Obsidian](https://obsidian.md)
-- [Git](https://git-scm.com)
-- [GitHub](https://github.com) account
-- [Node.js](https://nodejs.org)
-- Code Editor (I recommend [VSCode](https://code.visualstudio.com))
-- Basic [TypeScript](https://www.typescriptlang.org) knowledge
+You can add CSS attributes to any toggle (e.g., `%%⏷type: info; bg: rgba(0,100,255,0.1)%%`).
 
-**Installation**
+- **Shorthands**: `type` (presets), `bg` (background), `col` (color), `border` (left border).
+- **Free CSS**: Use any valid CSS attribute (e.g., `opacity: 0.5`).
+- **End Styling**: Block styling stops automatically at the end of the collapsed section or as soon as a horizontal rule (`---`) appears in the text.
 
-1. Open terminal
-2. `cd path/to/your/obsidian/vault/.obsidian/plugins`
-3. `git clone https://github.com/flolu/obsidian-plugin`
-4. `npm install`
-5. `npm run dev`
-6. In Obsidian, press `Ctrl + P` and select `Reload app without saving`
-7. In Obsidian, go to settings -> Community plugins -> Enable "Example Plugin"
+## ⚙️ Settings & Migration
 
-**Commands**
+> [!CAUTION]
+> ### ⚠️ Important: Create a Backup!
+> The **"Migrate Entire Vault"** and **"Remove ALL Toggles"** features modify many files at once. **Always** create a backup of your vault before using these tools.
 
-- `npm i` (Install dependencies)
-- `npm run dev` (Install dependencies)
+---
+*Disclaimer: This plugin is not affiliated with or endorsed by Notion Labs, Inc. It provides a similar user experience within Obsidian.*
 
-**Releasing**
-
-- [Releasing new releases](https://github.com/obsidianmd/obsidian-sample-plugin#releasing-new-releases)
+Developed by [Niklas Tran](https://github.com/niklastran)

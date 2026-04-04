@@ -36,7 +36,7 @@ export class ToggleWidget extends WidgetType {
 
     toDOM(view: EditorView) {
         const span = document.createElement("span");
-        span.className = "my-toggle-icon";
+        span.className = "inline-toggle-icon";
         span.style.cursor = "pointer";
 
         // Initialen Zustand im DOM speichern
