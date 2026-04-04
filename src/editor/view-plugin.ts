@@ -55,7 +55,6 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => 
                     // Toggle Widget
                     const foldRange = foldable(state, line.from, line.to);
                     const isFoldable = foldRange != null;
-                    const isFoldedIn = checkIfToggleIsFoldedIn(view, line);
                     //Der Text wird unsichtbar (0px), aber er bleibt da. Das gibt dem Cursor eine echte "Heimat" zum Blinken.
                     const hideText = Decoration.mark({
                         attributes: { style: "font-size: 0; opacity: 0;" }
@@ -78,12 +77,15 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => 
                     if (lineDecos) {
                         for (let i = line.number; i <= lastlineNumber; i++) {
                             const currentLine = state.doc.line(i);
+                            const isFoldedIn = checkIfToggleIsFoldedIn(view, currentLine);
+                            const range = foldable(state, currentLine.from, currentLine.to);
+                            const lastChildLineNumber = range ? state.doc.lineAt(range.to).number - line.number : 0;
                             if (currentLine.text === "---"){
                                 //Falls --- soll die vorherige Zeile unten abgerundet sein, als wäre sie die letzte
-                                applyRulesToLine(normalList, lineDecos, i - numLines, i - numLines, previousLine, togglePos, isFoldedIn)
+                                applyRulesToLine(normalList, lineDecos, i - numLines, i - numLines, previousLine, togglePos, isFoldedIn, lastChildLineNumber)
                                 break;
                             }
-                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, togglePos, isFoldedIn)
+                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, togglePos, isFoldedIn, lastChildLineNumber)
                             previousLine = currentLine
                         }
                     }

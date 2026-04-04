@@ -110,16 +110,21 @@ body.hide-gutter-arrows .collapse-indicator:hover {
     background-color: var(--inline-toggles-bg);
     box-shadow: inset 4px 0 0 0 var(--inline-toggles-border);
 }
-.inline-toggles-header {
+.inline-toggles-header-text{
     font-weight: bold;
     font-size: 1.15em;
+}
+.inline-toggles-header {
     padding-top: 10px !important;
-    border-radius: 5px 5px 0 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 .inline-toggles-header-folded {
     border-radius: 5px;
+    padding-bottom: 10px !important;
 }
 .inline-toggles-footer {
     padding-bottom: 10px !important;
-    border-radius: 0 0 5px 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
 }

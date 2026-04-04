@@ -4,7 +4,7 @@ import { MyToggleSettings } from "../ui/settings";
 
 
 export type LineStyleRule = {
-    condition: (index: number, num_lines: number, lineText: string, isFoldedIn: boolean) => boolean;
+    condition: (index: number, num_lines: number, lineText: string, isFoldedIn: boolean, lastChildLineNumber: number) => boolean;
     decoration: Decoration;
     isMark?: boolean
 };
@@ -17,8 +17,8 @@ function createLineDeco(newClass: string){
     })
 }
 
-export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line, togglePos: number, isFoldedIn: boolean){
-    const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text, isFoldedIn))
+export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: LineStyleRule[], index: number, numLines: number, line: Line, togglePos: number, isFoldedIn: boolean, lastChildLineNumber: number){
+    const activeRules = lineDecos.filter(rule => rule.condition(index, numLines, line.text, isFoldedIn, lastChildLineNumber))
     activeRules.forEach(rule =>{
         if (rule.isMark){
             if (togglePos > line.from)
@@ -75,6 +75,16 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             const inlineStyle = `--inline-toggles-bg: rgba(${colorVar}, 0.1); --inline-toggles-border: rgb(${colorVar});`;
             styleEntries.push(inlineStyle);
             classes.push("inline-toggles-colored");
+
+            lineStlyes.push({
+                condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
+                isMark: true,
+                decoration: Decoration.mark({
+                    attributes: {
+                        class: "inline-toggles-header-text"
+                    }
+                })
+            })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0,
                 decoration: createLineDeco("inline-toggles-header")
@@ -84,7 +94,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
                 decoration: createLineDeco("inline-toggles-header-folded")
             })
             lineStlyes.push({
-                condition: (index, numLines) => index === numLines,
+                condition: (index, numLines, lineText, isFoldedIn, lastChildLineNumber) => (index === numLines) || (isFoldedIn && lastChildLineNumber === numLines),
                 decoration: createLineDeco("inline-toggles-footer")
             })
             continue;
