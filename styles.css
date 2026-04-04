@@ -106,9 +106,22 @@ body.hide-gutter-arrows .collapse-indicator:hover {
 }
 
 /* --- Toggle Types --- */
+/* 1. Dein normaler Hintergrund (bleibt genau da, wo er ist) */
 .inline-toggles-colored {
     background-color: var(--inline-toggles-bg);
-    box-shadow: inset 4px 0 0 0 var(--inline-toggles-border);
+    position: relative;
+    overflow: visible !important;
+}
+
+/* 2. Die Linie, die links daneben schwebt */
+.inline-toggles-colored::before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    width: 4px;
+    top: 0;
+    bottom: 0;
+    background-color: var(--inline-toggles-border);
 }
 .inline-toggles-header-text{
     font-weight: bold;
