@@ -1,6 +1,6 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
-import MyTogglePlugin from './main';
-import { buildToggleTag, processAllToggles } from './utils';
+import MyTogglePlugin from '../main';
+import { buildToggleTag, processAllToggles } from '../utils/utils';
 import { ConfirmModal } from './modals';
 
 export interface PlaceholderSettings {

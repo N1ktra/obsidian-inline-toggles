@@ -1,7 +1,7 @@
 import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
-import { MyToggleSettings, PlaceholderSettings } from "./settings";
+import { MyToggleSettings, PlaceholderSettings } from "../ui/settings";
 import { App } from "obsidian";
 
 export const standardCallouts = ["info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];

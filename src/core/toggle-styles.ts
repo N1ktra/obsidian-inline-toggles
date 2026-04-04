@@ -1,6 +1,6 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
-import { MyToggleSettings } from "./settings";
+import { MyToggleSettings } from "../ui/settings";
 
 
 export type LineStyleRule = {

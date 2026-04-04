@@ -1,10 +1,10 @@
 import { App, MarkdownView, Editor } from 'obsidian';
-import { MyToggleSettings, PlaceholderSettings } from './settings';
-import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from './utils';
+import { MyToggleSettings, PlaceholderSettings } from '../ui/settings';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from '../utils/utils';
 import { EditorView } from '@codemirror/view';
 import { ChangeSpec, Line, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
-import { GenericActionModal, SuggestionAction } from './modals';
+import { GenericActionModal, SuggestionAction } from '../ui/modals';
 
 export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: MyToggleSettings): ChangeSpec[] {
     const changes: ChangeSpec[] = []

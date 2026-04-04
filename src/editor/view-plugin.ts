@@ -1,14 +1,14 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
 import { RangeSetBuilder, Text, Prec, Range, RangeSet } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
-import { MyToggleSettings } from "./settings";
-import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch, setSelection } from "./utils";
+import { MyToggleSettings } from "../ui/settings";
+import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch, setSelection } from "../utils/utils";
 import { foldable, foldEffect } from "@codemirror/language";
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
-import { editorLivePreviewField } from "obsidian";
-import { applyRulesToLine, buildLineDecorationFromAttributes } from "./toggle-styles";
+import { App, editorLivePreviewField } from "obsidian";
+import { applyRulesToLine, buildLineDecorationFromAttributes } from "../core/toggle-styles";
 
-export const createToggleViewPlugin = (settings: MyToggleSettings) => {
+export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => {
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet = Decoration.none;
         atomicDecorations: DecorationSet = Decoration.none
@@ -61,7 +61,7 @@ export const createToggleViewPlugin = (settings: MyToggleSettings) => {
                         attributes: { style: "font-size: 0; opacity: 0;" }
                     });
                     const widgetDeco = Decoration.replace({
-                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.attributeString, toggle.length, settings)
+                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.fullTag, toggle.attributeString, toggle.length, settings, app)
                     });
                     atomicList.push(hideText.range(togglePos, togglePos + match[0].length));
                     atomicList.push(widgetDeco.range(togglePos, togglePos + match[0].length));

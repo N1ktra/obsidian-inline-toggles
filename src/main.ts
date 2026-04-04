@@ -1,9 +1,9 @@
 import { MarkdownView, Plugin } from 'obsidian';
-import { createToggleViewPlugin, createToggleEnterFix } from './view-plugin';
-import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './logic';
-import { createFoldTrackerPlugin, foldTrackerSpec } from './fold-tracker';
-import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './settings';
-import { findToggle } from './utils';
+import { createToggleViewPlugin, createToggleEnterFix } from './editor/view-plugin';
+import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
+import { createFoldTrackerPlugin, foldTrackerSpec } from './editor/fold-tracker';
+import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './ui/settings';
+import { findToggle } from './utils/utils';
 import { EditorView } from '@codemirror/view';
 
 export default class MyTogglePlugin extends Plugin {
@@ -17,7 +17,7 @@ export default class MyTogglePlugin extends Plugin {
         createFoldTrackerPlugin(this, this.settings);
         // Editor Extension für die Icons
         this.registerEditorExtension([
-            createToggleViewPlugin(this.settings),
+            createToggleViewPlugin(this.settings, this.app),
             createToggleEnterFix(this.settings),
             foldTrackerSpec ? foldTrackerSpec : [],
         ]);
@@ -27,10 +27,10 @@ export default class MyTogglePlugin extends Plugin {
             id: 'inline-toggles.insert-toggle',
             name: 'Insert/Remove Toggle',
             icon: 'play',
-            hotkeys: [{
-                    modifiers: ["Mod", "Shift"],
-                    key: "l",
-                },],
+            // hotkeys: [{
+            //         modifiers: ["Mod", "Shift"],
+            //         key: "l",
+            //     },],
             editorCallback: (editor) => {
                 const view = (editor as any).cm as EditorView;
                 if (!view) return;

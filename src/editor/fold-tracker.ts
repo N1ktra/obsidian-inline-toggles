@@ -1,10 +1,10 @@
 import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 import { Extension, Line } from "@codemirror/state";
-import { getToggleRegex, parseToggleMatch, updateToggle } from "./utils";
+import { getToggleRegex, parseToggleMatch, updateToggle } from "../utils/utils";
 import { MarkdownView } from "obsidian";
-import { MyToggleSettings } from "./settings";
-import MyTogglePlugin from "./main";
+import { MyToggleSettings } from "../ui/settings";
+import MyTogglePlugin from "../main";
 
 
 export let foldTrackerSpec: Extension | null = null;

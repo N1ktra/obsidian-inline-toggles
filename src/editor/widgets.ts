@@ -1,19 +1,21 @@
 import { WidgetType, EditorView, placeholder } from "@codemirror/view";
-import { MyToggleSettings } from "./settings";
+import { MyToggleSettings } from "../ui/settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { App, Editor, MarkdownView, Menu, setIcon } from "obsidian";
-import { areAttributesEqual, buildToggleTag, findToggle, parseToggleMatch, ToggleMatch } from "./utils";
-import { changeToggleType, editToggleAttributes } from "./logic";
+import { areAttributesEqual, buildToggleTag, findToggle, parseToggleMatch, ToggleMatch } from "../utils/utils";
+import { changeToggleType, editToggleAttributes } from "../core/logic";
 
 export class ToggleWidget extends WidgetType {
     constructor(
         readonly isOpen: boolean,
         readonly hasChildren: boolean,
+        readonly fullTag: string,
         readonly attributeString: string,
         readonly fullLength: number,
         readonly settings: MyToggleSettings,
+        readonly app: App,
 
     ) { super(); }
 
@@ -21,16 +23,7 @@ export class ToggleWidget extends WidgetType {
         // 1. Einfache Werte zuerst (Booleans sind blitzschnell)
         if (this.isOpen !== other.isOpen) return false;
         if (this.hasChildren !== other.hasChildren) return false;
-        if (this.fullLength !== other.fullLength) return false;
-        if (this.attributeString !== other.attributeString) return false;
-
-        // 2. Referenz-Check für Settings
-        if (this.settings.placeholder !== other.settings.placeholder) {
-            if (this.settings.placeholder.symbolOpen !== other.settings.placeholder.symbolOpen) return false;
-            if (this.settings.placeholder.symbolClosed !== other.settings.placeholder.symbolClosed) return false;
-            if (this.settings.placeholder.borderSymbol !== other.settings.placeholder.borderSymbol) return false;
-        }
-
+        if (this.fullTag !== other.fullTag) return false;
         return true;
     }
 
@@ -127,9 +120,7 @@ export class ToggleWidget extends WidgetType {
     private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView){
         event.preventDefault();
         // @ts-ignore
-        const app = window.app as App;
-        if (!app) return;
-        const editor = app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+        const editor = this.app.workspace.activeEditor?.editor;
         if (!editor) return;
 
         const menu = new Menu();
@@ -140,7 +131,7 @@ export class ToggleWidget extends WidgetType {
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
                     if (result){
-                        changeToggleType(result.toggle, result.lineNumber, editor, app, this.settings.placeholder);
+                        changeToggleType(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
                     }
                 })
         );
@@ -151,7 +142,7 @@ export class ToggleWidget extends WidgetType {
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
                     if (result){
-                        editToggleAttributes(result.toggle, result.lineNumber, editor, app, this.settings.placeholder);
+                        editToggleAttributes(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
                     }
                 })
         });
@@ -161,13 +152,12 @@ export class ToggleWidget extends WidgetType {
     }
 
     private getToggleData(span: HTMLElement, view: EditorView){
-        const tag = buildToggleTag(this.isOpen, this.settings.placeholder, undefined, this.attributeString);
-        const toggle = findToggle(tag, this.settings.placeholder);
+        const toggle = findToggle(this.fullTag, this.settings.placeholder);
         if (!toggle) return;
         const pos = view.posAtDOM(span);
         const line = view.state.doc.lineAt(pos);
         const toggleMatch: ToggleMatch = {
-            fullTag: toggle.fullTag,
+            fullTag: this.fullTag,
             index: pos - line.from,
             length: this.fullLength,
             symbol: toggle.symbol,
