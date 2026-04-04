@@ -17,7 +17,7 @@ Unlike standard Obsidian callouts, Inline Toggles offer a more fluid writing exp
 
 | Source Mode (Markdown) | Live Preview (Result) |
 | :--- | :--- |
-| `%%⏷type: info%%` This is a toggle header<br>&nbsp;&nbsp;&nbsp;&nbsp;This text will be collapsed.<br>&nbsp;&nbsp;&nbsp;&nbsp;Just use indentation to group content. | ![Toggle Preview](assets/preview.png) |
+| `%%⏷type: info%%` This is a toggle header<br>&nbsp;&nbsp;&nbsp;&nbsp;This text will be collapsed.<br>&nbsp;&nbsp;&nbsp;&nbsp;Just use indentation to group content. | ![Toggle Preview](assets/toggle.gif) |
 
 ### Commands & Hotkeys
 - **Insert/Remove Toggle**: `Ctrl/Cmd + Shift + L`
