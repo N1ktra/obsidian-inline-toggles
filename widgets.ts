@@ -5,7 +5,7 @@ import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { App, Editor, MarkdownView, Menu, setIcon } from "obsidian";
 import { areAttributesEqual, buildToggleTag, findToggle, parseToggleMatch, ToggleMatch } from "./utils";
-import { changeToggleType } from "./logic";
+import { changeToggleType, editToggleAttributes } from "./logic";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -125,38 +125,59 @@ export class ToggleWidget extends WidgetType {
 
     private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView){
         event.preventDefault();
+        // @ts-ignore
+        const app = window.app as App;
+        if (!app) return;
+        const editor = app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+        if (!editor) return;
+
         const menu = new Menu();
         menu.addItem((item) =>
             item
                 .setTitle("Change Type")
                 .setIcon("pencil")
                 .onClick(() => {
-                    const tag = buildToggleTag(this.isOpen, this.settings.placeholder, undefined, this.attributeString);
-                    const toggle = findToggle(tag, this.settings.placeholder);
-                    if (!toggle) return;
-                    // @ts-ignore
-                    const app = window.app as App;
-                    if (!app) return;
-                    const editor = app.workspace.getActiveViewOfType(MarkdownView)?.editor;
-                    if (!editor) return;
-
-                    const pos = view.posAtDOM(span);
-                    const line = view.state.doc.lineAt(pos);
-                    const toggleMatch: ToggleMatch = {
-                        fullTag: toggle.fullTag,
-                        index: pos - line.from,
-                        length: this.fullLength,
-                        symbol: toggle.symbol,
-                        isOpen: this.isOpen,
-                        attributes: toggle.attributes,
-                        attributeString: this.attributeString
-                    };
-                    changeToggleType(toggleMatch, line.number - 1, editor, app, this.settings.placeholder);
+                    const result = this.getToggleData(span, view);
+                    if (result){
+                        changeToggleType(result.toggle, result.lineNumber, editor, app, this.settings.placeholder);
+                    }
                 })
         );
+        menu.addItem((item) => {
+            item
+                .setTitle("Edit Attributes")
+                .setIcon("list")
+                .onClick(() => {
+                    const result = this.getToggleData(span, view);
+                    if (result){
+                        editToggleAttributes(result.toggle, result.lineNumber, editor, app, this.settings.placeholder);
+                    }
+                })
+        });
 
         // 4. Zeige das Menü an der Mausposition
         menu.showAtMouseEvent(event);
+    }
+
+    private getToggleData(span: HTMLElement, view: EditorView){
+        const tag = buildToggleTag(this.isOpen, this.settings.placeholder, undefined, this.attributeString);
+        const toggle = findToggle(tag, this.settings.placeholder);
+        if (!toggle) return;
+        const pos = view.posAtDOM(span);
+        const line = view.state.doc.lineAt(pos);
+        const toggleMatch: ToggleMatch = {
+            fullTag: toggle.fullTag,
+            index: pos - line.from,
+            length: this.fullLength,
+            symbol: toggle.symbol,
+            isOpen: this.isOpen,
+            attributes: toggle.attributes,
+            attributeString: this.attributeString
+        };
+        return {
+            toggle: toggleMatch,
+            lineNumber: line.number - 1,
+        }
     }
 
     ignoreEvent() { return true; }
