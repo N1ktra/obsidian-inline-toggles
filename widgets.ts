@@ -3,8 +3,9 @@ import { MyToggleSettings } from "./settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
-import { setIcon } from "obsidian";
-import { areAttributesEqual, buildToggleTag } from "./utils";
+import { App, Editor, MarkdownView, Menu, setIcon } from "obsidian";
+import { areAttributesEqual, buildToggleTag, findToggle, parseToggleMatch, ToggleMatch } from "./utils";
+import { changeToggleType } from "./logic";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -47,6 +48,7 @@ export class ToggleWidget extends WidgetType {
             // für Mobile verindern, dass die Tastatur angezeigt wird
             event.preventDefault();
         };
+        span.addEventListener("contextmenu", (event) => this.handleContextMenu(event, span, view));
         return span;
     }
 
@@ -60,6 +62,7 @@ export class ToggleWidget extends WidgetType {
         if(this.hasChildren) dom.classList.replace("is-empty", "has-content");
         else dom.classList.replace("has-content", "is-empty");
         dom.onclick = (e) => this.handleClick(e, view, dom);
+        dom.addEventListener("contextmenu", (event) => this.handleContextMenu(event, dom, view));
         return true;
     }
 
@@ -118,6 +121,42 @@ export class ToggleWidget extends WidgetType {
                 userEvent: "inline-toggles.create-new-child"
             });
         }
+    }
+
+    private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView){
+        event.preventDefault();
+        const menu = new Menu();
+        menu.addItem((item) =>
+            item
+                .setTitle("Change Type")
+                .setIcon("pencil")
+                .onClick(() => {
+                    const tag = buildToggleTag(this.isOpen, this.settings.placeholder, undefined, this.attributeString);
+                    const toggle = findToggle(tag, this.settings.placeholder);
+                    if (!toggle) return;
+                    // @ts-ignore
+                    const app = window.app as App;
+                    if (!app) return;
+                    const editor = app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+                    if (!editor) return;
+
+                    const pos = view.posAtDOM(span);
+                    const line = view.state.doc.lineAt(pos);
+                    const toggleMatch: ToggleMatch = {
+                        fullTag: toggle.fullTag,
+                        index: pos - line.from,
+                        length: this.fullLength,
+                        symbol: toggle.symbol,
+                        isOpen: this.isOpen,
+                        attributes: toggle.attributes,
+                        attributeString: this.attributeString
+                    };
+                    changeToggleType(toggleMatch, line.number - 1, editor, app, this.settings.placeholder);
+                })
+        );
+
+        // 4. Zeige das Menü an der Mausposition
+        menu.showAtMouseEvent(event);
     }
 
     ignoreEvent() { return true; }

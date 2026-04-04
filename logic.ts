@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from './settings';
-import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap } from './utils';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from './utils';
 import { EditorView } from '@codemirror/view';
 import { ChangeSpec, Line, StateEffect} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -111,8 +111,6 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
 }
 
 export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
-    const standardCallouts = ["info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
-
     const actions: SuggestionAction[] = standardCallouts.map(id => ({
         label: id,
         onSelect(userInput, evt) {
