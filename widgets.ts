@@ -22,7 +22,7 @@ export class ToggleWidget extends WidgetType {
         if (this.isOpen !== other.isOpen) return false;
         if (this.hasChildren !== other.hasChildren) return false;
         if (this.fullLength !== other.fullLength) return false;
-        if (this.attributeString === other.attributeString) return false;
+        if (this.attributeString !== other.attributeString) return false;
 
         // 2. Referenz-Check für Settings
         if (this.settings.placeholder !== other.settings.placeholder) {
@@ -57,10 +57,11 @@ export class ToggleWidget extends WidgetType {
      * anstatt toDOM() neu auszuführen. -> Wichtig für Animation!
      */
     updateDOM(dom: HTMLElement, view: EditorView): boolean {
-        if(this.isOpen) dom.classList.replace("is-closed", "is-open");
-        else dom.classList.replace("is-open", "is-closed");
-        if(this.hasChildren) dom.classList.replace("is-empty", "has-content");
-        else dom.classList.replace("has-content", "is-empty");
+        dom.classList.toggle("is-open", this.isOpen);
+        dom.classList.toggle("is-closed", !this.isOpen);
+        dom.classList.toggle("has-content", this.hasChildren);
+        dom.classList.toggle("is-empty", !this.hasChildren);
+
         dom.onclick = (e) => this.handleClick(e, view, dom);
         dom.addEventListener("contextmenu", (event) => this.handleContextMenu(event, dom, view));
         return true;
