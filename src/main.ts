@@ -25,7 +25,7 @@ export default class MyTogglePlugin extends Plugin {
 
         // Befehl zum Einfügen
         this.addCommand({
-            id: 'inline-toggles.insert-toggle',
+            id: 'insert-toggle',
             name: 'Insert/Remove Toggle',
             icon: 'play',
             // hotkeys: [{
@@ -46,7 +46,7 @@ export default class MyTogglePlugin extends Plugin {
         });
 
         this.addCommand({
-            id: 'inline-toggles.reset-foldings',
+            id: 'reset-foldings',
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
             editorCallback: (editor) => {
@@ -55,7 +55,7 @@ export default class MyTogglePlugin extends Plugin {
         });
 
         this.addCommand({
-            id: 'inline-toggles.edit-attributes',
+            id: 'edit-attributes',
             name: 'Edit Attributes',
             editorCallback: (editor) => {
                 const cursor = editor.getCursor();
@@ -67,7 +67,7 @@ export default class MyTogglePlugin extends Plugin {
         })
 
         this.addCommand({
-            id: 'inline-toggles.change_type',
+            id: 'change_type',
             name: 'Change Type',
             editorCallback: async (editor) => {
                 const cursor = editor.getCursor();

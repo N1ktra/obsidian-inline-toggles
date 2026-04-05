@@ -3,7 +3,7 @@
 	"name": "Inline Toggles",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Create reliable inline toggles that save their state directly in Markdown. Features custom CSS attributes for rich styling in Live Preview while remaining clean and readable in Source mode.",
+	"description": "Create reliable inline toggles that save their state directly in Markdown.",
 	"author": "Niklas Tran",
 	"authorUrl": "",
 	"fundingUrl": "",
