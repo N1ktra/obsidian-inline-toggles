@@ -100,7 +100,10 @@ export class ToggleWidget extends WidgetType {
             });
         }else{
             // neues Kind erstellen
-            view.dispatch({ selection: { anchor: line.to } });
+            view.dispatch({
+                selection: { anchor: line.to },
+                userEvent: "inline-toggles.select-line-end"
+            });
             insertNewlineAndIndent(view);
             indentMore(view);
             const currentPos = view.state.selection.main.from;

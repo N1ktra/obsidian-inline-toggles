@@ -240,7 +240,8 @@ export function setSelection(view: EditorView, from: number, to: number){
         //Visualization:
         view.dispatch({
             selection: { anchor: from, head: to },
-            scrollIntoView: true
+            scrollIntoView: true,
+            userEvent: "inline-toggles.set-selection"
         });
     });
 }

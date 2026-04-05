@@ -77,7 +77,8 @@ export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
     // 3. Alle Änderungen in einem EINZIGEN Dispatch senden
     if (effects.length > 0) {
         view.dispatch({
-            effects: effects
+            effects: effects,
+            userEvent: "inline-toggles.apply-fold"
         });
     }
 }

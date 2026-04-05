@@ -99,7 +99,7 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: MyTogg
                             to: startPos + toggle.length,
                             insert: newFullTag
                         },
-                        userEvent: "plugin.fold.symbol-update"
+                        userEvent: "inline-toggles.symbol-update"
                     });
                 });
             }

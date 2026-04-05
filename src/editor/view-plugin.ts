@@ -188,6 +188,7 @@ export const createToggleEnterFix = (settings: MyToggleSettings) => {
                     //Automatisch Ausklappen "rückgängig" machen
                     view.dispatch({
                         effects: foldEffect.of({ from: foldStart, to: foldEnd}),
+                        userEvent: "inline-toggles.reverse-fold"
                     });
                     //Visualization:
                     // setSelection(view, foldStart, foldEnd);

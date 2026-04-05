@@ -40,7 +40,8 @@ export default class MyTogglePlugin extends Plugin {
                     changes.push(insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings));
                 });
                 view.dispatch({
-                    changes: changes
+                    changes: changes,
+                    userEvent: "inline-toggles.insert-remove-toggle"
                 });
             }
         });
