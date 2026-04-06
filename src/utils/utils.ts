@@ -4,8 +4,9 @@ import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/langu
 import { MyToggleSettings, PlaceholderSettings } from "../ui/settings";
 import { App } from "obsidian";
 
-export const standardCallouts = ["info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
+export const standardCallouts = ["no type", "info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
 export const calloutIconMap: Record<string, string> = {
+    "no type": "ban",
     note: "pencil",
     abstract: "clipboard-list",
     summary: "clipboard-list",

@@ -116,7 +116,11 @@ export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor
         label: id,
         onSelect(userInput, evt) {
             const newAttrs = toggle.attributes;
-            newAttrs["type"] = id;
+            if (id === "no type"){
+                delete newAttrs.type
+            }else{
+                newAttrs["type"] = id;
+            }
             const newToggleString = updateToggle(toggle, settings, { attributes: newAttrs });
             editor.replaceRange(
                 newToggleString,
