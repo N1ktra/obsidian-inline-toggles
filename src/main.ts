@@ -1,11 +1,13 @@
 import { MarkdownView, Plugin } from 'obsidian';
-import { createToggleViewPlugin, createToggleEnterFix } from './editor/view-plugin';
+import { createToggleViewPlugin } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './ui/settings';
 import { findToggle } from './utils/utils';
 import { EditorView } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
+import { createToggleField } from './editor/toggle-field';
+import { createToggleEnterFix } from './editor/toggle-enter';
 
 export const layoutChangedEffect = StateEffect.define<void>();
 export default class MyTogglePlugin extends Plugin {
@@ -16,11 +18,13 @@ export default class MyTogglePlugin extends Plugin {
         this.refreshGutterStyle();
         this.addSettingTab(new MyToggleSettingTab(this.app, this));
 
+        const myToggleField = createToggleField(this.settings.placeholder);
         // Editor Extension für die Icons
         this.registerEditorExtension([
-            createToggleViewPlugin(this.settings, this.app),
+            createToggleViewPlugin(this.settings, this.app, myToggleField),
             createToggleEnterFix(this.settings),
-            createFoldTrackerPlugin(this, this.settings)
+            createFoldTrackerPlugin(this, this.settings),
+            myToggleField
         ]);
 
         // Befehl zum Einfügen

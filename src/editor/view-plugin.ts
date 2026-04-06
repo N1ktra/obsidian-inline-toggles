@@ -1,22 +1,20 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
-import { RangeSetBuilder, Text, Prec, Range, RangeSet } from "@codemirror/state";
+import { Range, RangeSet, StateField, Line } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { MyToggleSettings } from "../ui/settings";
-import { checkIfToggleIsFoldedIn, getToggleRegex, extractMarkdownSymbols, findToggle, buildToggleTag, parseToggleMatch, setSelection } from "../utils/utils";
-import { foldable, foldEffect } from "@codemirror/language";
-import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
+import { checkIfToggleIsFoldedIn, ToggleMatch } from "../utils/utils";
+import { foldable } from "@codemirror/language";
 import { App, editorLivePreviewField } from "obsidian";
 import { applyRulesToLine, buildLineDecorationFromAttributes } from "../core/toggle-styles";
+import { ToggleValue } from "./toggle-field";
 
-export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => {
+export const createToggleViewPlugin = (settings: MyToggleSettings, app: App, toggleField: StateField<RangeSet<ToggleValue>>) => {
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet = Decoration.none;
         atomicDecorations: DecorationSet = Decoration.none
         normalDecorations: DecorationSet = Decoration.none
-        regex: RegExp;
 
         constructor(view: EditorView) {
-            this.regex = getToggleRegex(settings.placeholder);
             this.buildDecorations(view);
         }
 
@@ -29,10 +27,9 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => 
             }
         }
 
-        // Hier wird nur visuell angepasst. Der Text kann tatsächlich einfach bleiben wie er ist.
-        // Dann wird auch korrekt auf indents reagiert (Das toggle muss hier einfach offen bleiben in der Datei)
         buildDecorations(view: EditorView) {
             const { state } = view;
+
             if (state.field(editorLivePreviewField) === false) {
                 this.decorations = Decoration.none;
                 this.normalDecorations = Decoration.none;
@@ -40,65 +37,108 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => 
                 return;
             }
 
-            let match;
+            const toggleRanges = state.field(toggleField);
             const atomicList: Range<Decoration>[] = [];
             const normalList: Range<Decoration>[] = [];
-            for (const { from, to } of view.visibleRanges) {
-                const text = state.doc.sliceString(from, to);
-                this.regex.lastIndex = 0;
-                let previousToggleLine = -1;
-                while ((match = this.regex.exec(text)) !== null) {
-                    const toggle = parseToggleMatch(match, settings.placeholder);
-                    const togglePos = from + toggle.index;
-                    const line = state.doc.lineAt(togglePos);
 
-                    // Toggle Widget
-                    const foldRange = foldable(state, line.from, line.to);
-                    const isFoldable = foldRange != null;
-                    //Der Text wird unsichtbar (0px), aber er bleibt da. Das gibt dem Cursor eine echte "Heimat" zum Blinken.
-                    const hideText = Decoration.mark({
-                        attributes: { style: "font-size: 0; opacity: 0;" }
-                    });
-                    const widgetDeco = Decoration.replace({
-                        widget: new ToggleWidget(isFoldable ? toggle.isOpen : false, isFoldable, toggle.fullTag, toggle.attributeString, toggle.length, settings, app)
-                    });
-                    atomicList.push(hideText.range(togglePos, togglePos + match[0].length));
-                    atomicList.push(widgetDeco.range(togglePos, togglePos + match[0].length));
+            let previousToggleLine = -1;
+            const visibleRanges = view.visibleRanges;
+            if (visibleRanges.length === 0) return;
+            const viewportStart = visibleRanges[0].from;
+            const viewportEnd = visibleRanges[visibleRanges.length - 1].to;
 
-                    // Falls mehrere Widgets in einer Zeile sind, nicht doppelt das Line Styling
-                    if (previousToggleLine === line.number) continue;
-                    previousToggleLine = line.number;
+            const iter = toggleRanges.iter();
+            while (iter.value !== null) {
+                const tFrom = iter.from;
+                const tTo = iter.to;
+                const value = iter.value as ToggleValue;
+                if (tFrom > viewportEnd) break;
+                const toggle = value.data;
+                // Wenn es keine Line-Styles hat UND das Symbol nicht im Bild ist -> Überspringen
+                if (tTo < viewportStart && toggle.attributeString.length === 0) {
+                    iter.next();
+                    continue;
+                }
 
-                    // Attributes
-                    const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : line.number
-                    const numLines = lastlineNumber - line.number
-                    const lineDecos = buildLineDecorationFromAttributes(toggle.attributes, settings);
-                    let previousLine = line;
-                    if (lineDecos) {
-                        for (let i = line.number; i <= lastlineNumber; i++) {
-                            const currentLine = state.doc.line(i);
-                            const range = foldable(state, currentLine.from, currentLine.to);
-                            const isFoldedIn = !!range && checkIfToggleIsFoldedIn(view, currentLine);
-                            const lastChildLineNumber = range ? state.doc.lineAt(range.to).number - line.number : -1;
-                            if (currentLine.text === "---"){
-                                //Falls --- soll die vorherige Zeile unten abgerundet sein, als wäre sie die letzte
-                                applyRulesToLine(normalList, lineDecos, i - line.number, i - line.number, previousLine, togglePos, isFoldedIn, lastChildLineNumber)
-                                break;
-                            }
-                            applyRulesToLine(normalList, lineDecos, i - line.number, numLines, currentLine, togglePos, isFoldedIn, lastChildLineNumber)
-                            previousLine = currentLine
+                // Wir berechnen, wie weit der Toggle-Block nach unten reicht
+                const line = state.doc.lineAt(tFrom);
+                const foldRange = foldable(state, line.from, line.to);
+                const isFoldable = foldRange != null;
+                const toggleBlockEnd = isFoldable ? foldRange.to : line.to;
+                if (toggleBlockEnd >= viewportStart) {
+                    // --- WIDGET ---
+                    // Das Widget selbst zeichnen wir NUR, wenn das Tag (%%toggle%%) gerade im Bild ist.
+                    if (tFrom >= viewportStart && tTo <= viewportEnd) {
+                        const hideText = Decoration.mark({
+                            attributes: { style: "font-size: 0; opacity: 0;" }
+                        });
 
-                            if (isFoldedIn) break;
-                        }
+                        const widgetDeco = Decoration.replace({
+                            widget: new ToggleWidget(
+                                isFoldable ? toggle.isOpen : false,
+                                isFoldable,
+                                toggle.fullTag,
+                                toggle.attributeString,
+                                toggle.length,
+                                settings,
+                                app
+                            )
+                        });
+
+                        atomicList.push(hideText.range(tFrom, tFrom + toggle.length));
+                        atomicList.push(widgetDeco.range(tFrom, tFrom + toggle.length));
+                    }
+
+                    // --- LINE STYLING ---
+                    if (previousToggleLine !== line.number) {
+                        previousToggleLine = line.number;
+                        this.processLineStyling(view, line, foldRange, toggle, tFrom, normalList);
                     }
                 }
+
+                // Zum nächsten Toggle im StateField springen
+                iter.next();
             }
 
             this.atomicDecorations = Decoration.set(atomicList, true);
             this.normalDecorations = Decoration.set(normalList, true);
-
-            // 3. Zusammenführen für die Anzeige
             this.decorations = RangeSet.join([this.atomicDecorations, this.normalDecorations]);
+        }
+
+        processLineStyling(view: EditorView, startLine: Line,  foldRange: {from: number, to: number} | null, toggle: ToggleMatch, tFrom: number,
+            normalList: Range<Decoration> []) {
+            const { state } = view;
+            const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : startLine.number;
+            const numLines = lastlineNumber - startLine.number;
+            const lineDecos = buildLineDecorationFromAttributes(toggle.attributes, settings);
+
+            let previousLine = startLine;
+
+            if (!lineDecos) return; // Frühzeitiger Abbruch, wenn es keine Styles gibt
+            const visibleRanges = view.visibleRanges;
+            if (visibleRanges.length === 0) return;
+            const viewportStart = visibleRanges[0].from;
+            const viewportEnd = visibleRanges[visibleRanges.length - 1].to;
+
+            for (let i = startLine.number; i <= lastlineNumber; i++) {
+                const currentLine = state.doc.line(i);
+                // Performance-Check: Zeile ist oberhalb des sichtbaren Bereichs -> überspringen
+                if (currentLine.to < viewportStart) continue;
+                // Performance-Check: Zeile ist unterhalb des sichtbaren Bereichs -> abbrechen
+                if (currentLine.from > viewportEnd) break;
+                const range = foldable(state, currentLine.from, currentLine.to);
+                const isFoldedIn = !!range && checkIfToggleIsFoldedIn(view, currentLine);
+                const lastChildLineNumber = range ? state.doc.lineAt(range.to).number - startLine.number : -1;
+
+                if (currentLine.text === "---") {
+                    applyRulesToLine(normalList, lineDecos, i - startLine.number, i - startLine.number, previousLine, tFrom, isFoldedIn, lastChildLineNumber );
+                    break;
+                }
+
+                applyRulesToLine(normalList, lineDecos, i - startLine.number, numLines, currentLine, tFrom, isFoldedIn, lastChildLineNumber);
+                previousLine = currentLine;
+                if (isFoldedIn) break;
+            }
         }
 
     }, {
@@ -108,95 +148,8 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App) => 
             EditorView.atomicRanges.of(v => v.plugin(p)?.atomicDecorations || Decoration.none)
         ]
     });
+
+
 };
 
 
-export const createToggleEnterFix = (settings: MyToggleSettings) => {
-    return Prec.highest(keymap.of([{
-        key: "Enter",
-        run: (view: EditorView) => {
-            const { state } = view;
-            const selection = state.selection.main;
-            if (!selection.empty) return false;
-            const line = state.doc.lineAt(selection.head);
-            const toggle = findToggle(line.text, settings.placeholder)
-            if (!toggle) return false;
-
-            // Auswahl ist noch vor dem Toggle -> Dann nichts anders machen
-            if (selection.anchor - line.from <= toggle.index){
-                return false;
-            }
-
-            const lineIsFoldedIn = checkIfToggleIsFoldedIn(view, line)
-            if (!lineIsFoldedIn){ //ausgeklappt
-                insertNewlineAndIndent(view);
-                indentMore(view);
-                const currentPos = view.state.selection.main.from;
-                const insertText = settings.autoInsertBullet ? "- " : "";
-                view.dispatch({
-                    changes: [
-                        { from: currentPos, insert: insertText },
-                    ],
-                    selection: { anchor: currentPos + insertText.length },
-                    userEvent: "inline-toggles.auto-bullet"
-                });
-                return true;
-            }
-            else if(lineIsFoldedIn){ //eingeklappt
-                const range = foldable(state, line.from, line.to);
-                let finalPos = range ? range.to + 1 : line.to + 1;
-                const isAtEof = finalPos > state.doc.length
-                if (isAtEof) finalPos = state.doc.line(state.doc.lines).to
-
-                // Falls Toggle Text leer ist -> einrücken -> dann entfernen
-                const textWithoutPlaceholder = line.text.slice(0, toggle.index) + line.text.slice(toggle.index + toggle.length);
-                const mdSymbols = extractMarkdownSymbols(line.text, settings.placeholder);
-                const hasIndent = /^[ \t]/.test(line.text);
-                const isEffectivelyEmpty = textWithoutPlaceholder.trim() === mdSymbols.trim();
-                if (isEffectivelyEmpty) {
-                    if (hasIndent) {
-                        indentLess(view);
-                        return true;
-                    } else {
-                        view.dispatch({
-                            changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" },
-                            userEvent: "inline-toggles.remove-toggle"
-                        });
-                        return true;
-                    }
-                }
-
-                // Rest der Zeile löschen und in nächster Zeile einfügen
-                const from = selection.head;
-                const to = line.to
-                const remainingText = state.doc.sliceString(from, to)
-                const prefix = `${isAtEof ? "\n" : ""}${mdSymbols}${buildToggleTag(true, settings.placeholder)} ` // hier immer open, damit es beim evtl. einrücken passt
-                const insertText = `${prefix}${remainingText}${isAtEof ? "" : "\n"}`;
-                const newCursorPos = finalPos + insertText.length - (2 * remainingText.length) - (isAtEof ? 0 : 1)
-                view.dispatch({
-                    changes: [
-                        { from: selection.head, to: line.to, insert: "" },
-                        { from: finalPos, insert: insertText },
-                    ],
-                    selection: { anchor: newCursorPos },
-                    userEvent: "inline-toggles.new-line",
-                    scrollIntoView: false,
-                });
-                const foldStart = line.to - remainingText.length
-                const foldEnd = newCursorPos - prefix.length - (isAtEof ? 0 : 1)
-                if (foldStart != foldEnd){
-                    //Automatisch Ausklappen "rückgängig" machen
-                    view.dispatch({
-                        effects: foldEffect.of({ from: foldStart, to: foldEnd}),
-                        userEvent: "inline-toggles.reverse-fold"
-                    });
-                    //Visualization:
-                    // setSelection(view, foldStart, foldEnd);
-                }
-
-                return true;
-            }
-            return false;
-        }
-    }]));
-};
