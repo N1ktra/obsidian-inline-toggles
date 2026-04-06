@@ -4,6 +4,7 @@ import { Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { foldable, foldEffect } from "@codemirror/language";
 import { findToggle, checkIfToggleIsFoldedIn, extractMarkdownSymbols, buildToggleTag } from "../utils/utils";
+import { USER_EVENTS } from "../utils/constants";
 
 export const createToggleEnterFix = (settings: ToggleSettings) => {
     return Prec.highest(keymap.of([{
@@ -32,7 +33,7 @@ export const createToggleEnterFix = (settings: ToggleSettings) => {
                         { from: currentPos, insert: insertText },
                     ],
                     selection: { anchor: currentPos + insertText.length },
-                    userEvent: "inline-toggles.auto-bullet"
+                    userEvent: USER_EVENTS.AUTO_BULLET
                 });
                 return true;
             }
@@ -54,7 +55,7 @@ export const createToggleEnterFix = (settings: ToggleSettings) => {
                     } else {
                         view.dispatch({
                             changes: { from: line.from + toggle.index, to: line.from + toggle.index + toggle.length, insert: "" },
-                            userEvent: "inline-toggles.remove-toggle"
+                            userEvent: USER_EVENTS.REMOVE_TOGGLE
                         });
                         return true;
                     }
@@ -73,8 +74,8 @@ export const createToggleEnterFix = (settings: ToggleSettings) => {
                         { from: finalPos, insert: insertText },
                     ],
                     selection: { anchor: newCursorPos },
-                    userEvent: "inline-toggles.new-line",
                     scrollIntoView: false,
+                    userEvent: USER_EVENTS.NEW_LINE,
                 });
                 const foldStart = line.to - remainingText.length
                 const foldEnd = newCursorPos - prefix.length - (isAtEof ? 0 : 1)
@@ -82,7 +83,7 @@ export const createToggleEnterFix = (settings: ToggleSettings) => {
                     //Automatisch Ausklappen "rückgängig" machen
                     view.dispatch({
                         effects: foldEffect.of({ from: foldStart, to: foldEnd}),
-                        userEvent: "inline-toggles.reverse-fold"
+                        userEvent: USER_EVENTS.REVERSE_FOLD
                     });
                     //Visualization:
                     // setSelection(view, foldStart, foldEnd);

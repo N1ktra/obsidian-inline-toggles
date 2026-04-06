@@ -11,6 +11,7 @@ export const USER_EVENTS = {
     REVERSE_FOLD: PREFIX + ".reverse-fold",
     AUTO_BULLET: PREFIX + ".auto-bullet",
     SET_SELECTION: PREFIX + ".set-selection",
+    REMOVE_TOGGLE: PREFIX + "remove-toggle"
 };
 
 export const CSS_CLASSES = {
