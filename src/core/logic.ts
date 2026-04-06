@@ -2,9 +2,10 @@ import { App, MarkdownView, Editor } from 'obsidian';
 import { MyToggleSettings, PlaceholderSettings } from '../ui/settings';
 import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from '../utils/utils';
 import { EditorView } from '@codemirror/view';
-import { ChangeSpec, Line, StateEffect} from "@codemirror/state";
+import { ChangeSpec, Line, RangeSet, StateEffect, StateField} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
 import { GenericActionModal, SuggestionAction } from '../ui/modals';
+import { ToggleValue } from '../editor/toggle-field';
 
 export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: MyToggleSettings): ChangeSpec[] {
     const changes: ChangeSpec[] = []
@@ -51,29 +52,33 @@ function removeToggle(line: Line, toggle: ToggleMatch): ChangeSpec{
     }
 }
 
-export function scanAndApplyFold(app: App, settings: MyToggleSettings) {
+export function scanAndApplyFold(app: App, settings: MyToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>){
     const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) return;
     const view = (markdownView.editor as any).cm as EditorView;
     if (!view) return;
+    const { state } = view;
+    const allToggles = state.field(toggleField);
 
     const effects: StateEffect<unknown>[] = [];
-    for (let i = 1; i <= view.state.doc.lines; i++) {
-        const line = view.state.doc.line(i);
-        const range = foldable(view.state, line.from, line.to)
-        if (!range) continue
+    const iter = allToggles.iter();
+    while (iter.value !== null) {
+        const toggle = iter.value.data;
+        const line = state.doc.lineAt(iter.from);
+        const range = foldable(view.state, line.from, line.to);
 
-        const lineIsFolded = checkIfToggleIsFoldedIn(view, line)
-        const toggle = findToggle(line.text, settings.placeholder);
-        if (!toggle) continue
-        if (!toggle.isOpen && !lineIsFolded) {
-            effects.push(foldEffect.of(range));
+        if (range){
+            const lineIsFolded = checkIfToggleIsFoldedIn(view, line);
+            if (!toggle.isOpen && !lineIsFolded) {
+                effects.push(foldEffect.of(range));
+            }
+            else if (toggle.isOpen && lineIsFolded) {
+                effects.push(unfoldEffect.of(range));
+            }
         }
-        else if (toggle.isOpen && lineIsFolded) {
-            effects.push(unfoldEffect.of(range));
-        }
+
+        iter.next();
     }
-
     // 3. Alle Änderungen in einem EINZIGEN Dispatch senden
     if (effects.length > 0) {
         view.dispatch({

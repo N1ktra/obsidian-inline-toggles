@@ -55,7 +55,7 @@ export default class MyTogglePlugin extends Plugin {
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
             editorCallback: (editor) => {
-                scanAndApplyFold(this.app, this.settings);
+                scanAndApplyFold(this.app, this.settings, myToggleField);
             }
         });
 
@@ -96,7 +96,7 @@ export default class MyTogglePlugin extends Plugin {
                         }
                     }
                 });
-                scanAndApplyFold(this.app, this.settings);
+                scanAndApplyFold(this.app, this.settings, myToggleField);
             })
         );
     }
