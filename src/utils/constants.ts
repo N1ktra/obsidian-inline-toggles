@@ -32,3 +32,17 @@ export const CSS_CLASSES = {
     OBS_SUGGESTION_TITLE: "suggestion-title",
     OBS_SUGGESTION_NOTE: "suggestion-note",
 };
+
+export const CSS_VARIABLES = {
+    BACKGROUND: "--" + PREFIX + "-bg",
+    BORDER: "--" + PREFIX + "-border",
+}
+
+export const CSS_MAP: Record<string, string> = {
+    'bg': 'background-color',
+    'col': 'color',
+    'border': 'border-left',
+    'weight': 'font-weight',
+    'indent': 'padding-left',
+    'size': 'font-size',
+}

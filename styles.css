@@ -98,7 +98,7 @@
 /* --- Toggle Types --- */
 /* 1. Dein normaler Hintergrund (bleibt genau da, wo er ist) */
 .itgl-colored {
-    background-color: var(--inline-toggles-bg);
+    background-color: var(--itgl-bg);
     position: relative;
     overflow: visible !important;
 }
@@ -111,7 +111,7 @@
     width: 4px;
     top: 0;
     bottom: 0;
-    background-color: var(--inline-toggles-border);
+    background-color: var(--itgl-border);
 }
 .itgl-header-text{
     font-weight: bold;

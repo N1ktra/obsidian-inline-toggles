@@ -1,7 +1,7 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
 import { MyToggleSettings } from "../ui/settings";
-import { CSS_CLASSES } from "../utils/constants";
+import { CSS_CLASSES, CSS_MAP, CSS_VARIABLES } from "../utils/constants";
 
 
 export type LineStyleRule = {
@@ -33,19 +33,9 @@ export function applyRulesToLine(decorations: Range<Decoration>[], lineDecos: Li
 }
 
 function normalizeAttributes(attributes: Record<string, string>): Record<string, string>{
-    // 1. Die Übersetzungs-Map für Kürzel
-    const translationMap: Record<string, string> = {
-        'bg': 'background-color',
-        'col': 'color',
-        'border': 'border-left',
-        'weight': 'font-weight',
-        'indent': 'padding-left',
-        'size': 'font-size',
-    };
-
     return Object.fromEntries(
         Object.entries(attributes).map(([key, value]) => [
-            translationMap[key] ?? key, // Übersetze Key, falls in Map
+            CSS_MAP[key] ?? key, // Übersetze Key, falls in Map
             value
         ])
     );
@@ -73,7 +63,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
 
         if (key === 'type') {
             const colorVar = `var(--callout-${value})`;
-            const inlineStyle = `--inline-toggles-bg: rgba(${colorVar}, 0.1); --inline-toggles-border: rgb(${colorVar});`;
+            const inlineStyle = `${CSS_VARIABLES.BACKGROUND}: rgba(${colorVar}, 0.1); ${CSS_VARIABLES.BORDER}: rgb(${colorVar});`;
             styleEntries.push(inlineStyle);
             classes.push(CSS_CLASSES.COLORED);
 
