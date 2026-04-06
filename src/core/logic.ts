@@ -8,23 +8,30 @@ import { GenericActionModal, SuggestionAction } from '../ui/modals';
 import { ToggleValue } from '../editor/toggle-field';
 
 export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: MyToggleSettings): ChangeSpec[] {
-    const changes: ChangeSpec[] = []
-    const line: Line = view.state.doc.lineAt(selection.from);
-    const toggle = findToggle(line.text, settings.placeholder)
-    if (toggle) {
-        changes.push(removeToggle(line, toggle));
-    }else{
-        changes.push(insertToggle(line, settings, view));
+    const changes: ChangeSpec[] = [];
+    let currentPos = selection.from;
+
+    while (currentPos <= selection.to && currentPos <= view.state.doc.length) {
+        const line = view.state.doc.lineAt(currentPos);
+        const toggle = findToggle(line.text, settings.placeholder);
+
+        if (toggle) {
+            changes.push(removeToggle(line, toggle));
+        } else {
+            changes.push(insertToggle(line, settings, view));
+        }
+
+        const range = foldable(view.state, line.from, line.to);
+        if (range && range.to < view.state.doc.length) {
+            currentPos = range.to + 1;
+        } else {
+            currentPos = line.to + 1;
+        }
+
+        // Sicherheitsstopp, falls wir das Ende erreichen oder hängenbleiben
+        if (currentPos > view.state.doc.length) break;
     }
 
-    const range = foldable(view.state, line.from, line.to)
-    if (range && range.to < view.state.doc.length && range.to < selection.to){
-        // gehe zum ende der Foldable range
-        changes.push(insertOrRemoveToggle({from: range.to + 1, to: selection.to}, view, settings));
-    }else if (!range && line.to < view.state.doc.length && line.to < selection.to){
-        // gehe zur nächsten Zeile
-        changes.push(insertOrRemoveToggle({from: line.to + 1, to: selection.to}, view, settings));
-    }
     return changes;
 }
 

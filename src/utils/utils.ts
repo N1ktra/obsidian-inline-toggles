@@ -2,7 +2,7 @@ import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
 import { MyToggleSettings, PlaceholderSettings } from "../ui/settings";
-import { App } from "obsidian";
+import { App, Notice } from "obsidian";
 
 export const standardCallouts = ["no type", "info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
 export const calloutIconMap: Record<string, string> = {
@@ -250,9 +250,19 @@ export function setSelection(view: EditorView, from: number, to: number){
 export async function processAllToggles(app: App, oldSettings: PlaceholderSettings, transformFn: (toggle: ToggleMatch) => string){
     const files = app.vault.getMarkdownFiles();
     const oldRegex = getToggleRegex(oldSettings);
+    const totalFiles = files.length;
+    let filesModifiedCount = 0;
+    
+    const notice = new Notice(`Inline Toggles: Processing 0 / ${totalFiles} files...`, 0);
 
-    let filesProcessed = 0;
-    for (const file of files){
+    for (let i = 0; i < totalFiles; i++) {
+        const file = files[i];
+        
+        // Alle 10 Dateien oder bei der letzten Datei die Notice aktualisieren
+        if (i % 10 === 0 || i === totalFiles - 1) {
+            notice.setMessage(`Inline Toggles: Processing ${i + 1} / ${totalFiles} files...`);
+        }
+
         await app.vault.process(file, (content) => {
             // Prüfen ob überhaupt ein toggle existiert (Performance)
             if (!content.includes(oldSettings.borderSymbol)) return content;
@@ -263,10 +273,14 @@ export async function processAllToggles(app: App, oldSettings: PlaceholderSettin
                 const oldToggle = parseToggleMatch(simulatedMatch as any, oldSettings);
                 return transformFn(oldToggle);
             });
-            if (content != newContent) filesProcessed++;
+            
+            if (content !== newContent) {
+                filesModifiedCount++;
+            }
             return newContent;
         });
-
     }
-    return filesProcessed;
+
+    notice.hide();
+    return filesModifiedCount;
 }

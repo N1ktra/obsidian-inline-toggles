@@ -39,10 +39,9 @@ export default class MyTogglePlugin extends Plugin {
             editorCallback: (editor) => {
                 const view = (editor as any).cm as EditorView;
                 if (!view) return;
-                const changes: any[] = [];
-                view.state.selection.ranges.forEach(range => {
-                    changes.push(insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings));
-                });
+                const changes = view.state.selection.ranges.flatMap(range => 
+                    insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings)
+                );
                 view.dispatch({
                     changes: changes,
                     userEvent: "inline-toggles.insert-remove-toggle"
