@@ -1,4 +1,4 @@
-.inline-toggles-icon {
+.itgl-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -19,7 +19,7 @@
     transform: rotate(0deg);
 }
 
-.inline-toggles-icon svg {
+.itgl-icon svg {
     display: block; /* Verhindert extra Space unter dem SVG */
     width: 14px;
     height: 14px;
@@ -32,41 +32,41 @@
     margin: 0;
 }
 
-.inline-toggles-icon.is-open {
+.itgl-icon.itgl-is-open {
     color: var(--text-muted);
     background-color: transparent;
     transform: rotate(90deg);
 }
 
-.inline-toggles-icon.is-closed.has-content {
+.itgl-icon.itgl-is-closed.itgl-has-content {
     color: var(--text-accent);
     /* background-color: rgba(var(--mono-rgb-100), 0.03); */
     transform: rotate(0deg);
 }
 
 
-.inline-toggles-icon:active {
+.itgl-icon:active {
     transform: scale(0.9) rotate(0deg);
 }
 
-.inline-toggles-icon.is-open:active {
+.itgl-icon.itgl-is-open:active {
     transform: scale(0.9) rotate(90deg);
 }
 
 /* --- HOVER LOGIK (NUR FÜR MAUS-GERÄTE) --- */
 @media (hover: hover) {
     /* Der Hintergrund taucht nur am PC auf */
-    .inline-toggles-icon:hover {
+    .itgl-icon:hover {
         background-color: var(--background-modifier-hover);
     }
 
     /* Farbe beim OFFENEN Pfeil */
-    .inline-toggles-icon.is-open:hover {
+    .itgl-icon.itgl-is-open:hover {
         color: var(--text-normal);
     }
 
     /* Farbe beim GESCHLOSSENEN Pfeil mit Inhalt */
-    .inline-toggles-icon.is-closed.has-content:hover {
+    .itgl-icon.itgl-is-closed.itgl-has-content:hover {
         color: var(--text-accent-hover);
         /* Alternativ: filter: brightness(1.2); */
     }
@@ -74,29 +74,19 @@
 
 /* Falls du auf dem Handy ein kurzes Feedback beim Tippen willst,
    nutze :active statt :hover */
-.inline-toggles-icon:active {
+.itgl-icon:active {
     background-color: var(--background-modifier-hover);
     transform: scale(0.9);
     transition: transform 0.05s linear;
 }
 
-/* Der Effekt greift NUR, wenn die Klasse aktiv ist */
-body.hide-gutter-arrows .collapse-indicator {
-    opacity: 0 !important;
-    transition: opacity 0.2s !important;
-}
-
-body.hide-gutter-arrows .collapse-indicator:hover {
-    opacity: 1 !important;
-}
-
 /* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
-.inline-toggles-placeholder-action-setting {
+.itgl-ph-action-setting {
     flex-wrap: wrap !important;
 }
 
 /* Die Buttons sollen auf Mobile die volle Breite unter dem Text einnehmen */
-.inline-toggles-placeholder-action-setting .setting-item-control {
+.itgl-ph-action-setting .setting-item-control {
     flex: 1 0 100% !important;
     display: flex !important;
     flex-direction: column !important; /* Stapelt die Buttons übereinander */
@@ -107,14 +97,14 @@ body.hide-gutter-arrows .collapse-indicator:hover {
 
 /* --- Toggle Types --- */
 /* 1. Dein normaler Hintergrund (bleibt genau da, wo er ist) */
-.inline-toggles-colored {
+.itgl-colored {
     background-color: var(--inline-toggles-bg);
     position: relative;
     overflow: visible !important;
 }
 
 /* 2. Die Linie, die links daneben schwebt */
-.inline-toggles-colored::before {
+.itgl-colored::before {
     content: "";
     position: absolute;
     left: -10px;
@@ -123,33 +113,33 @@ body.hide-gutter-arrows .collapse-indicator:hover {
     bottom: 0;
     background-color: var(--inline-toggles-border);
 }
-.inline-toggles-header-text{
+.itgl-header-text{
     font-weight: bold;
     font-size: 1.15em;
 }
-.inline-toggles-header {
+.itgl-header {
     padding-top: 10px !important;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
 }
-.inline-toggles-header-folded {
+.itgl-header.itgl-is-closed {
     border-radius: 5px;
     padding-bottom: 10px !important;
 }
-.inline-toggles-footer {
+.itgl-footer {
     padding-bottom: 10px !important;
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 
 /* Suggestion Modal Styling */
-.inline-toggles-suggestion-item {
+.itgl-suggestion-item {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.inline-toggles-icon-container {
+.itgl-icon-container {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -169,4 +159,14 @@ body.hide-gutter-arrows .collapse-indicator:hover {
 
 .suggestion-note {
     color: var(--text-muted);
+}
+
+/* Der Effekt greift NUR, wenn die Klasse aktiv ist */
+body.hide-gutter-arrows .collapse-indicator {
+    opacity: 0 !important;
+    transition: opacity 0.2s !important;
+}
+
+body.hide-gutter-arrows .collapse-indicator:hover {
+    opacity: 1 !important;
 }

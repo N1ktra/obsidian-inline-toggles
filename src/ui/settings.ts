@@ -2,6 +2,7 @@ import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from '../main';
 import { buildToggleTag, processAllToggles } from '../utils/utils';
 import { ConfirmModal } from './modals';
+import { CSS_CLASSES } from '../utils/constants';
 
 export interface PlaceholderSettings {
     borderSymbol: string;
@@ -88,7 +89,7 @@ export class MyToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Save & Apply")
-            .setClass("inline-toggles-placeholder-action-setting")
+            .setClass(CSS_CLASSES.PH_ACTION_SETTING)
             .setDesc(
                 createFragment((f) => {
                     f.createSpan({ text: "Choose how to save your changes:" });

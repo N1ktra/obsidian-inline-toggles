@@ -24,7 +24,7 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
         this.setPlaceholder(placeholder);
         this.items = items;
         this.initialValue = initialValue;
-        this.modalEl.addClass(CSS_CLASSES.MODAL_COMPLEX);
+        this.modalEl.addClass(CSS_CLASSES.OBS_MODAL_COMPLEX);
     }
 
     onOpen() {
@@ -66,11 +66,11 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
         }
 
         // 2. Text und Beschreibung rendern
-        const textContainer = el.createDiv({ cls: CSS_CLASSES.SUGGESTION_CONTENT });
-        textContainer.createDiv({ text: item.label, cls: CSS_CLASSES.SUGGESTION_TITLE });
+        const textContainer = el.createDiv({ cls: CSS_CLASSES.OBS_SUGGESTION_CONTENT });
+        textContainer.createDiv({ text: item.label, cls: CSS_CLASSES.OBS_SUGGESTION_TITLE });
 
         if (item.description) {
-            textContainer.createEl("small", { text: item.description, cls: CSS_CLASSES.SUGGESTION_NOTE });
+            textContainer.createEl("small", { text: item.description, cls: CSS_CLASSES.OBS_SUGGESTION_NOTE });
         }
     }
 

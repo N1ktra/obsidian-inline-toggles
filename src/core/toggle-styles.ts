@@ -1,6 +1,7 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
 import { MyToggleSettings } from "../ui/settings";
+import { CSS_CLASSES } from "../utils/constants";
 
 
 export type LineStyleRule = {
@@ -74,28 +75,28 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             const colorVar = `var(--callout-${value})`;
             const inlineStyle = `--inline-toggles-bg: rgba(${colorVar}, 0.1); --inline-toggles-border: rgb(${colorVar});`;
             styleEntries.push(inlineStyle);
-            classes.push("inline-toggles-colored");
+            classes.push(CSS_CLASSES.COLORED);
 
             lineStlyes.push({
                 condition: (index, _, lineText) => index === 0 && !(lineText.contains("#")),
                 isMark: true,
                 decoration: Decoration.mark({
                     attributes: {
-                        class: "inline-toggles-header-text"
+                        class: CSS_CLASSES.HEADER_TEXT
                     }
                 })
             })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0,
-                decoration: createLineDeco("inline-toggles-header")
+                decoration: createLineDeco(CSS_CLASSES.HEADER)
             })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0 && isFoldedIn,
-                decoration: createLineDeco("inline-toggles-header-folded")
+                decoration: createLineDeco(CSS_CLASSES.IS_CLOSED)
             })
             lineStlyes.push({
                 condition: (index, numLines, lineText, isFoldedIn, lastChildLineNumber) => (index === numLines) || (isFoldedIn && lastChildLineNumber === numLines),
-                decoration: createLineDeco("inline-toggles-footer")
+                decoration: createLineDeco(CSS_CLASSES.FOOTER)
             })
             continue;
         }
