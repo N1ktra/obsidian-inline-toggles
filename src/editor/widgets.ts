@@ -1,11 +1,12 @@
-import { WidgetType, EditorView, placeholder } from "@codemirror/view";
+import { WidgetType, EditorView } from "@codemirror/view";
 import { MyToggleSettings } from "../ui/settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
-import { App, Editor, MarkdownView, Menu, setIcon } from "obsidian";
-import { areAttributesEqual, buildToggleTag, findToggle, parseToggleMatch, ToggleMatch } from "../utils/utils";
+import { App, MarkdownView, Menu, setIcon } from "obsidian";
+import { buildToggleTag, findToggle, ToggleMatch } from "../utils/utils";
 import { changeToggleType, editToggleAttributes } from "../core/logic";
+import { USER_EVENTS, CSS_CLASSES } from "../utils/constants";
 
 export class ToggleWidget extends WidgetType {
     constructor(
@@ -20,67 +21,66 @@ export class ToggleWidget extends WidgetType {
     ) { super(); }
 
     eq(other: ToggleWidget) {
-        // 1. Einfache Werte zuerst (Booleans sind blitzschnell)
-        if (this.isOpen !== other.isOpen) return false;
-        if (this.hasChildren !== other.hasChildren) return false;
-        if (this.fullTag !== other.fullTag) return false;
-        return true;
+        return this.isOpen === other.isOpen &&
+               this.hasChildren === other.hasChildren &&
+               this.fullTag === other.fullTag
     }
 
     toDOM(view: EditorView) {
         const span = document.createElement("span");
-        span.className = "inline-toggles-icon";
+        span.className = CSS_CLASSES.ICON;
         span.style.cursor = "pointer";
 
         // Initialen Zustand im DOM speichern
-        span.classList.add(this.isOpen ? "is-open" : "is-closed");
-        span.classList.add(this.hasChildren ? "has-content" : "is-empty");
+        span.classList.add(this.isOpen ? CSS_CLASSES.IS_OPEN : CSS_CLASSES.IS_CLOSED);
+        span.classList.add(this.hasChildren ? CSS_CLASSES.HAS_CONTENT : CSS_CLASSES.IS_EMPTY);
         setIcon(span, "play");
-        span.onclick = (e) => this.handleClick(e, view, span);
-        span.onmousedown = (event: MouseEvent) => {
-            // für Mobile verindern, dass die Tastatur angezeigt wird
-            event.preventDefault();
-        };
-        span.addEventListener("contextmenu", (event) => this.handleContextMenu(event, span, view));
+
+        this.attachEvents(span, view);
+
         return span;
     }
 
-    /**
-     * CodeMirror ruft diese Methode auf, wenn das Widget aktualisiert werden soll,
-     * anstatt toDOM() neu auszuführen. -> Wichtig für Animation!
-     */
     updateDOM(dom: HTMLElement, view: EditorView): boolean {
-        dom.classList.toggle("is-open", this.isOpen);
-        dom.classList.toggle("is-closed", !this.isOpen);
-        dom.classList.toggle("has-content", this.hasChildren);
-        dom.classList.toggle("is-empty", !this.hasChildren);
+        dom.classList.toggle(CSS_CLASSES.IS_OPEN, this.isOpen);
+        dom.classList.toggle(CSS_CLASSES.IS_CLOSED, !this.isOpen);
+        dom.classList.toggle(CSS_CLASSES.HAS_CONTENT, this.hasChildren);
+        dom.classList.toggle(CSS_CLASSES.IS_EMPTY, !this.hasChildren);
 
-        dom.onclick = (e) => this.handleClick(e, view, dom);
-        dom.addEventListener("contextmenu", (event) => this.handleContextMenu(event, dom, view));
+        this.attachEvents(dom, view);
         return true;
+    }
+
+    private attachEvents(dom: HTMLElement, view: EditorView) {
+        dom.onclick = (e) => this.handleClick(e, view, dom);
+        dom.oncontextmenu = (e) => this.handleContextMenu(e, dom, view);
+        dom.onmousedown = (e) => {
+            // Für Mobile verhindern, dass die Tastatur angezeigt wird
+            e.preventDefault();
+        };
     }
 
     private handleClick(e: MouseEvent, view: EditorView, span: HTMLElement) {
         e.preventDefault();
         e.stopPropagation();
-        const rectBefore = span.getBoundingClientRect(); //speichere position für autoscrollen
+        const rectBefore = span.getBoundingClientRect(); // Speichere Position für Autoscrollen
         const pos = view.posAtDOM(span);
         const line = view.state.doc.lineAt(pos);
         const range = foldable(view.state, line.from, line.to);
-        if (range){
+
+        if (range) {
             const currentFolds = view.state.field(foldState);
             const effects: StateEffect<any>[] = [];
 
             if (this.isOpen) {
                 effects.push(foldEffect.of(range));
             } else {
-                // überprüfen ob da tatsächlich eine Faltung existiert
+                // Überprüfen, ob da tatsächlich eine Faltung existiert
                 currentFolds.between(line.from, line.to, (from, to) => {
                     if (from >= line.from && from <= line.to) {
                         effects.push(unfoldEffect.of({ from, to }));
                     }
                 });
-                // Falls der Editor oben nichts gefunden hat
                 if (effects.length === 0) {
                     effects.push(unfoldEffect.of(range));
                 }
@@ -89,7 +89,7 @@ export class ToggleWidget extends WidgetType {
             view.dispatch({
                 effects: effects,
                 changes: { from: pos, to: pos + this.fullLength, insert: newTag },
-                userEvent: "inline-toggles.toggle-fold",
+                userEvent: USER_EVENTS.TOGGLE_FOLD,
             });
             requestAnimationFrame(() => {
                 const rectAfter = span.getBoundingClientRect();
@@ -98,11 +98,11 @@ export class ToggleWidget extends WidgetType {
                     view.scrollDOM.scrollBy(0, difference);
                 }
             });
-        }else{
-            // neues Kind erstellen
+        } else {
+            // Neues Kind erstellen
             view.dispatch({
                 selection: { anchor: line.to },
-                userEvent: "inline-toggles.select-line-end"
+                userEvent: USER_EVENTS.SELECT_LINE_END
             });
             insertNewlineAndIndent(view);
             indentMore(view);
@@ -112,15 +112,15 @@ export class ToggleWidget extends WidgetType {
             view.dispatch({
                 changes: [
                     { from: currentPos, insert: insertText },
-                    { from: pos, to: pos + this.fullLength, insert: newTag } //replace closed symbol
+                    { from: pos, to: pos + this.fullLength, insert: newTag }
                 ],
                 selection: { anchor: currentPos + insertText.length },
-                userEvent: "inline-toggles.create-new-child"
+                userEvent: USER_EVENTS.CREATE_NEW_CHILD
             });
         }
     }
 
-    private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView){
+    private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView) {
         event.preventDefault();
         // @ts-ignore
         const editor = this.app.workspace.activeEditor?.editor;
@@ -133,7 +133,7 @@ export class ToggleWidget extends WidgetType {
                 .setIcon("pencil")
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
-                    if (result){
+                    if (result) {
                         changeToggleType(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
                     }
                 })
@@ -144,17 +144,16 @@ export class ToggleWidget extends WidgetType {
                 .setIcon("list")
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
-                    if (result){
+                    if (result) {
                         editToggleAttributes(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
                     }
                 })
         });
 
-        // 4. Zeige das Menü an der Mausposition
         menu.showAtMouseEvent(event);
     }
 
-    private getToggleData(span: HTMLElement, view: EditorView){
+    private getToggleData(span: HTMLElement, view: EditorView) {
         const toggle = findToggle(this.fullTag, this.settings.placeholder);
         if (!toggle) return;
         const pos = view.posAtDOM(span);

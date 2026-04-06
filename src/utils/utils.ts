@@ -2,7 +2,13 @@ import { Text, Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
 import { MyToggleSettings, PlaceholderSettings } from "../ui/settings";
-import { App, Notice } from "obsidian";
+import { App, Notice, Editor, MarkdownView } from "obsidian";
+import { USER_EVENTS } from "./constants";
+
+export function getCM(editor: Editor): EditorView | null {
+    if (!editor) return null;
+    return (editor as any).cm as EditorView;
+}
 
 export const standardCallouts = ["no type", "info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];
 export const calloutIconMap: Record<string, string> = {

@@ -3,11 +3,12 @@ import { createToggleViewPlugin } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './ui/settings';
-import { findToggle } from './utils/utils';
+import { findToggle, getCM } from './utils/utils';
 import { EditorView } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
 import { createToggleField } from './editor/toggle-field';
 import { createToggleEnterFix } from './editor/toggle-enter';
+import { USER_EVENTS } from './utils/constants';
 
 export const layoutChangedEffect = StateEffect.define<void>();
 export default class MyTogglePlugin extends Plugin {
@@ -32,19 +33,15 @@ export default class MyTogglePlugin extends Plugin {
             id: 'insert-toggle',
             name: 'Insert/Remove Toggle',
             icon: 'play',
-            // hotkeys: [{
-            //         modifiers: ["Mod", "Shift"],
-            //         key: "l",
-            //     },],
             editorCallback: (editor) => {
-                const view = (editor as any).cm as EditorView;
+                const view = getCM(editor);
                 if (!view) return;
                 const changes = view.state.selection.ranges.flatMap(range => 
                     insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings)
                 );
                 view.dispatch({
                     changes: changes,
-                    userEvent: "inline-toggles.insert-remove-toggle"
+                    userEvent: USER_EVENTS.INSERT_REMOVE_TOGGLE
                 });
             }
         });
@@ -87,7 +84,7 @@ export default class MyTogglePlugin extends Plugin {
             this.app.workspace.on('layout-change', () => {
                 this.app.workspace.iterateAllLeaves((leaf) => {
                     if (leaf.view instanceof MarkdownView) {
-                        const cm = (leaf.view.editor as any).cm;
+                        const cm = getCM(leaf.view.editor);
                         if (cm) {
                             cm.dispatch({
                                 effects: layoutChangedEffect.of()

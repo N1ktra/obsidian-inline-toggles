@@ -1,4 +1,5 @@
 import { App, Modal, setIcon, Setting, SuggestModal } from "obsidian";
+import { CSS_CLASSES } from "../utils/constants";
 
 export interface SuggestionAction {
     label: string;
@@ -23,7 +24,7 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
         this.setPlaceholder(placeholder);
         this.items = items;
         this.initialValue = initialValue;
-        this.modalEl.addClass("mod-complex");
+        this.modalEl.addClass(CSS_CLASSES.MODAL_COMPLEX);
     }
 
     onOpen() {
@@ -47,22 +48,11 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
     }
 
     renderSuggestion(item: SuggestionAction, el: HTMLElement) {
-        // Wir machen das Element zu einem Flex-Container
-        el.style.display = "flex";
-        el.style.alignItems = "center";
-        el.style.gap = "10px"; // Abstand zwischen Icon und Text
+        el.addClass(CSS_CLASSES.SUGGESTION_ITEM);
 
         // 1. Icon mit kleinem farbigen Hintergrund rendern
         if (item.icon) {
-            const iconContainer = el.createDiv();
-
-            // Kompaktes Styling für den Hintergrund
-            iconContainer.style.display = "flex";
-            iconContainer.style.alignItems = "center";
-            iconContainer.style.justifyContent = "center";
-            iconContainer.style.width = "24px";
-            iconContainer.style.height = "24px";
-            iconContainer.style.borderRadius = "4px"; // Leichte Abrundung
+            const iconContainer = el.createDiv({ cls: CSS_CLASSES.ICON_CONTAINER });
 
             if (item.color) {
                 // Nutzt die übergebene Farbe für das Icon
@@ -76,11 +66,11 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
         }
 
         // 2. Text und Beschreibung rendern
-        const textContainer = el.createDiv({ cls: "suggestion-content" });
-        textContainer.createDiv({ text: item.label, cls: "suggestion-title" });
+        const textContainer = el.createDiv({ cls: CSS_CLASSES.SUGGESTION_CONTENT });
+        textContainer.createDiv({ text: item.label, cls: CSS_CLASSES.SUGGESTION_TITLE });
 
         if (item.description) {
-            textContainer.createEl("small", { text: item.description, cls: "suggestion-note" });
+            textContainer.createEl("small", { text: item.description, cls: CSS_CLASSES.SUGGESTION_NOTE });
         }
     }
 

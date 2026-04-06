@@ -141,3 +141,32 @@ body.hide-gutter-arrows .collapse-indicator:hover {
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
+
+/* Suggestion Modal Styling */
+.inline-toggles-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inline-toggles-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.suggestion-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestion-title {
+    font-weight: var(--font-semibold);
+}
+
+.suggestion-note {
+    color: var(--text-muted);
+}
