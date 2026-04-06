@@ -1,11 +1,11 @@
 import { insertNewlineAndIndent, indentMore, indentLess } from "@codemirror/commands";
-import { MyToggleSettings } from "../ui/settings";
+import { ToggleSettings } from "../ui/settings";
 import { Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { foldable, foldEffect } from "@codemirror/language";
 import { findToggle, checkIfToggleIsFoldedIn, extractMarkdownSymbols, buildToggleTag } from "../utils/utils";
 
-export const createToggleEnterFix = (settings: MyToggleSettings) => {
+export const createToggleEnterFix = (settings: ToggleSettings) => {
     return Prec.highest(keymap.of([{
         key: "Enter",
         run: (view: EditorView) => {

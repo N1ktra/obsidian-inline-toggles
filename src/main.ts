@@ -2,7 +2,7 @@ import { MarkdownView, Plugin } from 'obsidian';
 import { createToggleViewPlugin } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
-import { MyToggleSettings, DEFAULT_SETTINGS, MyToggleSettingTab } from './ui/settings';
+import { ToggleSettings, DEFAULT_SETTINGS, ToggleSettingTab } from './ui/settings';
 import { findToggle, getCM } from './utils/utils';
 import { EditorView } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
@@ -12,21 +12,36 @@ import { USER_EVENTS } from './utils/constants';
 
 export const layoutChangedEffect = StateEffect.define<void>();
 export default class MyTogglePlugin extends Plugin {
-    settings!: MyToggleSettings;
+    settings!: ToggleSettings;
 
     async onload() {
         await this.loadSettings();
         this.refreshGutterStyle();
-        this.addSettingTab(new MyToggleSettingTab(this.app, this));
+        this.addSettingTab(new ToggleSettingTab(this.app, this));
 
-        const myToggleField = createToggleField(this.settings.placeholder);
-        // Editor Extension für die Icons
+        const toggleField = createToggleField(this.settings.placeholder);
         this.registerEditorExtension([
-            createToggleViewPlugin(this.settings, this.app, myToggleField),
+            toggleField,
+            createToggleViewPlugin(this.settings, this.app, toggleField),
             createToggleEnterFix(this.settings),
             createFoldTrackerPlugin(this, this.settings),
-            myToggleField
         ]);
+
+        // Auto-Fold beim Tab-Wechsel
+        this.registerEvent(
+            this.app.workspace.on('layout-change', () => {
+                const editor = this.app.workspace.activeEditor?.editor
+                if (editor){
+                    const cm = getCM(editor);
+                    if (cm) {
+                        cm.dispatch({
+                            effects: layoutChangedEffect.of()
+                        });
+                    }
+                }
+            })
+        );
+
 
         // Befehl zum Einfügen
         this.addCommand({
@@ -36,7 +51,7 @@ export default class MyTogglePlugin extends Plugin {
             editorCallback: (editor) => {
                 const view = getCM(editor);
                 if (!view) return;
-                const changes = view.state.selection.ranges.flatMap(range => 
+                const changes = view.state.selection.ranges.flatMap(range =>
                     insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings)
                 );
                 view.dispatch({
@@ -51,7 +66,7 @@ export default class MyTogglePlugin extends Plugin {
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
             editorCallback: (editor) => {
-                scanAndApplyFold(this.app, this.settings, myToggleField);
+                scanAndApplyFold(this.app, this.settings, toggleField);
             }
         });
 
@@ -79,22 +94,6 @@ export default class MyTogglePlugin extends Plugin {
             }
         })
 
-        // Auto-Fold beim Tab-Wechsel
-        this.registerEvent(
-            this.app.workspace.on('layout-change', () => {
-                this.app.workspace.iterateAllLeaves((leaf) => {
-                    if (leaf.view instanceof MarkdownView) {
-                        const cm = getCM(leaf.view.editor);
-                        if (cm) {
-                            cm.dispatch({
-                                effects: layoutChangedEffect.of()
-                            });
-                        }
-                    }
-                });
-                scanAndApplyFold(this.app, this.settings, myToggleField);
-            })
-        );
     }
 
     async loadSettings() {

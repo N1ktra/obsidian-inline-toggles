@@ -1,6 +1,6 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
-import { MyToggleSettings } from "../ui/settings";
+import { ToggleSettings } from "../ui/settings";
 import { CSS_CLASSES, CSS_MAP, CSS_VARIABLES } from "../utils/constants";
 
 
@@ -45,7 +45,7 @@ function normalizeAttributes(attributes: Record<string, string>): Record<string,
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
  */
-export function buildLineDecorationFromAttributes(attributes: Record<string, string>, settings: MyToggleSettings): LineStyleRule[] {
+export function buildLineDecorationFromAttributes(attributes: Record<string, string>, settings: ToggleSettings): LineStyleRule[] {
     if (!attributes || Object.keys(attributes).length === 0) return [];
 
     const styleEntries: string[] = [];

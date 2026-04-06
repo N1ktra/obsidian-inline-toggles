@@ -1,5 +1,5 @@
 import { WidgetType, EditorView } from "@codemirror/view";
-import { MyToggleSettings } from "../ui/settings";
+import { ToggleSettings } from "../ui/settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
@@ -15,7 +15,7 @@ export class ToggleWidget extends WidgetType {
         readonly fullTag: string,
         readonly attributeString: string,
         readonly fullLength: number,
-        readonly settings: MyToggleSettings,
+        readonly settings: ToggleSettings,
         readonly app: App,
 
     ) { super(); }

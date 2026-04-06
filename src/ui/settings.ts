@@ -11,14 +11,14 @@ export interface PlaceholderSettings {
     delimiter: string;
 }
 
-export interface MyToggleSettings {
+export interface ToggleSettings {
     placeholder: PlaceholderSettings; // Hier wird das Unter-Interface genutzt
     autoInsertBullet: boolean;
     hideGutterArrows: boolean;
     debugMode: boolean;
 }
 
-export const DEFAULT_SETTINGS: MyToggleSettings = {
+export const DEFAULT_SETTINGS: ToggleSettings = {
     placeholder: {
         borderSymbol: "%%",
         symbolClosed: "⏵",
@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS: MyToggleSettings = {
     debugMode: false
 }
 
-export class MyToggleSettingTab extends PluginSettingTab {
+export class ToggleSettingTab extends PluginSettingTab {
     plugin: MyTogglePlugin;
     private tempPlaceholder: PlaceholderSettings;
 

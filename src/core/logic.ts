@@ -1,5 +1,5 @@
 import { App, MarkdownView, Editor } from 'obsidian';
-import { MyToggleSettings, PlaceholderSettings } from '../ui/settings';
+import { ToggleSettings, PlaceholderSettings } from '../ui/settings';
 import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts, getCM } from '../utils/utils';
 import { EditorView } from '@codemirror/view';
 import { ChangeSpec, Line, RangeSet, StateEffect, StateField} from "@codemirror/state";
@@ -8,7 +8,7 @@ import { GenericActionModal, SuggestionAction } from '../ui/modals';
 import { ToggleValue } from '../editor/toggle-field';
 import { USER_EVENTS } from '../utils/constants';
 
-export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: MyToggleSettings): ChangeSpec[] {
+export function insertOrRemoveToggle(selection: {from: number, to: number}, view: EditorView, settings: ToggleSettings): ChangeSpec[] {
     const changes: ChangeSpec[] = [];
     let currentPos = selection.from;
 
@@ -36,7 +36,7 @@ export function insertOrRemoveToggle(selection: {from: number, to: number}, view
     return changes;
 }
 
-function insertToggle(line: Line, settings: MyToggleSettings, view: EditorView): ChangeSpec{
+function insertToggle(line: Line, settings: ToggleSettings, view: EditorView): ChangeSpec{
     const isCurrentlyFolded = checkIfToggleIsFoldedIn(view, line);
     const hasChildren = checkIfLineHasChildren(view, line);
     const newToggle = buildToggleTag(!(isCurrentlyFolded && hasChildren), settings.placeholder);
@@ -60,13 +60,14 @@ function removeToggle(line: Line, toggle: ToggleMatch): ChangeSpec{
     }
 }
 
-export function scanAndApplyFold(app: App, settings: MyToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>){
+export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>){
     const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) return;
     const view = getCM(markdownView.editor);
     if (!view) return;
     const { state } = view;
-    const allToggles = state.field(toggleField);
+    const allToggles = state.field(toggleField, false);
+    if (!allToggles) return;
 
     const effects: StateEffect<unknown>[] = [];
     const iter = allToggles.iter();

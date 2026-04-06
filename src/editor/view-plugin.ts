@@ -1,14 +1,15 @@
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
 import { Range, RangeSet, StateField, Line } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
-import { MyToggleSettings } from "../ui/settings";
+import { ToggleSettings } from "../ui/settings";
 import { checkIfToggleIsFoldedIn, ToggleMatch } from "../utils/utils";
 import { foldable } from "@codemirror/language";
 import { App, editorLivePreviewField } from "obsidian";
 import { applyRulesToLine, buildLineDecorationFromAttributes } from "../core/toggle-styles";
 import { ToggleValue } from "./toggle-field";
+import { scanAndApplyFold } from "../core/logic";
 
-export const createToggleViewPlugin = (settings: MyToggleSettings, app: App, toggleField: StateField<RangeSet<ToggleValue>>) => {
+export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggleField: StateField<RangeSet<ToggleValue>>) => {
     return ViewPlugin.fromClass(class {
         decorations: DecorationSet = Decoration.none;
         atomicDecorations: DecorationSet = Decoration.none
@@ -16,6 +17,18 @@ export const createToggleViewPlugin = (settings: MyToggleSettings, app: App, tog
 
         constructor(view: EditorView) {
             this.buildDecorations(view);
+            view.requestMeasure({
+                read: (view) => {
+                    return view.state.field(toggleField, false);
+                },
+                write: (fieldExists, view) => {
+                    if (fieldExists) {
+                        Promise.resolve().then(() => {
+                            scanAndApplyFold(app, settings, toggleField);
+                        });
+                    }
+                }
+            });
         }
 
         update(update: ViewUpdate) {

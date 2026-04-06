@@ -3,11 +3,11 @@ import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 import { Line } from "@codemirror/state";
 import { getToggleRegex, parseToggleMatch, updateToggle } from "../utils/utils";
 import { MarkdownView } from "obsidian";
-import { MyToggleSettings } from "../ui/settings";
+import { ToggleSettings } from "../ui/settings";
 import MyTogglePlugin, { layoutChangedEffect } from "../main";
 
 
-export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: MyToggleSettings) => {
+export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: ToggleSettings) => {
     return ViewPlugin.fromClass(class {
         private cachedView: MarkdownView | null = null;
         public lastMode: string = "";
