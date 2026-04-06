@@ -10,7 +10,7 @@ export const USER_EVENTS = {
     NEW_LINE: PREFIX + ".new-line",
     REVERSE_FOLD: PREFIX + ".reverse-fold",
     AUTO_BULLET: PREFIX + ".auto-bullet",
-    SET_SELECTION: PREFIX + ".set-selection"
+    SET_SELECTION: PREFIX + ".set-selection",
 };
 
 export const CSS_CLASSES = {

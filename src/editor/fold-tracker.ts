@@ -1,10 +1,11 @@
 import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
-import { Line } from "@codemirror/state";
+import { Line, Transaction } from "@codemirror/state";
 import { getToggleRegex, parseToggleMatch, updateToggle } from "../utils/utils";
-import { MarkdownView } from "obsidian";
+import { editorInfoField, MarkdownView } from "obsidian";
 import { ToggleSettings } from "../ui/settings";
 import MyTogglePlugin, { layoutChangedEffect } from "../main";
+import { PREFIX, USER_EVENTS } from "../utils/constants";
 
 
 export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: ToggleSettings) => {
@@ -17,9 +18,10 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: Toggle
 
         constructor(readonly view: EditorView) {
             // Initialen Modus setzen
-            const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-            if (activeView) {
-                this.lastMode = activeView.getMode();
+            this.cachedView = view.state.field(editorInfoField) as MarkdownView | null;
+            if (this.cachedView) {
+                this.lastMode = this.cachedView.getMode();
+                this.triggerLock();
             }
             this.toggleRegex = getToggleRegex(settings.placeholder);
         }
@@ -40,13 +42,9 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: Toggle
 
         update(update: ViewUpdate) {
             // --- Überprüfen, ob gerade zwischen Lese / Bearbeitungsmodus gewechselt wurde ---
-            if (!this.cachedView || update.focusChanged) {
-                this.cachedView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-                this.triggerLock(); //verhindert das automatische falten, durch den editor (was intern gespeichtert ist)
-            }
-            const activeView = this.cachedView;
-            if (!activeView) return;
-            const currentMode = activeView.getMode();
+            this.cachedView ??= update.state.field(editorInfoField) as MarkdownView | null;
+            if (!this.cachedView) return;
+            const currentMode = this.cachedView.getMode();
             // console.log(this.lastMode, "->", currentMode)
             if (this.lastMode !== currentMode) {
                 this.lastMode = currentMode;
@@ -60,10 +58,13 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: Toggle
 
             // --- Korrekt Falten ---
             for (let tr of update.transactions) {
-                if (tr.isUserEvent("inline-toggles")) continue;
+                if (tr.isUserEvent(PREFIX)) continue;
                 for (let effect of tr.effects) {
                     if (effect.is(layoutChangedEffect)) {
+                        //Falls Layout Changed -> lock Tracker
                         this.lastMode = currentMode;
+                        this.triggerLock();
+                        return;
                     }
                     else if (effect.is(foldEffect)) {
                         const pos = effect.value.from;
@@ -99,7 +100,7 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: Toggle
                             to: startPos + toggle.length,
                             insert: newFullTag
                         },
-                        userEvent: "inline-toggles.symbol-update"
+                        userEvent: USER_EVENTS.SYMBOL_UPDATE
                     });
                 });
             }
