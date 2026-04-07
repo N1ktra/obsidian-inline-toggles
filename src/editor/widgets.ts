@@ -122,7 +122,6 @@ export class ToggleWidget extends WidgetType {
 
     private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView) {
         event.preventDefault();
-        // @ts-ignore
         const editor = this.app.workspace.activeEditor?.editor;
         if (!editor) return;
 
@@ -134,7 +133,17 @@ export class ToggleWidget extends WidgetType {
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
                     if (result) {
-                        changeToggleType(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
+                        const rectBefore = span.getBoundingClientRect();
+                        changeToggleType(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder, () => {
+                            requestAnimationFrame(() => {
+                                //wieder zur ursprünglichen ansicht scrollen
+                                const rectAfter = span.getBoundingClientRect();
+                                const difference = rectAfter.top - rectBefore.top;
+                                if (difference !== 0) {
+                                    view.scrollDOM.scrollBy(0, difference);
+                                }
+                            });
+                        });
                     }
                 })
         );

@@ -125,7 +125,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
     new GenericActionModal(app, "Type CSS-Style String...", actions, toggle.attributeString ?? "").open();
 }
 
-export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
+export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings, callback?: () => void){
     const actions: SuggestionAction[] = standardCallouts.map(id => ({
         label: id,
         onSelect(userInput, evt) {
@@ -141,6 +141,7 @@ export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor
                 { line: lineNumber, ch: toggle.index },
                 { line: lineNumber, ch: toggle.index + toggle.length }
             );
+            callback?.();
         },
         icon: calloutIconMap[id.toLocaleLowerCase()] || "chevron-right",
         color: `rgb(var(--callout-${id}))`,

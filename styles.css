@@ -11,7 +11,7 @@
     /* FIX FÜR DIE VERTIKALE POSITION */
     vertical-align: middle;
     position: relative;
-    top: -1px; /* Feinjustierung: Falls es immer noch 1px zu hoch wirkt */
+    top: -3px; /* Feinjustierung: Falls es immer noch 1px zu hoch wirkt */
 
     transition: all 0.15s ease-in-out;
     color: var(--text-faint);

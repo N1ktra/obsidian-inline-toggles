@@ -150,7 +150,13 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
 
                 applyRulesToLine(normalList, lineDecos, i - startLine.number, numLines, currentLine, tFrom, isFoldedIn, lastChildLineNumber);
                 previousLine = currentLine;
-                if (isFoldedIn) break;
+                // eingeklappten Zeilen überspringen
+                if (isFoldedIn){
+                    const nextLine = state.doc.lineAt(range.to).number;
+                    if (nextLine > i){
+                        i = nextLine;
+                    }
+                }
             }
         }
 
