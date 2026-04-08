@@ -42,6 +42,10 @@ export const calloutIconMap: Record<string, string> = {
     cite: "quote"
 };
 
+export function placeholderHasEmptySymbol(settings: PlaceholderSettings){
+    return settings.borderSymbol === "" || settings.delimiter === "" || settings.symbolClosed === "" || settings.symbolOpen === ""
+}
+
 export interface ToggleMatch {
     fullTag: string;      // Der komplette Text, z.B. "|⏷:bg=red|"
     index: number;        // Startposition in der Zeile

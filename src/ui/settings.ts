@@ -1,6 +1,6 @@
 import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from '../main';
-import { buildToggleTag, processAllToggles } from '../utils/utils';
+import { buildToggleTag, placeholderHasEmptySymbol, processAllToggles } from '../utils/utils';
 import { ConfirmModal } from './modals';
 import { CSS_CLASSES } from '../utils/constants';
 
@@ -110,6 +110,14 @@ export class ToggleSettingTab extends PluginSettingTab {
                 .setButtonText('Save for Future Toggles')
                 .onClick(async () => {
                     const newSettings = this.tempPlaceholder;
+                    if (!newSettings){
+                        new Notice("Error, Settings cannot be loaded");
+                        return;
+                    }
+                    if (placeholderHasEmptySymbol(newSettings)){
+                        new Notice("Error: Placeholder cannot be empty.")
+                        return;
+                    }
                     this.plugin.settings.placeholder = { ...newSettings };
                     await this.plugin.saveSettings();
                     new Notice("Settings saved!\nYou might have to reopen current Tabs.");
@@ -127,6 +135,10 @@ export class ToggleSettingTab extends PluginSettingTab {
                         async () => {
                             const oldSettings = this.plugin.settings.placeholder;
                             const newSettings = this.tempPlaceholder;
+                            if (placeholderHasEmptySymbol(newSettings)){
+                                new Notice("Error: Placeholder cannot be empty.")
+                                return;
+                            }
                             if (!newSettings){
                                 new Notice("Error, Settings cannot be loaded");
                                 return;
