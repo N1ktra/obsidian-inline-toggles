@@ -89,7 +89,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Save & Apply")
-            .setClass(CSS_CLASSES.PH_ACTION_SETTING)
+            .setClass(CSS_CLASSES.MULTI_BUTTON_SETTING)
             .setDesc(
                 createFragment((f) => {
                     f.createSpan({ text: "Choose how to save your changes:" });
@@ -202,6 +202,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Danger Zone")
+            .setClass(CSS_CLASSES.MULTI_BUTTON_SETTING)
             .addButton((btn) => {
                 btn.setButtonText("Reset all Settings")
                     .setWarning()

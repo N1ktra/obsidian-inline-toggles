@@ -81,12 +81,12 @@
 }
 
 /* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
-.itgl-ph-action-setting {
+.itgl-multi-button-setting {
     flex-wrap: wrap !important;
 }
 
 /* Die Buttons sollen auf Mobile die volle Breite unter dem Text einnehmen */
-.itgl-ph-action-setting .setting-item-control {
+.itgl-multi-button-setting .setting-item-control {
     flex: 1 0 100% !important;
     display: flex !important;
     flex-direction: column !important; /* Stapelt die Buttons übereinander */

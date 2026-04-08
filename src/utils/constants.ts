@@ -26,7 +26,7 @@ export const CSS_CLASSES = {
     HEADER: PREFIX + "-header",
     HEADER_TEXT: PREFIX + "-header-text",
     FOOTER: PREFIX + "-footer",
-    PH_ACTION_SETTING: PREFIX + "-ph-action-setting",
+    MULTI_BUTTON_SETTING: PREFIX + "-multi-button-setting",
 
     OBS_MODAL_COMPLEX: "mod-complex",
     OBS_SUGGESTION_CONTENT: "suggestion-content",
