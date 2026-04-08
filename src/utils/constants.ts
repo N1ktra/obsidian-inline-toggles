@@ -16,8 +16,8 @@ export const USER_EVENTS = {
 
 export const CSS_CLASSES = {
     ICON: PREFIX + "-icon",
-    IS_OPEN: PREFIX + "-is-open",
-    IS_CLOSED: PREFIX + "-is-closed",
+    IS_EXPANDED: PREFIX + "-is-expanded",
+    IS_COLLAPSED: PREFIX + "-is-collapsed",
     HAS_CONTENT: PREFIX + "-has-content",
     IS_EMPTY: PREFIX + "-is-empty",
     SUGGESTION_ITEM: PREFIX + "-suggestion-item",

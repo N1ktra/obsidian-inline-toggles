@@ -11,7 +11,7 @@ export class ToggleValue extends RangeValue {
     // Überschreibt nur die eq-Methode für den Performance-Vergleich
     eq(other: RangeValue): boolean {
         if (!(other instanceof ToggleValue)) return false;
-        return this.data.isOpen === other.data.isOpen && this.data.fullTag === other.data.fullTag;
+        return this.data.isExpanded === other.data.isExpanded && this.data.fullTag === other.data.fullTag;
     }
 }
 
@@ -92,7 +92,7 @@ function buildToggleRangeSet(doc: Text, settings: PlaceholderSettings) {
     for (let i = 1; i <= doc.lines; i++) {
         const line = doc.line(i);
         // Vorab-Filter: Regex nur starten, wenn das typische Zeichen überhaupt da ist
-        if (line.text.includes(settings.borderSymbol) && (line.text.includes(settings.symbolClosed) || line.text.includes(settings.symbolOpen))) {
+        if (line.text.includes(settings.borderSymbol) && (line.text.includes(settings.symbolCollapsed) || line.text.includes(settings.symbolExpanded))) {
             regex.lastIndex = 0;
             let match;
             while ((match = regex.exec(line.text)) !== null) {

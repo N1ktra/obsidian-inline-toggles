@@ -10,7 +10,7 @@ import { USER_EVENTS, CSS_CLASSES } from "../utils/constants";
 
 export class ToggleWidget extends WidgetType {
     constructor(
-        readonly isOpen: boolean,
+        readonly isExpanded: boolean,
         readonly hasChildren: boolean,
         readonly fullTag: string,
         readonly attributeString: string,
@@ -21,7 +21,7 @@ export class ToggleWidget extends WidgetType {
     ) { super(); }
 
     eq(other: ToggleWidget) {
-        return this.isOpen === other.isOpen &&
+        return this.isExpanded === other.isExpanded &&
                this.hasChildren === other.hasChildren &&
                this.fullTag === other.fullTag
     }
@@ -32,7 +32,7 @@ export class ToggleWidget extends WidgetType {
         span.style.cursor = "pointer";
 
         // Initialen Zustand im DOM speichern
-        span.classList.add(this.isOpen ? CSS_CLASSES.IS_OPEN : CSS_CLASSES.IS_CLOSED);
+        span.classList.add(this.isExpanded ? CSS_CLASSES.IS_EXPANDED : CSS_CLASSES.IS_COLLAPSED);
         span.classList.add(this.hasChildren ? CSS_CLASSES.HAS_CONTENT : CSS_CLASSES.IS_EMPTY);
         setIcon(span, "play");
 
@@ -42,8 +42,8 @@ export class ToggleWidget extends WidgetType {
     }
 
     updateDOM(dom: HTMLElement, view: EditorView): boolean {
-        dom.classList.toggle(CSS_CLASSES.IS_OPEN, this.isOpen);
-        dom.classList.toggle(CSS_CLASSES.IS_CLOSED, !this.isOpen);
+        dom.classList.toggle(CSS_CLASSES.IS_EXPANDED, this.isExpanded);
+        dom.classList.toggle(CSS_CLASSES.IS_COLLAPSED, !this.isExpanded);
         dom.classList.toggle(CSS_CLASSES.HAS_CONTENT, this.hasChildren);
         dom.classList.toggle(CSS_CLASSES.IS_EMPTY, !this.hasChildren);
 
@@ -72,7 +72,7 @@ export class ToggleWidget extends WidgetType {
             const currentFolds = view.state.field(foldState);
             const effects: StateEffect<any>[] = [];
 
-            if (this.isOpen) {
+            if (this.isExpanded) {
                 effects.push(foldEffect.of(range));
             } else {
                 // Überprüfen, ob da tatsächlich eine Faltung existiert
@@ -85,7 +85,7 @@ export class ToggleWidget extends WidgetType {
                     effects.push(unfoldEffect.of(range));
                 }
             }
-            const newTag = buildToggleTag(!this.isOpen, this.settings.placeholder, undefined, this.attributeString)
+            const newTag = buildToggleTag(!this.isExpanded, this.settings.placeholder, undefined, this.attributeString)
             view.dispatch({
                 effects: effects,
                 changes: { from: pos, to: pos + this.fullLength, insert: newTag },
@@ -172,7 +172,7 @@ export class ToggleWidget extends WidgetType {
             index: pos - line.from,
             length: this.fullLength,
             symbol: toggle.symbol,
-            isOpen: this.isOpen,
+            isExpanded: this.isExpanded,
             attributes: toggle.attributes,
             attributeString: this.attributeString
         };

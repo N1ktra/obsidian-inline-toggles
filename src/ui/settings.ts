@@ -6,8 +6,8 @@ import { CSS_CLASSES } from '../utils/constants';
 
 export interface PlaceholderSettings {
     borderSymbol: string;
-    symbolClosed: string;
-    symbolOpen: string;
+    symbolCollapsed: string;
+    symbolExpanded: string;
     delimiter: string;
 }
 
@@ -21,8 +21,8 @@ export interface ToggleSettings {
 export const DEFAULT_SETTINGS: ToggleSettings = {
     placeholder: {
         borderSymbol: "%%",
-        symbolClosed: "⏵",
-        symbolOpen: "⏷",
+        symbolCollapsed: "⏵",
+        symbolExpanded: "⏷",
         delimiter: ";",
     },
     autoInsertBullet: true,
@@ -48,23 +48,23 @@ export class ToggleSettingTab extends PluginSettingTab {
         containerEl.createEl('h3', { text: 'Source Code (Markdown)' });
 
         new Setting(containerEl)
-            .setName('Placeholder: Folded In')
-            .setDesc('The exact text in your markdown file that triggers the toggle.')
+            .setName('Placeholder: Collapsed')
+            .setDesc('The exact text in your markdown file when collapsed.')
             .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolClosed)
-                .setValue(this.plugin.settings.placeholder.symbolClosed)
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolCollapsed)
+                .setValue(this.plugin.settings.placeholder.symbolCollapsed)
                 .onChange(async (value) => {
-                    this.tempPlaceholder.symbolClosed = value;
+                    this.tempPlaceholder.symbolCollapsed = value;
                 }));
 
         new Setting(containerEl)
-            .setName('Placeholder: Folded Out')
+            .setName('Placeholder: Expanded')
             .setDesc('The exact text in your markdown file when expanded.')
             .addText(text => text
-                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolOpen)
-                .setValue(this.plugin.settings.placeholder.symbolOpen)
+                .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolExpanded)
+                .setValue(this.plugin.settings.placeholder.symbolExpanded)
                 .onChange(async (value) => {
-                    this.tempPlaceholder.symbolOpen = value;
+                    this.tempPlaceholder.symbolExpanded = value;
                 }));
 
         new Setting(containerEl)
@@ -120,7 +120,7 @@ export class ToggleSettingTab extends PluginSettingTab {
                     }
                     this.plugin.settings.placeholder = { ...newSettings };
                     await this.plugin.saveSettings();
-                    new Notice("Settings saved!\nYou might have to reopen current Tabs.");
+                    new Notice("Settings saved!\nYou might have to reload Obsidian.");
                     this.display();
                 })
             )
@@ -143,19 +143,19 @@ export class ToggleSettingTab extends PluginSettingTab {
                                 new Notice("Error, Settings cannot be loaded");
                                 return;
                             }
-                            if (newSettings.symbolClosed === oldSettings.symbolClosed && newSettings.symbolOpen === oldSettings.symbolOpen && newSettings.borderSymbol === oldSettings.borderSymbol && newSettings.delimiter === oldSettings.delimiter){
+                            if (newSettings.symbolCollapsed === oldSettings.symbolCollapsed && newSettings.symbolExpanded === oldSettings.symbolExpanded && newSettings.borderSymbol === oldSettings.borderSymbol && newSettings.delimiter === oldSettings.delimiter){
                                 new Notice("No changes detected.");
                                 return;
                             }
 
                             // const modifiedFilesCount = await migrateToggles(this.app, oldSetting, newSetting);
                             const modifiedFilesCount = await processAllToggles(this.app, oldSettings, (toggle) => {
-                                return buildToggleTag(toggle.isOpen, newSettings, toggle.attributes);
+                                return buildToggleTag(toggle.isExpanded, newSettings, toggle.attributes);
                             });
 
                             this.plugin.settings.placeholder = { ...newSettings };
                             await this.plugin.saveSettings();
-                            new Notice(`Migrated ${modifiedFilesCount} Files.\nYou might have to reopen current Tabs.`);
+                            new Notice(`Migrated ${modifiedFilesCount} Files.\nYou might have to reload Obsidian.`);
                             this.display();
                         }
                     ).open();

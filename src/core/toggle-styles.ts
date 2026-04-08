@@ -82,7 +82,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
             })
             lineStlyes.push({
                 condition: (index, num_lines, lineText, isFoldedIn) => index === 0 && isFoldedIn,
-                decoration: createLineDeco(CSS_CLASSES.IS_CLOSED)
+                decoration: createLineDeco(CSS_CLASSES.IS_COLLAPSED)
             })
             lineStlyes.push({
                 condition: (index, numLines, lineText, isFoldedIn, lastChildLineNumber) => (index === numLines) || (isFoldedIn && lastChildLineNumber === numLines),

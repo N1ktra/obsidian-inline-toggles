@@ -78,10 +78,10 @@ export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField
 
         if (range){
             const lineIsFolded = checkIfToggleIsFoldedIn(view, line);
-            if (!toggle.isOpen && !lineIsFolded) {
+            if (!toggle.isExpanded && !lineIsFolded) {
                 effects.push(foldEffect.of(range));
             }
-            else if (toggle.isOpen && lineIsFolded) {
+            else if (toggle.isExpanded && lineIsFolded) {
                 effects.push(unfoldEffect.of(range));
             }
         }

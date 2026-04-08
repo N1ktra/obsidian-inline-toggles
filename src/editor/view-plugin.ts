@@ -88,7 +88,7 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
 
                         const widgetDeco = Decoration.replace({
                             widget: new ToggleWidget(
-                                isFoldable ? toggle.isOpen : false,
+                                isFoldable ? toggle.isExpanded : false,
                                 isFoldable,
                                 toggle.fullTag,
                                 toggle.attributeString,

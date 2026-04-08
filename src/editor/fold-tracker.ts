@@ -82,16 +82,16 @@ export const createFoldTrackerPlugin = (plugin: MyTogglePlugin, settings: Toggle
             }
         }
 
-        matchToggleToFold(view: EditorView, line: Line, isOpen: boolean){
-            // console.log("updating toggle", isOpen)
+        matchToggleToFold(view: EditorView, line: Line, isExpanded: boolean){
+            // console.log("updating toggle", isExpanded)
             this.toggleRegex.lastIndex = 0;
             const text = view.state.doc.sliceString(line.from, line.to);
             const match = this.toggleRegex.exec(text)
             if(match)
             {
                 const toggle = parseToggleMatch(match, settings.placeholder)
-                if (toggle.isOpen === isOpen) return; // nichts machen falls symbol schon korrekt ist
-                const newFullTag = updateToggle(toggle, settings.placeholder, { isOpen: isOpen });
+                if (toggle.isExpanded === isExpanded) return; // nichts machen falls symbol schon korrekt ist
+                const newFullTag = updateToggle(toggle, settings.placeholder, { isExpanded: isExpanded });
                 const startPos = line.from + toggle.index;
                 window.requestAnimationFrame(() => {
                     view.dispatch({

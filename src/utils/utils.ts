@@ -43,7 +43,7 @@ export const calloutIconMap: Record<string, string> = {
 };
 
 export function placeholderHasEmptySymbol(settings: PlaceholderSettings){
-    return settings.borderSymbol === "" || settings.delimiter === "" || settings.symbolClosed === "" || settings.symbolOpen === ""
+    return settings.borderSymbol === "" || settings.delimiter === "" || settings.symbolCollapsed === "" || settings.symbolExpanded === ""
 }
 
 export interface ToggleMatch {
@@ -51,7 +51,7 @@ export interface ToggleMatch {
     index: number;        // Startposition in der Zeile
     length: number;       // Länge des gesamten Tags
     symbol: string;
-    isOpen: boolean;      // Status (true = offen, false = geschlossen)
+    isExpanded: boolean;      // Status (true = offen, false = geschlossen)
     attributes: Record<string, string>; // Die Flags als Objekt: { bg: "red" }
     attributeString: string;
 }
@@ -69,8 +69,8 @@ export function escapeRegex(text: string): string {
  */
 export function getToggleRegex(settings: PlaceholderSettings): RegExp {
     const b = escapeRegex(settings.borderSymbol);
-    const o = escapeRegex(settings.symbolOpen);
-    const c = escapeRegex(settings.symbolClosed);
+    const o = escapeRegex(settings.symbolExpanded);
+    const c = escapeRegex(settings.symbolCollapsed);
     const d = escapeRegex(settings.delimiter);
 
     // Erklärung der Gruppen:
@@ -101,7 +101,7 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
         index: match.index,
         length: match[0].length,
         symbol: match[1],
-        isOpen: match[1] === settings.symbolOpen,
+        isExpanded: match[1] === settings.symbolExpanded,
         attributes: parseAttributes(match[2], settings),
         attributeString: match[2],
     };
@@ -109,18 +109,18 @@ export function findToggle(text: string, settings: PlaceholderSettings): ToggleM
 
 /**
  * Erzeugt einen fertigen Toggle-Tag String (z.B. %%⏷type: info%%)
- * * @param isOpen - Bestimmt, ob das "Open" oder "Closed" Symbol genutzt wird
- * @param settings - Deine PlaceholderSettings (borderSymbol, placeholderOpen, etc.)
+ * * @param isExpanded - Bestimmt, ob das "Expanded" oder "Collapsed" Symbol genutzt wird
+ * @param settings - PlaceholderSettings
  * @param attributes - Ein Objekt mit Key-Value Paaren (z.B. { bg: "red" })
  */
 export function buildToggleTag(
-    isOpen: boolean,
+    isExpanded: boolean,
     settings: PlaceholderSettings,
     attributes: Record<string, string> = {},
     attributeString?: string,
 ): string {
     const b = settings.borderSymbol;
-    const icon = isOpen ? settings.symbolOpen : settings.symbolClosed;
+    const icon = isExpanded ? settings.symbolExpanded : settings.symbolCollapsed;
 
     // 3. Die Attribute in das Format ":key=value" umwandeln
     // Wenn das Objekt leer ist, wird dieser String einfach leer ("")
@@ -138,10 +138,10 @@ export function buildToggleTag(
 export function updateToggle(
     toggle: ToggleMatch,
     settings: PlaceholderSettings,
-    changes: { isOpen?: boolean; attributes?: Record<string, string>; attributeString?: string}
+    changes: { isExpanded?: boolean; attributes?: Record<string, string>; attributeString?: string}
 ): string {
     // Wenn in 'changes' nichts steht, nehmen wir die alten Werte aus 'toggle'
-    const newState = changes.isOpen ?? toggle.isOpen;
+    const newState = changes.isExpanded ?? toggle.isExpanded;
     const newAttrs = changes.attributes ?? toggle.attributes;
 
     // Nutzt unsere bewährte build-Funktion
@@ -163,7 +163,7 @@ export function parseToggleMatch(
         index: match.index,
         length: match[0].length,
         symbol: foundSymbol,
-        isOpen: foundSymbol === settings.symbolOpen,
+        isExpanded: foundSymbol === settings.symbolExpanded,
         attributes: parseAttributes(match[2], settings),
         attributeString: match[2] || "",
     };
@@ -276,7 +276,7 @@ export async function processAllToggles(app: App, oldSettings: PlaceholderSettin
         await app.vault.process(file, (content) => {
             // Prüfen ob überhaupt ein toggle existiert (Performance)
             if (!content.includes(oldSettings.borderSymbol)) return content;
-            if (!content.includes(oldSettings.symbolClosed) && !content.includes(oldSettings.symbolOpen)) return content;
+            if (!content.includes(oldSettings.symbolCollapsed) && !content.includes(oldSettings.symbolExpanded)) return content;
 
             const newContent = content.replace(oldRegex, (fullMatch, symbol, attributes) => {
                 const simulatedMatch = [fullMatch, symbol, attributes];
