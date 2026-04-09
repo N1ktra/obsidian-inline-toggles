@@ -1,83 +1,104 @@
+/* ==========================================================================
+   1. DER WRAPPER (Container)
+   Kümmert sich NUR um Position im Text, den Klick-Bereich und den Hover-Hintergrund.
+   Hier wird NICHTS gedreht!
+   ========================================================================== */
 .itgl-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 22px;
     height: 22px;
+    vertical-align: middle;
+    margin-bottom: 0.15em;
+
     cursor: pointer !important;
     user-select: none;
     border-radius: 4px;
-
-    /* FIX FÜR DIE VERTIKALE POSITION */
-    vertical-align: middle;
-    position: relative;
-    top: -3px; /* Feinjustierung: Falls es immer noch 1px zu hoch wirkt */
-
-    transition: all 0.15s ease-in-out;
     color: var(--text-faint);
-    transform-origin: center;
-    transform: rotate(0deg);
+
+    /* --- MOBILE OPTIMIERUNG --- */
+    /* 1. Nur spezifische Eigenschaften animieren (kein 'all') */
+    transition: background-color 0.15s ease-in-out, transform 0.1s ease-out;
+
+    /* 2. Hardware-Beschleunigung erzwingen */
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    /* 3. Den standardmäßigen grauen Klick-Rahmen auf Handys entfernen */
+    -webkit-tap-highlight-color: transparent;
 }
 
+/* ==========================================================================
+   2. DAS ICON (SVG)
+   Kümmert sich NUR um Aussehen und die Drehung.
+   ========================================================================== */
 .itgl-icon svg {
-    display: block; /* Verhindert extra Space unter dem SVG */
+    display: block;
     width: 14px;
     height: 14px;
     fill: currentColor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 1px;
-
-    /* Zentrierung innerhalb des Flex-Containers erzwingen */
     margin: 0;
+
+    /* --- MOBILE OPTIMIERUNG --- */
+    will-change: transform;
+    /* Auch hier: nur transform animieren */
+    transition: transform 0.15s ease-in-out;
+    color: inherit;
 }
 
+/* ==========================================================================
+   3. ZUSTÄNDE (Geschlossen / Offen)
+   Wir ändern Farben am Container und drehen das innere SVG.
+   ========================================================================== */
+
+/* Zustand: OFFEN */
 .itgl-icon.itgl-is-expanded {
     color: var(--text-muted);
-    background-color: transparent;
+}
+.itgl-icon.itgl-is-expanded svg {
     transform: rotate(90deg);
 }
 
+/* Zustand: GESCHLOSSEN (mit Inhalt) */
 .itgl-icon.itgl-is-collapsed.itgl-has-content {
     color: var(--text-accent);
-    /* background-color: rgba(var(--mono-rgb-100), 0.03); */
+}
+.itgl-icon.itgl-is-collapsed.itgl-has-content svg {
     transform: rotate(0deg);
 }
 
-
+/* ==========================================================================
+   4. KLICK-EFFEKTE (Mobile & Desktop)
+   Der Container wird minimal kleiner, das SVG behält dabei seine Drehung.
+   ========================================================================== */
 .itgl-icon:active {
-    transform: scale(0.9) rotate(0deg);
+    background-color: var(--background-modifier-hover);
+    transform: scale(0.9);
 }
 
-.itgl-icon.itgl-is-expanded:active {
-    transform: scale(0.9) rotate(90deg);
-}
-
-/* --- HOVER LOGIK (NUR FÜR MAUS-GERÄTE) --- */
+/* ==========================================================================
+   5. HOVER-LOGIK (Nur für Geräte mit Maus)
+   ========================================================================== */
 @media (hover: hover) {
-    /* Der Hintergrund taucht nur am PC auf */
+    /* Grauer Hintergrund für alle Zustände beim Drüberfahren */
     .itgl-icon:hover {
         background-color: var(--background-modifier-hover);
     }
 
-    /* Farbe beim OFFENEN Pfeil */
+    /* Helleres Grau, wenn offen */
     .itgl-icon.itgl-is-expanded:hover {
         color: var(--text-normal);
     }
 
-    /* Farbe beim GESCHLOSSENEN Pfeil mit Inhalt */
+    /* Leuchtenderes Accent, wenn geschlossen */
     .itgl-icon.itgl-is-collapsed.itgl-has-content:hover {
         color: var(--text-accent-hover);
-        /* Alternativ: filter: brightness(1.2); */
     }
-}
-
-/* Falls du auf dem Handy ein kurzes Feedback beim Tippen willst,
-   nutze :active statt :hover */
-.itgl-icon:active {
-    background-color: var(--background-modifier-hover);
-    transform: scale(0.9);
-    transition: transform 0.05s linear;
 }
 
 /* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
