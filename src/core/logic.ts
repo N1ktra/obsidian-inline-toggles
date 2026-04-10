@@ -102,7 +102,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
         {
             label: "Save as new Attribute-String ✅",
             description: "Save this string as the Toggles Attributes.",
-            onSelect(userInput, evt) {
+            onSelect(userInput) {
                 const newToggleString = updateToggle(toggle, settings, { attributeString: userInput });
                 editor.replaceRange(
                     newToggleString,
@@ -128,7 +128,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
 export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings, callback?: () => void){
     const actions: SuggestionAction[] = standardCallouts.map(id => ({
         label: id,
-        onSelect(userInput, evt) {
+        onSelect() {
             const newAttrs = toggle.attributes;
             if (id === "no type"){
                 delete newAttrs.type

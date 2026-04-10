@@ -1,4 +1,4 @@
-import { StateField, StateEffect, RangeSet, RangeSetBuilder, RangeValue, Range } from "@codemirror/state";
+import { StateField, RangeSet, RangeSetBuilder, RangeValue, Range } from "@codemirror/state";
 import { getToggleRegex, parseToggleMatch, ToggleMatch } from "../utils/utils";
 import { PlaceholderSettings } from "../ui/settings";
 import { Text } from "@codemirror/state";
@@ -42,7 +42,7 @@ export function createToggleField(settings: PlaceholderSettings) {
 
                 // 2. Werfe alle alten Toggles raus, die sich in diesen geänderten Zeilen befanden
                 newSet = newSet.update({
-                    filter: (from, to, value) => {
+                    filter: (from) => {
                         const toggleLine = tr.state.doc.lineAt(from).number;
                         // false = wegwerfen, true = behalten
                         return !changedLines.has(toggleLine);

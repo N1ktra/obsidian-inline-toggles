@@ -1,10 +1,9 @@
-import { MarkdownView, Plugin } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { createToggleViewPlugin } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { ToggleSettings, DEFAULT_SETTINGS, ToggleSettingTab } from './ui/settings';
 import { findToggle, getCM } from './utils/utils';
-import { EditorView } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
 import { createToggleField } from './editor/toggle-field';
 import { createToggleEnterFix } from './editor/toggle-enter';
@@ -65,7 +64,7 @@ export default class MyTogglePlugin extends Plugin {
             id: 'reset-foldings',
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
-            editorCallback: (editor) => {
+            editorCallback: () => {
                 scanAndApplyFold(this.app, this.settings, toggleField);
             }
         });
@@ -85,7 +84,7 @@ export default class MyTogglePlugin extends Plugin {
         this.addCommand({
             id: 'change_type',
             name: 'Change Type',
-            editorCallback: async (editor) => {
+            editorCallback: (editor) => {
                 const cursor = editor.getCursor();
                 const lineText = editor.getLine(cursor.line)
                 const toggle = findToggle(lineText, this.settings.placeholder)
@@ -118,26 +117,31 @@ export default class MyTogglePlugin extends Plugin {
         document.body.classList.remove('hide-gutter-arrows');
     }
 
-    deepMerge<T extends object>(target: T, source: any): T {
-        // Wenn source leer oder kein Objekt ist, geben wir einfach die Defaults zurück
-        if (!source || typeof source !== 'object') return target;
+    deepMerge<T extends object>(target: T, source: unknown): T {
+        // 1. Validierung: Wenn source kein Objekt ist, direkt target zurückgeben
+        if (!source || typeof source !== 'object' || Array.isArray(source)) {
+            return target;
+        }
+        // 2. Wir casten source zu einem Record, damit wir sicher auf Keys zugreifen können
+        const sourceObj = source as Record<string, unknown>;
 
-        // Wir erstellen eine frische Kopie des Ziels (Defaults)
-        const output = { ...target } as Record<string, any>;
+        // 3. Das Ziel-Objekt als Record für den dynamischen Zugriff vorbereiten
+        const output = { ...target } as Record<string, unknown>;
 
-        for (const key in source) {
-            if (Object.prototype.hasOwnProperty.call(source, key)) {
-                const sourceValue = source[key];
+        for (const key in sourceObj) {
+            if (Object.prototype.hasOwnProperty.call(sourceObj, key)) {
+                const sourceValue = sourceObj[key];
                 const targetValue = output[key];
 
-                // Wenn BEIDE Werte Objekte sind (und keine Arrays) -> gehe eine Ebene tiefer!
+                // Prüfen, ob beide Werte Objekte sind, um rekursiv zu mergen
                 if (
                     sourceValue && typeof sourceValue === 'object' && !Array.isArray(sourceValue) &&
                     targetValue && typeof targetValue === 'object' && !Array.isArray(targetValue)
                 ) {
+                    // Hier casten wir targetValue zu object, damit die Rekursion passt
                     output[key] = this.deepMerge(targetValue, sourceValue);
                 } else {
-                    // Ansonsten (Strings, Booleans, Arrays) einfach überschreiben
+                    // Bei Primitiven oder Arrays einfach überschreiben
                     output[key] = sourceValue;
                 }
             }

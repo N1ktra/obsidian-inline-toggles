@@ -1,5 +1,6 @@
 import { App, Modal, setIcon, Setting, SuggestModal } from "obsidian";
-import { CSS_CLASSES } from "../utils/constants";
+import { CSS_CLASSES, CSS_VARIABLES } from "../utils/constants";
+import { setCssProps } from "../utils/utils";
 
 export interface SuggestionAction {
     label: string;
@@ -28,7 +29,7 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
     }
 
     onOpen() {
-        super.onOpen();
+        void super.onOpen();
 
         if (this.initialValue) {
             this.inputEl.value = this.initialValue;
@@ -55,10 +56,7 @@ export class GenericActionModal extends SuggestModal<SuggestionAction> {
             const iconContainer = el.createDiv({ cls: CSS_CLASSES.ICON_CONTAINER });
 
             if (item.color) {
-                // Nutzt die übergebene Farbe für das Icon
-                iconContainer.style.color = item.color;
-                // Erzeugt einen leicht transparenten Hintergrund in derselben Farbe (20% Deckkraft)
-                iconContainer.style.backgroundColor = `color-mix(in srgb, ${item.color} 20%, transparent)`;
+                setCssProps(iconContainer, {[CSS_VARIABLES.ITEM_COLOR] : item.color})
             }
 
             // Obsidian fügt das SVG-Icon in den Container ein

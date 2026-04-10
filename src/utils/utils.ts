@@ -1,13 +1,20 @@
-import { Text, Line } from "@codemirror/state";
+import { Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { foldState, foldable, foldedRanges, syntaxTree } from "@codemirror/language";
-import { ToggleSettings, PlaceholderSettings } from "../ui/settings";
-import { App, Notice, Editor, MarkdownView } from "obsidian";
+import { foldable, foldedRanges } from "@codemirror/language";
+import { PlaceholderSettings } from "../ui/settings";
+import { App, Notice, Editor } from "obsidian";
 import { USER_EVENTS } from "./constants";
 
 export function getCM(editor: Editor): EditorView | null {
     if (!editor) return null;
     return (editor as any).cm as EditorView;
+}
+
+export function setCssProps(el: HTMLElement, props: Record<string, string>) {
+    const elementStyle = el['style'];
+    for (const [key, value] of Object.entries(props)) {
+        elementStyle.setProperty(key, value);
+    }
 }
 
 export const standardCallouts = ["no type", "info", "todo", "tip", "success", "question", "warning", "bug", "example", "quote"];

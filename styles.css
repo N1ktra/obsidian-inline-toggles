@@ -167,6 +167,13 @@
     width: 24px;
     height: 24px;
     border-radius: 4px;
+
+    color: var(--itgl-item-color, var(--text-normal));
+    background-color: color-mix(
+        in srgb,
+        var(--itgl-item-color, var(--text-normal)) 20%,
+        transparent
+    );
 }
 
 .suggestion-content {

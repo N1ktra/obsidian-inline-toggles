@@ -3,7 +3,7 @@ import { ToggleSettings } from "../ui/settings";
 import { foldable, unfoldEffect, foldEffect, foldState } from "@codemirror/language";
 import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
-import { App, MarkdownView, Menu, setIcon } from "obsidian";
+import { App, Menu, setIcon } from "obsidian";
 import { buildToggleTag, findToggle, ToggleMatch } from "../utils/utils";
 import { changeToggleType, editToggleAttributes } from "../core/logic";
 import { USER_EVENTS, CSS_CLASSES } from "../utils/constants";
@@ -29,7 +29,6 @@ export class ToggleWidget extends WidgetType {
     toDOM(view: EditorView) {
         const span = document.createElement("span");
         span.className = CSS_CLASSES.ICON;
-        span.style.cursor = "pointer";
 
         // Initialen Zustand im DOM speichern
         span.classList.add(this.isExpanded ? CSS_CLASSES.IS_EXPANDED : CSS_CLASSES.IS_COLLAPSED);
@@ -70,7 +69,7 @@ export class ToggleWidget extends WidgetType {
 
         if (range) {
             const currentFolds = view.state.field(foldState);
-            const effects: StateEffect<any>[] = [];
+            const effects: StateEffect<{from: number, to: number}>[] = [];
 
             if (this.isExpanded) {
                 effects.push(foldEffect.of(range));

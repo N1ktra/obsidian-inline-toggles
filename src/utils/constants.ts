@@ -37,6 +37,7 @@ export const CSS_CLASSES = {
 export const CSS_VARIABLES = {
     BACKGROUND: "--" + PREFIX + "-bg",
     BORDER: "--" + PREFIX + "-border",
+    ITEM_COLOR: "--" + PREFIX + "-item-color",
 }
 
 export const CSS_MAP: Record<string, string> = {

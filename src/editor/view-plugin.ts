@@ -1,4 +1,4 @@
-import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { Range, RangeSet, StateField, Line } from "@codemirror/state";
 import { ToggleWidget } from "./widgets";
 import { ToggleSettings } from "../ui/settings";
@@ -21,11 +21,11 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
                 read: (view) => {
                     return view.state.field(toggleField, false);
                 },
-                write: (fieldExists, view) => {
+                write: (fieldExists) => {
                     if (fieldExists) {
-                        Promise.resolve().then(() => {
+                        queueMicrotask(() => {
                             scanAndApplyFold(app, settings, toggleField);
-                        });
+                        })
                     }
                 }
             });
@@ -64,7 +64,7 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
             while (iter.value !== null) {
                 const tFrom = iter.from;
                 const tTo = iter.to;
-                const value = iter.value as ToggleValue;
+                const value = iter.value;
                 if (tFrom > viewportEnd) break;
                 const toggle = value.data;
                 // Wenn es keine Line-Styles hat UND das Symbol nicht im Bild ist -> Überspringen
@@ -123,7 +123,7 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
             const { state } = view;
             const lastlineNumber = foldRange ? state.doc.lineAt(foldRange.to).number : startLine.number;
             const numLines = lastlineNumber - startLine.number;
-            const lineDecos = buildLineDecorationFromAttributes(toggle.attributes, settings);
+            const lineDecos = buildLineDecorationFromAttributes(toggle.attributes);
 
             let previousLine = startLine;
 

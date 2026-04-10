@@ -1,6 +1,6 @@
 import { foldEffect, unfoldEffect } from "@codemirror/language";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
-import { Line, Transaction } from "@codemirror/state";
+import { Line } from "@codemirror/state";
 import { getToggleRegex, parseToggleMatch, updateToggle } from "../utils/utils";
 import { editorInfoField, MarkdownView } from "obsidian";
 import { ToggleSettings } from "../ui/settings";

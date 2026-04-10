@@ -1,6 +1,5 @@
 import { Decoration } from "@codemirror/view";
 import { Line, Range } from "@codemirror/state";
-import { ToggleSettings } from "../ui/settings";
 import { CSS_CLASSES, CSS_MAP, CSS_VARIABLES } from "../utils/constants";
 
 
@@ -45,7 +44,7 @@ function normalizeAttributes(attributes: Record<string, string>): Record<string,
  * Wandelt benutzerdefinierte Attribute in eine CodeMirror LineDecoration um.
  * Gibt 'null' zurück, wenn keine relevanten Styling-Attribute gefunden wurden.
  */
-export function buildLineDecorationFromAttributes(attributes: Record<string, string>, settings: ToggleSettings): LineStyleRule[] {
+export function buildLineDecorationFromAttributes(attributes: Record<string, string>): LineStyleRule[] {
     if (!attributes || Object.keys(attributes).length === 0) return [];
 
     const styleEntries: string[] = [];
@@ -77,7 +76,7 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
                 })
             })
             lineStlyes.push({
-                condition: (index, num_lines, lineText, isFoldedIn) => index === 0,
+                condition: (index) => index === 0,
                 decoration: createLineDeco(CSS_CLASSES.HEADER)
             })
             lineStlyes.push({
