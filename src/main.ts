@@ -45,7 +45,7 @@ export default class MyTogglePlugin extends Plugin {
         // Befehl zum Einfügen
         this.addCommand({
             id: 'insert-toggle',
-            name: 'Insert/Remove Toggle',
+            name: 'Insert/remove toggle',
             icon: 'play',
             editorCallback: (editor) => {
                 const view = editor.cm;
@@ -71,7 +71,7 @@ export default class MyTogglePlugin extends Plugin {
 
         this.addCommand({
             id: 'edit-attributes',
-            name: 'Edit Attributes',
+            name: 'Edit attributes',
             editorCallback: (editor) => {
                 const cursor = editor.getCursor();
                 const lineText = editor.getLine(cursor.line)
@@ -83,7 +83,7 @@ export default class MyTogglePlugin extends Plugin {
 
         this.addCommand({
             id: 'change_type',
-            name: 'Change Type',
+            name: 'Change type',
             editorCallback: (editor) => {
                 const cursor = editor.getCursor();
                 const lineText = editor.getLine(cursor.line)

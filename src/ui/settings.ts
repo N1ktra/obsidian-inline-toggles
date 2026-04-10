@@ -51,7 +51,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Placeholder: collapsed')
-            .setDesc('The exact text in your markdown file when collapsed.')
+            .setDesc('The exact text in your Markdown file when collapsed.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolCollapsed)
                 .setValue(this.plugin.settings.placeholder.symbolCollapsed)
@@ -61,7 +61,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Placeholder: expanded')
-            .setDesc('The exact text in your markdown file when expanded.')
+            .setDesc('The exact text in your Markdown file when expanded.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolExpanded)
                 .setValue(this.plugin.settings.placeholder.symbolExpanded)
@@ -98,12 +98,12 @@ export class ToggleSettingTab extends PluginSettingTab {
                     f.createEl("br");
                     // Kurze, knappe Gegenüberstellung
                     f.createEl("small", {
-                        text: "• Save Only: Updates future toggles. Existing ones will break.",
+                        text: "• Save only: updates future toggles. Existing ones will break.",
                         cls: "setting-item-description"
                     });
                     f.createEl("br");
                     f.createEl("small", {
-                        text: "• Migrate: Fixes all existing toggles before saving. (⚠️ overwrites whole vault!)",
+                        text: "• Migrate: fixes all existing toggles before saving. (⚠️ overwrites whole vault!)",
                         cls: "setting-item-description"
                     });
                 })
@@ -170,7 +170,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .setHeading();
         new Setting(containerEl)
         .setName("Auto-insert bullet point")
-        .setDesc("Automatically inserts a bullet point, when creating a Toggle.")
+        .setDesc("Automatically inserts a bullet point, when creating a toggle.")
         .addToggle(toggle => toggle
             .setValue(this.plugin.settings.autoInsertBullet)
             .onChange(async (value) => {

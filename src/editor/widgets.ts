@@ -127,7 +127,7 @@ export class ToggleWidget extends WidgetType {
         const menu = new Menu();
         menu.addItem((item) =>
             item
-                .setTitle("Change Type")
+                .setTitle("Change type")
                 .setIcon("pencil")
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
@@ -148,7 +148,7 @@ export class ToggleWidget extends WidgetType {
         );
         menu.addItem((item) => {
             item
-                .setTitle("Edit Attributes")
+                .setTitle("Edit attributes")
                 .setIcon("list")
                 .onClick(() => {
                     const result = this.getToggleData(span, view);

@@ -8,7 +8,6 @@ import { App, editorLivePreviewField } from "obsidian";
 import { applyRulesToLine, buildLineDecorationFromAttributes } from "../core/toggle-styles";
 import { ToggleValue } from "./toggle-field";
 import { scanAndApplyFold } from "../core/logic";
-import { CSS_CLASSES } from "../utils/constants";
 
 export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggleField: StateField<RangeSet<ToggleValue>>) => {
     return ViewPlugin.fromClass(class {
