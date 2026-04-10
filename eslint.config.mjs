@@ -51,6 +51,36 @@ export default [
 
             "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
             "no-console": "warn",
+
+            "no-restricted-syntax": [
+                "error",
+                // Check 1: Direkter Style-Zugriff (hast du schon)
+                {
+                    "selector": "MemberExpression[property.name='style']",
+                    "message": "Direct style access is discouraged. Use CSS classes or setCssProps."
+                },
+                // Check 2: Sicherheit - Kein innerHTML (Wichtig für Obsidian Review)
+                {
+                    "selector": "MemberExpression[property.name='innerHTML']",
+                    "message": "Using innerHTML is a security risk. Use .textContent or .createEl() instead."
+                },
+                // Check 3: Sentence Case - Startet mit Kleinbuchstabe?
+                {
+                    "selector": "CallExpression[callee.property.name=/^(setName|setDesc|setButtonText|setPlaceholder)$/] > Literal[value=/^[a-z]/]",
+                    "message": "Obsidian UI strings should use sentence case and start with an uppercase letter."
+                },
+                // Check 4: Sentence Case - Unnötige Großschreibung (Title Case Check)
+                // Findet Strings mit zwei aufeinanderfolgenden großgeschriebenen Wörtern (Eigennamen ausgenommen)
+                {
+                    "selector": "CallExpression[callee.property.name=/^(setName|setDesc|setButtonText)$/] > Literal[value=/[A-Z][a-z]+ [A-Z][a-z]+/]",
+                    "message": "Avoid title case (Capitalizing Every Word). Use sentence case instead."
+                },
+                // Check 5: Überschriften in createEl
+                {
+                    "selector": "CallExpression[callee.property.name='createEl'][arguments.0.value=/^h[1-6]$/] ~ ObjectExpression Property[key.name='text'] > Literal[value=/^[a-z]/]",
+                    "message": "Headings should start with an uppercase letter (Sentence case)."
+                }
+            ],
         },
     }
 ];

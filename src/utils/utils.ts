@@ -286,9 +286,14 @@ export async function processAllToggles(app: App, oldSettings: PlaceholderSettin
             if (!content.includes(oldSettings.borderSymbol)) return content;
             if (!content.includes(oldSettings.symbolCollapsed) && !content.includes(oldSettings.symbolExpanded)) return content;
 
-            const newContent = content.replace(oldRegex, (fullMatch, symbol, attributes) => {
-                const simulatedMatch = [fullMatch, symbol, attributes];
-                const oldToggle = parseToggleMatch(simulatedMatch as any, oldSettings);
+            const newContent = content.replace(oldRegex, (match, symbol, attributes, offset, input) => {
+                const matchArray = [match, symbol, attributes];
+                const simulatedExecArray = Object.assign(matchArray, {
+                    index: offset,     // Die Startposition des Treffers
+                    input: input,      // Der gesamte Text, der durchsucht wurde
+                    groups: undefined  // Falls du keine benannten Gruppen (?<name>) nutzt
+                }) as RegExpExecArray;
+                const oldToggle = parseToggleMatch(simulatedExecArray, oldSettings);
                 return transformFn(oldToggle);
             });
 

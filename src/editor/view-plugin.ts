@@ -8,6 +8,7 @@ import { App, editorLivePreviewField } from "obsidian";
 import { applyRulesToLine, buildLineDecorationFromAttributes } from "../core/toggle-styles";
 import { ToggleValue } from "./toggle-field";
 import { scanAndApplyFold } from "../core/logic";
+import { CSS_CLASSES } from "../utils/constants";
 
 export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggleField: StateField<RangeSet<ToggleValue>>) => {
     return ViewPlugin.fromClass(class {
@@ -82,10 +83,6 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
                     // --- WIDGET ---
                     // Das Widget selbst zeichnen wir NUR, wenn das Tag (%%toggle%%) gerade im Bild ist.
                     if (tFrom >= viewportStart && tTo <= viewportEnd) {
-                        const hideText = Decoration.mark({
-                            attributes: { style: "font-size: 0; opacity: 0;" }
-                        });
-
                         const widgetDeco = Decoration.replace({
                             widget: new ToggleWidget(
                                 isFoldable ? toggle.isExpanded : false,
@@ -97,8 +94,6 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
                                 app
                             )
                         });
-
-                        atomicList.push(hideText.range(tFrom, tFrom + toggle.length));
                         atomicList.push(widgetDeco.range(tFrom, tFrom + toggle.length));
                     }
 

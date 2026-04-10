@@ -45,10 +45,12 @@ export class ToggleSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         // --- SEKTION: SOURCE CODE ---
-        containerEl.createEl('h3', { text: 'Source Code (Markdown)' });
+        new Setting(containerEl)
+            .setName('Source code (Markdown)') // Markdown ist ein Eigenname
+            .setHeading();
 
         new Setting(containerEl)
-            .setName('Placeholder: Collapsed')
+            .setName('Placeholder: collapsed')
             .setDesc('The exact text in your markdown file when collapsed.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolCollapsed)
@@ -58,7 +60,7 @@ export class ToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Placeholder: Expanded')
+            .setName('Placeholder: expanded')
             .setDesc('The exact text in your markdown file when expanded.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolExpanded)
@@ -68,7 +70,7 @@ export class ToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Placeholder: Border Symbol')
+            .setName('Placeholder: border symbol')
             .setDesc('The border symbol to start / end a toggle.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.borderSymbol)
@@ -78,8 +80,8 @@ export class ToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Placeholder: Delimiter')
-            .setDesc('The symbol to start a new attribute')
+            .setName('Placeholder: delimiter')
+            .setDesc('The symbol to start a new attribute.')
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.delimiter)
                 .setValue(this.plugin.settings.placeholder.delimiter)
@@ -88,7 +90,7 @@ export class ToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName("Save & Apply")
+            .setName("Save & apply")
             .setClass(CSS_CLASSES.MULTI_BUTTON_SETTING)
             .setDesc(
                 createFragment((f) => {
@@ -107,15 +109,15 @@ export class ToggleSettingTab extends PluginSettingTab {
                 })
             )
             .addButton(btn => btn
-                .setButtonText('Save for Future Toggles')
+                .setButtonText('Save for future toggles')
                 .onClick(async () => {
                     const newSettings = this.tempPlaceholder;
                     if (!newSettings){
-                        new Notice("Error, Settings cannot be loaded");
+                        new Notice("Error: settings cannot be loaded.");
                         return;
                     }
                     if (placeholderHasEmptySymbol(newSettings)){
-                        new Notice("Error: Placeholder cannot be empty.")
+                        new Notice("Error: placeholder cannot be empty.")
                         return;
                     }
                     this.plugin.settings.placeholder = { ...newSettings };
@@ -125,22 +127,22 @@ export class ToggleSettingTab extends PluginSettingTab {
                 })
             )
             .addButton(btn => btn
-                .setButtonText('Save & Migrate Entire Vault')
+                .setButtonText('Save & migrate entire vault')
                 .setWarning()
                 .onClick(() => {
                     new ConfirmModal(this.app,
-                        "Migrate Placeholders?",
+                        "Migrate placeholders?",
                         "This will replace the old placeholders in every file of your vault. Do you want to proceed?",
-                        "Update & Migrate",
+                        "Update & migrate",
                         async () => {
                             const oldSettings = this.plugin.settings.placeholder;
                             const newSettings = this.tempPlaceholder;
                             if (placeholderHasEmptySymbol(newSettings)){
-                                new Notice("Error: Placeholder cannot be empty.")
+                                new Notice("Error: placeholder cannot be empty.")
                                 return;
                             }
                             if (!newSettings){
-                                new Notice("Error, Settings cannot be loaded");
+                                new Notice("Error: settings cannot be loaded.");
                                 return;
                             }
                             if (newSettings.symbolCollapsed === oldSettings.symbolCollapsed && newSettings.symbolExpanded === oldSettings.symbolExpanded && newSettings.borderSymbol === oldSettings.borderSymbol && newSettings.delimiter === oldSettings.delimiter){
@@ -155,7 +157,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
                             this.plugin.settings.placeholder = { ...newSettings };
                             await this.plugin.saveSettings();
-                            new Notice(`Migrated ${modifiedFilesCount} Files.\nYou might have to reload Obsidian.`);
+                            new Notice(`Migrated ${modifiedFilesCount} files.\nYou might have to reload Obsidian.`);
                             this.display();
                         }
                     ).open();
@@ -163,36 +165,42 @@ export class ToggleSettingTab extends PluginSettingTab {
             )
 
         // --- Behavior ---
-        containerEl.createEl('h3', { text: 'Behavior' });
-         new Setting(containerEl)
-            .setName("Auto-Insert Bullet Point")
-            .setDesc("Automatically inserts a bullet point, when creating a Toggle")
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.autoInsertBullet)
-                .onChange(async (value) => {
-                    this.plugin.settings.autoInsertBullet = value;
-                    await this.plugin.saveSettings();
-                }));
+        new Setting(containerEl)
+            .setName('Behavior')
+            .setHeading();
+        new Setting(containerEl)
+        .setName("Auto-insert bullet point")
+        .setDesc("Automatically inserts a bullet point, when creating a Toggle.")
+        .addToggle(toggle => toggle
+            .setValue(this.plugin.settings.autoInsertBullet)
+            .onChange(async (value) => {
+                this.plugin.settings.autoInsertBullet = value;
+                await this.plugin.saveSettings();
+            }));
 
         // --- Visuals ---
-        containerEl.createEl('h3', { text: 'Visuals' });
-         new Setting(containerEl)
-            .setName("Hide Gutter-Arrows")
-            .setDesc("Hides the standard Obsidian Gutter-Arrows, until hovered")
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settings.hideGutterArrows)
-                .onChange(async (value) => {
-                    this.plugin.settings.hideGutterArrows = value;
-                    await this.plugin.saveSettings();
-                    this.plugin.refreshGutterStyle();
-                }));
+        new Setting(containerEl)
+            .setName('Visuals')
+            .setHeading();
+        new Setting(containerEl)
+        .setName("Hide gutter-arrows")
+        .setDesc("Hides the standard Obsidian gutter-arrows, until hovered.")
+        .addToggle(toggle => toggle
+            .setValue(this.plugin.settings.hideGutterArrows)
+            .onChange(async (value) => {
+                this.plugin.settings.hideGutterArrows = value;
+                await this.plugin.saveSettings();
+                this.plugin.refreshGutterStyle();
+            }));
 
 
         // --- DEBUG ---
-        containerEl.createEl('h3', { text: 'System' });
         new Setting(containerEl)
-            .setName("Debug Mode")
-            .setDesc("Detaillierte Konsolen-Ausgaben zur Fehlersuche aktivieren.")
+            .setName('System')
+            .setHeading();
+        new Setting(containerEl)
+            .setName("Debug mode")
+            .setDesc("Detailed console-logs.")
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.debugMode)
                 .onChange(async (value) => {
@@ -201,16 +209,16 @@ export class ToggleSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName("Danger Zone")
+            .setName("Danger zone")
             .setClass(CSS_CLASSES.MULTI_BUTTON_SETTING)
             .addButton((btn) => {
-                btn.setButtonText("Reset all Settings")
+                btn.setButtonText("Reset all settings")
                     .setWarning()
                     .onClick(() => {
                         new ConfirmModal(this.app,
-                            "Reset all Settings?",
-                            "Are you sure you want to reset All Settings? All of your changes will be lost!",
-                            "Yes, Reset",
+                            "Reset all settings?",
+                            "Are you sure you want to reset all Settings? All of your changes will be lost!",
+                            "Yes, reset",
                             async () => {
                                 this.plugin.settings = structuredClone(DEFAULT_SETTINGS);
                                 await this.plugin.saveSettings();
@@ -222,18 +230,18 @@ export class ToggleSettingTab extends PluginSettingTab {
                     });
             })
             .addButton((btn) => {
-                btn.setButtonText("Remove ALL Toggles from Vault")
+                btn.setButtonText("Remove all toggles from vault")
                     .setWarning()
                     .onClick(() => {
                         new ConfirmModal(this.app,
-                            "Remove all Toggles?",
-                            "Are you sure you want to remove ALL Toggles from your entire Vault? This action cannot be reversed. Backup your Vault first!",
-                            "Yes, Remove",
+                            "Remove all toggles?",
+                            "Are you sure you want to remove all toggles from your entire vault? This action cannot be reversed. Backup your vault first!",
+                            "Yes, remove",
                             async () => {
                                 const modifiedFilesCount = await processAllToggles(this.app, this.plugin.settings.placeholder, () => {
                                     return ""
                                 });
-                                new Notice(`Reset successful!. Modified ${modifiedFilesCount} Files.`);
+                                new Notice(`Reset successful! Modified ${modifiedFilesCount} files.`);
                             },
                             true,
                         ).open();

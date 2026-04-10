@@ -101,6 +101,7 @@
     }
 }
 
+/* --- SETTINGS --- */
 /* Wir zwingen die Einstellungs-Zeile, den Inhalt umzubrechen */
 .itgl-multi-button-setting {
     flex-wrap: wrap !important;
