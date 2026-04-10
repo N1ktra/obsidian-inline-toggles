@@ -2,12 +2,13 @@ import { Line } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { foldable, foldedRanges } from "@codemirror/language";
 import { PlaceholderSettings } from "../ui/settings";
-import { App, Notice, Editor } from "obsidian";
+import { App, Notice } from "obsidian";
 import { USER_EVENTS } from "./constants";
 
-export function getCM(editor: Editor): EditorView | null {
-    if (!editor) return null;
-    return (editor as any).cm as EditorView;
+declare module "obsidian" {
+    interface Editor {
+        cm: EditorView;
+    }
 }
 
 export function setCssProps(el: HTMLElement, props: Record<string, string>) {
@@ -211,7 +212,7 @@ export function checkIfToggleIsFoldedIn(view: EditorView, line: Line): boolean {
 
     let isFolded = false;
     const folded = foldedRanges(state);
-    folded.between(range.from, range.from, (from, to) => {
+    folded.between(range.from, range.from, (from) => {
         if (from === range.from) {
             isFolded = true;
             return false; // Iteration stoppen

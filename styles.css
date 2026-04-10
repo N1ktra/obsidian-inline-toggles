@@ -119,7 +119,7 @@
 /* --- Toggle Types --- */
 /* 1. Dein normaler Hintergrund (bleibt genau da, wo er ist) */
 .itgl-colored {
-    background-color: var(--itgl-bg);
+    background-color: rgba(var(--itgl-callout-color), 0.1);
     position: relative;
     overflow: visible !important;
 }
@@ -132,7 +132,7 @@
     width: 4px;
     top: 0;
     bottom: 0;
-    background-color: var(--itgl-border);
+    background-color: rgb(var(--itgl-callout-color));
 }
 .itgl-header-text{
     font-weight: bold;

@@ -3,7 +3,7 @@ import { createToggleViewPlugin } from './editor/view-plugin';
 import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { ToggleSettings, DEFAULT_SETTINGS, ToggleSettingTab } from './ui/settings';
-import { findToggle, getCM } from './utils/utils';
+import { findToggle } from './utils/utils';
 import { StateEffect } from '@codemirror/state';
 import { createToggleField } from './editor/toggle-field';
 import { createToggleEnterFix } from './editor/toggle-enter';
@@ -31,9 +31,9 @@ export default class MyTogglePlugin extends Plugin {
             this.app.workspace.on('layout-change', () => {
                 const editor = this.app.workspace.activeEditor?.editor
                 if (editor){
-                    const cm = getCM(editor);
-                    if (cm) {
-                        cm.dispatch({
+                    const view = editor.cm;
+                    if (view) {
+                        view.dispatch({
                             effects: layoutChangedEffect.of()
                         });
                     }
@@ -48,7 +48,7 @@ export default class MyTogglePlugin extends Plugin {
             name: 'Insert/Remove Toggle',
             icon: 'play',
             editorCallback: (editor) => {
-                const view = getCM(editor);
+                const view = editor.cm;
                 if (!view) return;
                 const changes = view.state.selection.ranges.flatMap(range =>
                     insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings)

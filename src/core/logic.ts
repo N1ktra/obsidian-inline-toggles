@@ -1,6 +1,6 @@
 import { App, MarkdownView, Editor } from 'obsidian';
 import { ToggleSettings, PlaceholderSettings } from '../ui/settings';
-import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts, getCM } from '../utils/utils';
+import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from '../utils/utils';
 import { EditorView } from '@codemirror/view';
 import { ChangeSpec, Line, RangeSet, StateEffect, StateField} from "@codemirror/state";
 import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
@@ -63,7 +63,7 @@ function removeToggle(line: Line, toggle: ToggleMatch): ChangeSpec{
 export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>){
     const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
     if (!markdownView) return;
-    const view = getCM(markdownView.editor);
+    const view = markdownView.editor.cm;
     if (!view) return;
     const { state } = view;
     const allToggles = state.field(toggleField, false);

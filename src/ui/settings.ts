@@ -1,4 +1,4 @@
-import { App, Modal, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import MyTogglePlugin from '../main';
 import { buildToggleTag, placeholderHasEmptySymbol, processAllToggles } from '../utils/utils';
 import { ConfirmModal } from './modals';
@@ -53,7 +53,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolCollapsed)
                 .setValue(this.plugin.settings.placeholder.symbolCollapsed)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.tempPlaceholder.symbolCollapsed = value;
                 }));
 
@@ -63,7 +63,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.symbolExpanded)
                 .setValue(this.plugin.settings.placeholder.symbolExpanded)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.tempPlaceholder.symbolExpanded = value;
                 }));
 
@@ -73,7 +73,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.borderSymbol)
                 .setValue(this.plugin.settings.placeholder.borderSymbol)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.tempPlaceholder.borderSymbol = value;
                 }));
 
@@ -83,7 +83,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addText(text => text
                 .setPlaceholder(DEFAULT_SETTINGS.placeholder.delimiter)
                 .setValue(this.plugin.settings.placeholder.delimiter)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.tempPlaceholder.delimiter = value;
                 }));
 
@@ -127,7 +127,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addButton(btn => btn
                 .setButtonText('Save & Migrate Entire Vault')
                 .setWarning()
-                .onClick(async () => {
+                .onClick(() => {
                     new ConfirmModal(this.app,
                         "Migrate Placeholders?",
                         "This will replace the old placeholders in every file of your vault. Do you want to proceed?",
@@ -206,7 +206,7 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addButton((btn) => {
                 btn.setButtonText("Reset all Settings")
                     .setWarning()
-                    .onClick(async () => {
+                    .onClick(() => {
                         new ConfirmModal(this.app,
                             "Reset all Settings?",
                             "Are you sure you want to reset All Settings? All of your changes will be lost!",
@@ -224,13 +224,13 @@ export class ToggleSettingTab extends PluginSettingTab {
             .addButton((btn) => {
                 btn.setButtonText("Remove ALL Toggles from Vault")
                     .setWarning()
-                    .onClick(async () => {
+                    .onClick(() => {
                         new ConfirmModal(this.app,
                             "Remove all Toggles?",
                             "Are you sure you want to remove ALL Toggles from your entire Vault? This action cannot be reversed. Backup your Vault first!",
                             "Yes, Remove",
                             async () => {
-                                const modifiedFilesCount = await processAllToggles(this.app, this.plugin.settings.placeholder, (toggle) => {
+                                const modifiedFilesCount = await processAllToggles(this.app, this.plugin.settings.placeholder, () => {
                                     return ""
                                 });
                                 new Notice(`Reset successful!. Modified ${modifiedFilesCount} Files.`);

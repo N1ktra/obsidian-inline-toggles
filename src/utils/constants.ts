@@ -35,8 +35,7 @@ export const CSS_CLASSES = {
 };
 
 export const CSS_VARIABLES = {
-    BACKGROUND: "--" + PREFIX + "-bg",
-    BORDER: "--" + PREFIX + "-border",
+    CALLOUT_COLOR: "--" + PREFIX + "-callout-color",
     ITEM_COLOR: "--" + PREFIX + "-item-color",
 }
 

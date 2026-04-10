@@ -61,9 +61,8 @@ export function buildLineDecorationFromAttributes(attributes: Record<string, str
         }
 
         if (key === 'type') {
-            const colorVar = `var(--callout-${value})`;
-            const inlineStyle = `${CSS_VARIABLES.BACKGROUND}: rgba(${colorVar}, 0.1); ${CSS_VARIABLES.BORDER}: rgb(${colorVar});`;
-            styleEntries.push(inlineStyle);
+            const colorVar = `${CSS_VARIABLES.CALLOUT_COLOR}: var(--callout-${value})`;
+            styleEntries.push(colorVar);
             classes.push(CSS_CLASSES.COLORED);
 
             lineStlyes.push({
