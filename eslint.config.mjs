@@ -26,6 +26,26 @@ export default [
         },
         rules: {
             ...obsidianmd.configs.recommended.rules,
+            "obsidianmd/ui/sentence-case": [
+                "warn",
+                {
+                "brands": [
+                    "Obsidian",
+                    "Markdown",
+                    "GitHub",
+                    "JavaScript",
+                    "Apple"
+                ],
+                "acronyms": [
+                    "OK",
+                    "UI",
+                    "API",
+                    "JSON",
+                    "CSS"
+                ],
+                enforceCamelCaseLower: true,
+                },
+            ],
 
             // 1. Die Promise-Prüfung (WICHTIG für Obsidian)
             "@typescript-eslint/no-floating-promises": "error",

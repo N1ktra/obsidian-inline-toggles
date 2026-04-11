@@ -46,7 +46,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         // --- SEKTION: SOURCE CODE ---
         new Setting(containerEl)
-            .setName('Source code (Markdown)') // Markdown ist ein Eigenname
+            .setName('Source code (Markdown)')
             .setHeading();
 
         new Setting(containerEl)
@@ -91,7 +91,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Save & apply")
-            .setDesc("Choose how to save your changes:\nsave only: updates future toggles (existing ones will break).\nmigrate: fixes all existing toggles before saving (⚠️ overwrites whole vault!).")
+            .setDesc("Choose how to save your changes.\nSave only: updates future toggles (existing ones will break).\nMigrate: fixes all existing toggles before saving (⚠️ overwrites whole vault!).")
             .addButton(btn => btn
                 .setButtonText('Save for future toggles')
                 .onClick(async () => {
