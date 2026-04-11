@@ -91,23 +91,7 @@ export class ToggleSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Save & apply")
-            .setClass(CSS_CLASSES.MULTI_BUTTON_SETTING)
-            .setDesc(
-                createFragment((f) => {
-                    f.createSpan({ text: "Choose how to save your changes:" });
-                    f.createEl("br");
-                    // Kurze, knappe Gegenüberstellung
-                    f.createEl("small", {
-                        text: "• Save only: updates future toggles. Existing ones will break.",
-                        cls: "setting-item-description"
-                    });
-                    f.createEl("br");
-                    f.createEl("small", {
-                        text: "• Migrate: fixes all existing toggles before saving. (⚠️ overwrites whole vault!)",
-                        cls: "setting-item-description"
-                    });
-                })
-            )
+            .setDesc("Choose how to save your changes:\nsave only: updates future toggles (existing ones will break).\nmigrate: fixes all existing toggles before saving (⚠️ overwrites whole vault!).")
             .addButton(btn => btn
                 .setButtonText('Save for future toggles')
                 .onClick(async () => {
@@ -163,6 +147,9 @@ export class ToggleSettingTab extends PluginSettingTab {
                     ).open();
                 })
             )
+            .then((setting) => {
+                setting.settingEl.addClasses([CSS_CLASSES.MULTI_LINE_DESC, CSS_CLASSES.MULTI_BUTTON_SETTING])
+            })
 
         // --- Behavior ---
         new Setting(containerEl)

@@ -20,7 +20,7 @@ Unlike standard Obsidian callouts, Inline Toggles offer a more fluid writing exp
 | `%%⏷type: info%%` This is a toggle header<br>&nbsp;&nbsp;&nbsp;&nbsp;This text will be collapsed.<br>&nbsp;&nbsp;&nbsp;&nbsp;Just use indentation to group content. | ![Toggle Preview](assets/toggle.gif) |
 
 ### Commands & Hotkeys
-- **Insert/Remove Toggle**: `Ctrl/Cmd + Shift + L`
+- **Insert/Remove Toggle**: e.g., set to `Ctrl/Cmd + Shift + L`
 - **Edit Attributes**: Opens a modal for quick styling (via command or **Right-Click** on the widget).
 - **Change Type**: Cycle through callout types (via command or **Right-Click** on the widget).
 
@@ -36,9 +36,9 @@ You can add CSS attributes to any toggle (e.g., `%%⏷type: info; bg: rgba(0,100
 
 > [!CAUTION]
 > ### ⚠️ Important: Create a Backup!
-> The **"Migrate Entire Vault"** and **"Remove ALL Toggles"** features modify many files at once. **Always** create a backup of your vault before using these tools.
+> The **"Migrate Entire Vault"** and **"Remove All Toggles"** features modify many files at once. **Always** create a backup of your vault before using these tools.
 
 ---
 *Disclaimer: This plugin is not affiliated with or endorsed by Notion Labs, Inc. It provides a similar user experience within Obsidian.*
 
-Developed by [Niklas Tran](https://github.com/niklastran)
+Developed by [Niklas Tran](https://github.com/N1ktra)

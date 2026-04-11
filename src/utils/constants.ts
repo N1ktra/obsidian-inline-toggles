@@ -27,11 +27,13 @@ export const CSS_CLASSES = {
     HEADER_TEXT: PREFIX + "-header-text",
     FOOTER: PREFIX + "-footer",
     MULTI_BUTTON_SETTING: PREFIX + "-multi-button-setting",
+    MULTI_LINE_DESC: PREFIX + "-multi-line-desc",
 
     OBS_MODAL_COMPLEX: "mod-complex",
     OBS_SUGGESTION_CONTENT: "suggestion-content",
     OBS_SUGGESTION_TITLE: "suggestion-title",
     OBS_SUGGESTION_NOTE: "suggestion-note",
+    OBS_SETTING_DESC: "setting-item-description",
 };
 
 export const CSS_VARIABLES = {
