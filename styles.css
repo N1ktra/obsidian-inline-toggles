@@ -118,7 +118,7 @@
 /* --- Toggle Types --- */
 /* 1. Normaler Hintergrund*/
 .itgl-colored {
-    background-color: rgba(var(--itgl-callout-color), 0.1);
+    background-color: color-mix(in srgb, var(--itgl-callout-color) 10%, transparent);
     position: relative;
     overflow: visible !important;
 }
@@ -131,7 +131,7 @@
     width: 4px;
     top: 0;
     bottom: 0;
-    background-color: rgb(var(--itgl-callout-color));
+    background-color: var(--itgl-callout-color);
 }
 .itgl-header-text{
     font-weight: bold;

@@ -97,7 +97,7 @@ export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField
     }
 }
 
-export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
+export function editToggleAttributesCmd(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings){
     const actions: SuggestionAction[] = [
         {
             label: "Save as new Attribute-String ✅",
@@ -125,7 +125,7 @@ export function editToggleAttributes(toggle: ToggleMatch, lineNumber: number, ed
     new GenericActionModal(app, "Type CSS-Style String...", actions, toggle.attributeString ?? "").open();
 }
 
-export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings, callback?: () => void){
+export function changeToggleTypeCmd(toggle: ToggleMatch, lineNumber: number, editor: Editor, app: App, settings: PlaceholderSettings, callback?: () => void){
     const actions: SuggestionAction[] = standardCallouts.map(id => ({
         label: id,
         onSelect() {
@@ -144,7 +144,7 @@ export function changeToggleType(toggle: ToggleMatch, lineNumber: number, editor
             callback?.();
         },
         icon: calloutIconMap[id.toLocaleLowerCase()] || "chevron-right",
-        color: `rgb(var(--callout-${id}))`,
+        color: `var(--callout-${id})`,
     }))
     new GenericActionModal(app, "Choose a new Toggle style...", actions).open()
 }

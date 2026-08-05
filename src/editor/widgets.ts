@@ -5,7 +5,7 @@ import { StateEffect } from "@codemirror/state";
 import { insertNewlineAndIndent, indentMore } from "@codemirror/commands";
 import { App, Menu, setIcon } from "obsidian";
 import { buildToggleTag, findToggle, ToggleMatch } from "../utils/utils";
-import { changeToggleType, editToggleAttributes } from "../core/logic";
+import { changeToggleTypeCmd, editToggleAttributesCmd } from "../core/logic";
 import { USER_EVENTS, CSS_CLASSES } from "../utils/constants";
 
 export class ToggleWidget extends WidgetType {
@@ -133,7 +133,7 @@ export class ToggleWidget extends WidgetType {
                     const result = this.getToggleData(span, view);
                     if (result) {
                         const rectBefore = span.getBoundingClientRect();
-                        changeToggleType(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder, () => {
+                        changeToggleTypeCmd(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder, () => {
                             requestAnimationFrame(() => {
                                 //wieder zur ursprünglichen ansicht scrollen
                                 const rectAfter = span.getBoundingClientRect();
@@ -153,7 +153,7 @@ export class ToggleWidget extends WidgetType {
                 .onClick(() => {
                     const result = this.getToggleData(span, view);
                     if (result) {
-                        editToggleAttributes(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
+                        editToggleAttributesCmd(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder);
                     }
                 })
         });

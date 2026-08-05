@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
 import { createToggleViewPlugin } from './editor/view-plugin';
-import { changeToggleType, editToggleAttributes, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
+import { changeToggleTypeCmd, editToggleAttributesCmd, insertOrRemoveToggle, scanAndApplyFold } from './core/logic';
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { ToggleSettings, DEFAULT_SETTINGS, ToggleSettingTab } from './ui/settings';
 import { findToggle } from './utils/utils';
@@ -77,7 +77,7 @@ export default class MyTogglePlugin extends Plugin {
                 const lineText = editor.getLine(cursor.line)
                 const toggle = findToggle(lineText, this.settings.placeholder)
                 if (!toggle) return
-                editToggleAttributes(toggle, cursor.line, editor, this.app, this.settings.placeholder);
+                editToggleAttributesCmd(toggle, cursor.line, editor, this.app, this.settings.placeholder);
             }
         })
 
@@ -89,7 +89,7 @@ export default class MyTogglePlugin extends Plugin {
                 const lineText = editor.getLine(cursor.line)
                 const toggle = findToggle(lineText, this.settings.placeholder)
                 if (!toggle) return
-                changeToggleType(toggle, cursor.line, editor, this.app, this.settings.placeholder);
+                changeToggleTypeCmd(toggle, cursor.line, editor, this.app, this.settings.placeholder);
             }
         })
 
