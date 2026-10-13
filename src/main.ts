@@ -4,7 +4,7 @@ import { changeToggleTypeCmd, editToggleAttributesCmd, insertOrRemoveToggle, sca
 import { createFoldTrackerPlugin } from './editor/fold-tracker';
 import { ToggleSettings, DEFAULT_SETTINGS, ToggleSettingTab } from './ui/settings';
 import { findToggle } from './utils/utils';
-import { StateEffect } from '@codemirror/state';
+import { StateEffect, ChangeSet } from '@codemirror/state';
 import { createToggleField } from './editor/toggle-field';
 import { createToggleEnterFix } from './editor/toggle-enter';
 import { USER_EVENTS } from './utils/constants';
@@ -53,9 +53,12 @@ export default class MyTogglePlugin extends Plugin {
                 const changes = view.state.selection.ranges.flatMap(range =>
                     insertOrRemoveToggle({from: range.from, to: range.to}, view, this.settings)
                 );
+                const changeSet = ChangeSet.of(changes, view.state.doc.length);
                 view.dispatch({
-                    changes: changes,
-                    userEvent: USER_EVENTS.INSERT_REMOVE_TOGGLE
+                    changes: changeSet,
+                    selection: view.state.selection.map(changeSet, 1),
+                    userEvent: USER_EVENTS.INSERT_REMOVE_TOGGLE,
+                    scrollIntoView: true
                 });
             }
         });
