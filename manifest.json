@@ -1,7 +1,7 @@
 {
 	"id": "inline-toggles",
 	"name": "Inline Toggles",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Create reliable inline toggles that save their state directly in Markdown.",
 	"author": "Niklas Tran",
