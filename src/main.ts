@@ -99,7 +99,7 @@ export default class MyTogglePlugin extends Plugin {
     }
 
     async loadSettings() {
-        const loadedData = await this.loadData();
+        const loadedData: unknown = await this.loadData();
         this.settings = this.deepMerge(DEFAULT_SETTINGS, loadedData);
     }
 

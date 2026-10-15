@@ -1,9 +1,9 @@
 /* ==========================================================================
-   1. DER WRAPPER (Container)
-   Kümmert sich NUR um Position im Text, den Klick-Bereich und den Hover-Hintergrund.
-   Hier wird NICHTS gedreht!
+   1. ICON WRAPPER (Container)
+   Positionierung im Text, Klick-Bereich und Hover-Hintergrund.
    ========================================================================== */
-.itgl-icon {
+.itgl-icon,
+.cm-content .itgl-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -12,27 +12,22 @@
     vertical-align: middle;
     margin-bottom: 0.15em;
 
-    cursor: pointer !important;
+    cursor: pointer;
     user-select: none;
     border-radius: 4px;
     color: var(--text-faint);
 
-    /* --- MOBILE OPTIMIERUNG --- */
-    /* 1. Nur spezifische Eigenschaften animieren (kein 'all') */
+    /* Mobile- & Performance-Optimierung */
     transition: background-color 0.15s ease-in-out, transform 0.1s ease-out;
-
-    /* 2. Hardware-Beschleunigung erzwingen */
     will-change: transform;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
-
-    /* 3. Den standardmäßigen grauen Klick-Rahmen auf Handys entfernen */
     -webkit-tap-highlight-color: transparent;
 }
 
 /* ==========================================================================
-   2. DAS ICON (SVG)
-   Kümmert sich NUR um Aussehen und die Drehung.
+   2. ICON GRAPHIC (SVG)
+   Darstellung und Rotations-Animation des Pfeils.
    ========================================================================== */
 .itgl-icon svg {
     display: block;
@@ -44,19 +39,17 @@
     stroke-width: 1px;
     margin: 0;
 
-    /* --- MOBILE OPTIMIERUNG --- */
     will-change: transform;
-    /* Auch hier: nur transform animieren */
     transition: transform 0.15s ease-in-out;
     color: inherit;
 }
 
 /* ==========================================================================
-   3. ZUSTÄNDE (Geschlossen / Offen)
-   Wir ändern Farben am Container und drehen das innere SVG.
+   3. ICON ZUSTÄNDE (Offen / Geschlossen)
+   Steuert die Textfarbe am Container und die Drehung des SVGs.
    ========================================================================== */
 
-/* Zustand: OFFEN */
+/* Zustand: Offen */
 .itgl-icon.itgl-is-expanded {
     color: var(--text-muted);
 }
@@ -64,7 +57,7 @@
     transform: rotate(90deg);
 }
 
-/* Zustand: GESCHLOSSEN (mit Inhalt) */
+/* Zustand: Geschlossen (mit Inhalt) */
 .itgl-icon.itgl-is-collapsed.itgl-has-content {
     color: var(--text-accent);
 }
@@ -74,7 +67,7 @@
 
 /* ==========================================================================
    4. KLICK-EFFEKTE (Mobile & Desktop)
-   Der Container wird minimal kleiner, das SVG behält dabei seine Drehung.
+   Leichtes Verkleinern beim Klicken/Tippen als visuelles Feedback.
    ========================================================================== */
 .itgl-icon:active {
     background-color: var(--background-modifier-hover);
@@ -82,48 +75,37 @@
 }
 
 /* ==========================================================================
-   5. HOVER-LOGIK (Nur für Geräte mit Maus)
+   5. HOVER-LOGIK (Nur für Geräte mit Mauszeiger)
    ========================================================================== */
 @media (hover: hover) {
-    /* Grauer Hintergrund für alle Zustände beim Drüberfahren */
     .itgl-icon:hover {
         background-color: var(--background-modifier-hover);
     }
 
-    /* Helleres Grau, wenn offen */
     .itgl-icon.itgl-is-expanded:hover {
         color: var(--text-normal);
     }
 
-    /* Leuchtenderes Accent, wenn geschlossen */
     .itgl-icon.itgl-is-collapsed.itgl-has-content:hover {
         color: var(--text-accent-hover);
     }
 }
 
-/* --- SETTINGS --- */
-.itgl-multi-button-setting .setting-item-control {
-    /* Stapelt die Buttons untereinander */
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-end !important;
-    flex: 0 0 auto !important;
-    gap: 6px !important;
-    align-self: flex-start !important;
-}
-.itgl-multi-line-desc {
-    white-space: pre-wrap;
-}
+/* ==========================================================================
+   6. TOGGLE-STYLES (Hintergrund, Rahmen & Abstände)
+   Gestaltung für farbige Blöcke, Header und Footer im Editor & Reading-View.
+   ========================================================================== */
 
-/* --- Toggle Types --- */
-/* 1. Normaler Hintergrund*/
-.itgl-colored {
+/* Farbiger Hintergrundblock */
+.itgl-colored,
+.markdown-source-view.mod-cm6 .cm-line.itgl-colored,
+.markdown-rendered .itgl-colored {
     background-color: color-mix(in srgb, var(--itgl-callout-color) 10%, transparent);
     position: relative;
-    overflow: visible !important;
+    overflow: visible;
 }
 
-/* 2. Die Linie, die links daneben schwebt */
+/* Farbige Akzentlinie auf der linken Seite */
 .itgl-colored::before {
     content: "";
     position: absolute;
@@ -133,26 +115,43 @@
     bottom: 0;
     background-color: var(--itgl-callout-color);
 }
-.itgl-header-text{
+
+/* Hervorgehobener Header-Text */
+.itgl-header-text {
     font-weight: bold;
     font-size: 1.15em;
 }
-.itgl-header {
-    padding-top: 10px !important;
+
+/* Obere Zeile eines Toggles (Header) */
+.itgl-header,
+.markdown-source-view.mod-cm6 .cm-line.itgl-header,
+.markdown-rendered .itgl-header {
+    padding-top: 10px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
 }
-.itgl-header.itgl-is-collapsed {
+
+/* Header im eingeklappten Zustand (rundum abgerundet) */
+.itgl-header.itgl-is-collapsed,
+.markdown-source-view.mod-cm6 .cm-line.itgl-header.itgl-is-collapsed,
+.markdown-rendered .itgl-header.itgl-is-collapsed {
     border-radius: 5px;
-    padding-bottom: 10px !important;
+    padding-bottom: 10px;
 }
-.itgl-footer {
-    padding-bottom: 10px !important;
+
+/* Untere Zeile eines Toggles (Footer) */
+.itgl-footer,
+.markdown-source-view.mod-cm6 .cm-line.itgl-footer,
+.markdown-rendered .itgl-footer {
+    padding-bottom: 10px;
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
 }
 
-/* Suggestion Modal Styling */
+/* ==========================================================================
+   7. SUGGESTION MODAL (Auswahl-Menü)
+   Layout und Farbgebung für die Vorschläge im Modal.
+   ========================================================================== */
 .itgl-suggestion-item {
     display: flex;
     align-items: center;
@@ -175,25 +174,55 @@
     );
 }
 
-.suggestion-content {
+.itgl-suggestion-item .suggestion-content {
     display: flex;
     flex-direction: column;
 }
 
-.suggestion-title {
+.itgl-suggestion-item .suggestion-title {
     font-weight: var(--font-semibold);
 }
 
-.suggestion-note {
+.itgl-suggestion-item .suggestion-note {
     color: var(--text-muted);
 }
 
-/* Der Effekt greift NUR, wenn die Klasse aktiv ist */
-body.hide-gutter-arrows .collapse-indicator {
-    opacity: 0 !important;
-    transition: opacity 0.2s !important;
+/* ==========================================================================
+   8. PLUGIN-EINSTELLUNGEN (Settings Tab)
+   Anpassungen für mehrzeilige Beschreibungen und gestapelte Buttons.
+   ========================================================================== */
+.setting-item.itgl-multi-button-setting .setting-item-control {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: 0 0 auto;
+    gap: 6px;
+    align-self: flex-start;
 }
 
-body.hide-gutter-arrows .collapse-indicator:hover {
-    opacity: 1 !important;
+.itgl-multi-line-desc {
+    white-space: pre-wrap;
+}
+
+/* ==========================================================================
+   9. GUTTER ARROWS (Obsidian Falt-Pfeile)
+   Blendet die Standard-Faltpfeile aus, bis man direkt darüber schwebt.
+   ========================================================================== */
+
+/* Standardmäßig ausgeblendet */
+body.hide-gutter-arrows.hide-gutter-arrows.hide-gutter-arrows .markdown-source-view.mod-cm6 .cm-fold-indicator .collapse-indicator:not(:hover),
+body.hide-gutter-arrows.hide-gutter-arrows.hide-gutter-arrows .markdown-rendered .collapse-indicator:not(:hover),
+body.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows .markdown-source-view.mod-cm6 .cm-fold-indicator .collapse-indicator:not(:hover),
+body.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows .markdown-rendered .collapse-indicator:not(:hover) {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Einblenden bei direktem Hover über das Pfeil-Symbol */
+body.hide-gutter-arrows.hide-gutter-arrows.hide-gutter-arrows .markdown-source-view.mod-cm6 .cm-fold-indicator .collapse-indicator:hover,
+body.hide-gutter-arrows.hide-gutter-arrows.hide-gutter-arrows .markdown-rendered .collapse-indicator:hover,
+body.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows .markdown-source-view.mod-cm6 .cm-fold-indicator .collapse-indicator:hover,
+body.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows.itgl-hide-gutter-arrows .markdown-rendered .collapse-indicator:hover {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
 }

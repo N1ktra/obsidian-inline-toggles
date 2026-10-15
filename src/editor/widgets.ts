@@ -27,7 +27,7 @@ export class ToggleWidget extends WidgetType {
     }
 
     toDOM(view: EditorView) {
-        const span = document.createElement("span");
+        const span = createSpan({ cls: CSS_CLASSES.ICON });
         span.className = CSS_CLASSES.ICON;
 
         // Initialen Zustand im DOM speichern
@@ -90,7 +90,8 @@ export class ToggleWidget extends WidgetType {
                 changes: { from: pos, to: pos + this.fullLength, insert: newTag },
                 userEvent: USER_EVENTS.TOGGLE_FOLD,
             });
-            requestAnimationFrame(() => {
+            const targetWindow = span.win || window;
+            targetWindow.requestAnimationFrame(() => {
                 const rectAfter = span.getBoundingClientRect();
                 const difference = rectAfter.top - rectBefore.top;
                 if (difference !== 0) {
@@ -134,7 +135,8 @@ export class ToggleWidget extends WidgetType {
                     if (result) {
                         const rectBefore = span.getBoundingClientRect();
                         changeToggleTypeCmd(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder, () => {
-                            requestAnimationFrame(() => {
+                            const targetWindow = span.win || window;
+                            targetWindow.requestAnimationFrame(() => {
                                 //wieder zur ursprünglichen ansicht scrollen
                                 const rectAfter = span.getBoundingClientRect();
                                 const difference = rectAfter.top - rectBefore.top;

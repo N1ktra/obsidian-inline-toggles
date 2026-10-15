@@ -255,7 +255,8 @@ export function extractMarkdownSymbols(lineText: string, settings: PlaceholderSe
 }
 
 export function setSelection(view: EditorView, from: number, to: number){
-    requestAnimationFrame(() => {
+    const targetWindow = view.dom.ownerDocument.defaultView ?? window;
+    targetWindow.requestAnimationFrame(() => {
         //Visualization:
         view.dispatch({
             selection: { anchor: from, head: to },
@@ -286,16 +287,18 @@ export async function processAllToggles(app: App, oldSettings: PlaceholderSettin
             if (!content.includes(oldSettings.borderSymbol)) return content;
             if (!content.includes(oldSettings.symbolCollapsed) && !content.includes(oldSettings.symbolExpanded)) return content;
 
-            const newContent = content.replace(oldRegex, (match, symbol, attributes, offset, input) => {
-                const matchArray = [match, symbol, attributes];
-                const simulatedExecArray = Object.assign(matchArray, {
-                    index: offset,     // Die Startposition des Treffers
-                    input: input,      // Der gesamte Text, der durchsucht wurde
-                    groups: undefined  // Falls du keine benannten Gruppen (?<name>) nutzt
-                }) as RegExpExecArray;
-                const oldToggle = parseToggleMatch(simulatedExecArray, oldSettings);
-                return transformFn(oldToggle);
-            });
+            const newContent = content.replace(
+                oldRegex,
+                (match: string, symbol: string, attributes: string, offset: number, input: string) => {
+                    const simulatedExecArray = [match, symbol, attributes] as unknown as RegExpExecArray;
+                    simulatedExecArray.index = offset;
+                    simulatedExecArray.input = input;
+                    simulatedExecArray.groups = undefined;
+
+                    const oldToggle = parseToggleMatch(simulatedExecArray, oldSettings);
+                    return transformFn(oldToggle);
+                }
+            );
 
             if (content !== newContent) {
                 filesModifiedCount++;
