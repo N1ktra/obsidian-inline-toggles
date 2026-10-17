@@ -53,6 +53,10 @@ export class ToggleWidget extends WidgetType {
     private attachEvents(dom: HTMLElement, view: EditorView) {
         dom.onclick = (e) => this.handleClick(e, view, dom);
         dom.oncontextmenu = (e) => this.handleContextMenu(e, dom, view);
+        dom.onpointerdown = (e) => {
+            // Verhindert auf Mobile bereits beim Aufsetzen des Fingers den Fokusverlust der Zeile
+            e.preventDefault();
+        };
         dom.onmousedown = (e) => {
             // Für Mobile verhindern, dass die Tastatur angezeigt wird
             e.preventDefault();
@@ -92,10 +96,12 @@ export class ToggleWidget extends WidgetType {
             });
             const targetWindow = span.win || window;
             targetWindow.requestAnimationFrame(() => {
-                const rectAfter = span.getBoundingClientRect();
-                const difference = rectAfter.top - rectBefore.top;
-                if (difference !== 0) {
-                    view.scrollDOM.scrollBy(0, difference);
+                const topAfter = span.isConnected ? span.getBoundingClientRect().top : view.coordsAtPos(pos)?.top;
+                if (topAfter != null) {
+                    const difference = topAfter - rectBefore.top;
+                    if (difference !== 0) {
+                        view.scrollDOM.scrollBy(0, difference);
+                    }
                 }
             });
         } else {
@@ -122,6 +128,9 @@ export class ToggleWidget extends WidgetType {
 
     private handleContextMenu(event: MouseEvent, span: HTMLElement, view: EditorView) {
         event.preventDefault();
+        event.stopPropagation();
+        if (!span.isConnected) return;
+
         const editor = this.app.workspace.activeEditor?.editor;
         if (!editor) return;
 
@@ -134,14 +143,17 @@ export class ToggleWidget extends WidgetType {
                     const result = this.getToggleData(span, view);
                     if (result) {
                         const rectBefore = span.getBoundingClientRect();
+                        const pos = view.posAtDOM(span);
                         changeToggleTypeCmd(result.toggle, result.lineNumber, editor, this.app, this.settings.placeholder, () => {
                             const targetWindow = span.win || window;
                             targetWindow.requestAnimationFrame(() => {
                                 //wieder zur ursprünglichen ansicht scrollen
-                                const rectAfter = span.getBoundingClientRect();
-                                const difference = rectAfter.top - rectBefore.top;
-                                if (difference !== 0) {
-                                    view.scrollDOM.scrollBy(0, difference);
+                                const topAfter = span.isConnected ? span.getBoundingClientRect().top : view.coordsAtPos(pos)?.top;
+                                if (topAfter != null) {
+                                    const difference = topAfter - rectBefore.top;
+                                    if (difference !== 0) {
+                                        view.scrollDOM.scrollBy(0, difference);
+                                    }
                                 }
                             });
                         });

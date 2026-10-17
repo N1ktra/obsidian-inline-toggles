@@ -35,7 +35,7 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
             const modeChanged = update.startState.field(editorLivePreviewField) !== update.state.field(editorLivePreviewField);
 
             // Icons zeichnen
-            if (update.docChanged || update.viewportChanged || update.focusChanged || modeChanged) {
+            if (update.docChanged || update.viewportChanged || modeChanged) {
                 this.buildDecorations(update.view);
             }
         }
