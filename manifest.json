@@ -4,7 +4,7 @@
 	"version": "1.0.2",
 	"minAppVersion": "1.1.0",
 	"description": "Create reliable inline toggles that save their state directly in Markdown.",
-	"author": "Niklas Tran",
+	"author": "N1ktra",
 	"authorUrl": "",
 	"fundingUrl": "",
 	"isDesktopOnly": false
