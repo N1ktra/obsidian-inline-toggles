@@ -67,8 +67,8 @@ export default class MyTogglePlugin extends Plugin {
             id: 'reset-foldings',
             name: 'Reset all foldings',
             icon: 'rotate-ccw',
-            editorCallback: () => {
-                scanAndApplyFold(this.app, this.settings, toggleField);
+            editorCallback: (editor) => {
+                scanAndApplyFold(this.app, this.settings, toggleField, editor.cm);
             }
         });
 

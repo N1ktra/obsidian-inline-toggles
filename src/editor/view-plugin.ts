@@ -24,7 +24,7 @@ export const createToggleViewPlugin = (settings: ToggleSettings, app: App, toggl
                 write: (fieldExists) => {
                     if (fieldExists) {
                         queueMicrotask(() => {
-                            scanAndApplyFold(app, settings, toggleField);
+                            scanAndApplyFold(app, settings, toggleField, view);
                         })
                     }
                 }

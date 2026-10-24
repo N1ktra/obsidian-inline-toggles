@@ -3,7 +3,7 @@ import { ToggleSettings, PlaceholderSettings } from '../ui/settings';
 import { checkIfLineHasChildren, checkIfToggleIsFoldedIn, extractMarkdownSymbols, findToggle, updateToggle, buildToggleTag, ToggleMatch, calloutIconMap, standardCallouts } from '../utils/utils';
 import { EditorView } from '@codemirror/view';
 import { ChangeSpec, Line, RangeSet, StateEffect, StateField} from "@codemirror/state";
-import { foldEffect, unfoldEffect, foldable } from '@codemirror/language';
+import { foldEffect, unfoldEffect, foldable, ensureSyntaxTree } from '@codemirror/language';
 import { GenericActionModal, SuggestionAction } from '../ui/modals';
 import { ToggleValue } from '../editor/toggle-field';
 import { USER_EVENTS } from '../utils/constants';
@@ -60,14 +60,20 @@ function removeToggle(line: Line, toggle: ToggleMatch): ChangeSpec{
     }
 }
 
-export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>){
-    const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
-    if (!markdownView) return;
-    const view = markdownView.editor.cm;
-    if (!view) return;
+export function scanAndApplyFold(app: App, settings: ToggleSettings, toggleField: StateField<RangeSet<ToggleValue>>, targetView?: EditorView){
+    let view = targetView;
+    if (!view) {
+        const markdownView = app.workspace.getActiveViewOfType(MarkdownView);
+        if (!markdownView) return;
+        view = markdownView.editor?.cm;
+        if (!view) return;
+    }
+    if (view.dom && !view.dom.isConnected) return;
     const { state } = view;
     const allToggles = state.field(toggleField, false);
     if (!allToggles) return;
+
+    ensureSyntaxTree(state, state.doc.length, 50);
 
     const effects: StateEffect<unknown>[] = [];
     const iter = allToggles.iter();
